@@ -1,0 +1,34 @@
+{
+    "debug" : true,
+    "write" : true,
+    "key-file" : "/etc/vscp/vscp.key",
+    "max-out-queue" : 32000,
+    "max-in-queue" : 32000,
+    "interface" : "9598",
+    "encryption" : "aes256",
+    "path-users" : "/home/akhe/development/VSCP/vscpl2drv-tcpipsrv/debug/users.json",
+    "tls" : {
+        "certificate" : "",
+        "certificate-chain" : "",
+        "verify-peer" : false,
+        "ca-path" : "",
+        "ca-file" : "",
+        "verify-depth" : 9,
+        "default-verify-paths" : true,
+        "cipher-list" : "DES-CBC3-SHA:AES128-SHA:AES128-GCM-SHA256",
+        "protocol-version" : 3,
+        "short-trust" : false
+    },
+    "logging" : {
+        "file-enable-log": true,
+        "file-log-level" : "debug",
+        "file-pattern" : "[vcpl2drv-tcpipsrv] [%^%l%$] %v",
+        "file-path" : "/tmp/vscpl2drv-tcpipsrv.log",
+        "file-max-size" : 5242880,
+        "file-max-files" : 7,
+        "console-enable-log": true,
+        "console-log-level" : "debug",
+        "console-pattern" : "[vcpl2drv-tcpipsrv] [%^%l%$] %v"
+    } 
+}
+

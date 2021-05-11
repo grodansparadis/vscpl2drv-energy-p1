@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+build
+config.log
+config.status
+autom4te.cache/
+config.h.in~
