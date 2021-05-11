@@ -1,17 +1,17 @@
-# vscpl2drv-tcpipsrv
+# vscpl2drv-energy-p1
 
 <img src="https://vscp.org/images/logo.png" width="100">
 
     Available for: Linux, Windows
-    Driver Linux: vscpl2drv-tcpipsrv.so
-    Driver Windows: vscpl2drv-tcpipsrv.dll
+    Driver Linux: vscpl2drv-energy-p1.so
+    Driver Windows: vscpl2drv-energy-p1.dll
 
-The tcp/ip driver act as a tcp/ip server for the [VSCP tcp/ip link protocol](https://grodansparadis.github.io/vscp-doc-spec/#/./vscp_over_tcp_ip). Users or IoT/m2m devices with different privileges and rights can connect to the exported interface and send/receive VSCP events.
+A driver that read data from a P1 energy meter and send relevant VSCP events.
 
 ## Install the driver on Linux
 You can install the driver using the debian package with
 
-> sudo apt install ./vscpl2drv-tcpipsrv_x.y.z.deb
+> sudo apt install ./vscpl2drv-energy-p1_x.y.z.deb
 
 the driver will be installed to /var/lib/vscp/drivers/level2
 

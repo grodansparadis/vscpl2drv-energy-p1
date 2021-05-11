@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "/home/akhe/development/VSCP/vscp/build/vscpd",
-            "args": ["-s","-c/home/akhe/development/VSCP/vscpl2drv-tcpipsrv/debug/linux/vscpd.json"],
+            "args": ["-s","-c/home/akhe/development/VSCP/vscpl2drv-energy-p1/debug/linux/vscpd.json"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/../vscp",
             "environment": [],
@@ -22,7 +22,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "build vscpl2drv-tcpipsrv",
+            "preLaunchTask": "build vscpl2drv-energy-p1",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]

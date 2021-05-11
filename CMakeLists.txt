@@ -27,7 +27,7 @@
 #
 
 cmake_minimum_required(VERSION 3.5)
-project(vscpl2drv-tcpipsrv LANGUAGES CXX C)
+project(vscpl2drv-energy-p1 LANGUAGES CXX C)
 set(PACKAGE_AUTHOR "Ake Hedman, the VSCP Project")
 
 # Load packaging facilities.
@@ -35,7 +35,7 @@ INCLUDE(CPack)
 
 # Version settings
 if(NOT DEFINED MAJOR_VERSION)
-    SET(MAJOR_VERSION "1")
+    SET(MAJOR_VERSION "15")
 endif()
 if(NOT DEFINED MINOR_VERSION)
     SET(MINOR_VERSION "0")
@@ -44,21 +44,21 @@ if(NOT DEFINED PATCH_VERSION)
     SET(PATCH_VERSION "0")
 endif()
 
-SET(CPACK_PACKAGE_DESCRIPTION "VSCP driver for tcp/ip server")
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "VSCP level II Driver for VSCP that export a server interface for the VSCP tcp/ip link protocol")
+SET(CPACK_PACKAGE_DESCRIPTION "VSCP driver for p1 energy meter")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "VSCP level II Driver for VSCP that read p1 energy meter protocol and publish relevant events")
 SET(CPACK_PACKAGE_VENDOR "the VSCP Project")
 SET(CPACK_PACKAGE_CONTACT "akhe@vscp.org")
 
 if(NOT DEFINED APP_LOW_NAME)
-set(APP_LOW_NAME "vscpl2drv-tcpipsrv")
+set(APP_LOW_NAME "vscpl2drv-energy-p1")
 endif()
 
 if(NOT DEFINED APP_NAME)
-set(APP_NAME "VSCPL2DEV-TCPIPSRV")
+set(APP_NAME "VSCPL2DEV-ENERGY-P1")
 endif()
 
 if(NOT DEFINED APP_URL)
-set(APP_URL "https://github.com/grodansparadis/vscpl2drv-tcpipsrv")
+set(APP_URL "https://github.com/grodansparadis/vscpl2drv-energy-p1")
 endif()
 
 if(NOT DEFINED APP_VERSION)
@@ -196,14 +196,11 @@ set(RESOURCE_FILES
         forms/index.html)
 
 # Add files to library
-add_library(vscpl2drv-tcpipsrv
-    ./src/vscpl2drv-tcpipsrv.cpp
-    ./src/tcpipsrv.cpp
-    ./src/srv.cpp 
-    ${VSCP_PATH}/src/vscp/common/userlist.h
-    ${VSCP_PATH}/src/vscp/common/userlist.cpp
-    ${VSCP_PATH}/src/vscp/common/clientlist.h
-    ${VSCP_PATH}/src/vscp/common/clientlist.cpp   
+add_library(vscpl2drv-energy-p1
+    ./src/vscpl2drv-energy-p1.h   
+    ./src/vscpl2drv-energy-p1.cpp
+    ./src/energy-p1-obj.h 
+    ./src/energy-p1-obj.cpp  
     ${VSCP_PATH}/src/common/third_party/mustache.hpp
     ${VSCP_PATH}/src/common/third_party/spdlog-1.8.5/include    
     ${VSCP_PATH}/src/vscp/common/vscp.h
@@ -263,7 +260,7 @@ else()
  endif()   
 
 if (WIN32)
-    target_link_libraries(vscpl2drv-tcpipsrv PRIVATE     
+    target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
         PThreads4W::PThreads4W_CXXEXC
         OpenSSL::SSL 
         OpenSSL::Crypto
@@ -272,7 +269,7 @@ if (WIN32)
     )
         
 else()
-    target_link_libraries(vscpl2drv-tcpipsrv PRIVATE     
+    target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
         m
         dl
         Threads::Threads
@@ -285,7 +282,7 @@ endif()
 # Install
 if(WIN32)
     # Runtime files
-    install(TARGETS vscpl2drv-tcpipsrv
+    install(TARGETS vscpl2drv-energy-p1
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
     )
     # Dependencies
@@ -296,7 +293,7 @@ if(WIN32)
     # README
     install(FILES "${CMAKE_BINARY_DIR}/../README.md" DESTINATION "${CMAKE_INSTALL_BINDIR}/..")
 else()
-    install(TARGETS vscpl2drv-tcpipsrv
+    install(TARGETS vscpl2drv-energy-p1
             LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_}${VSCP_LEVEL2_DRV_DIR}
             RUNTIME DESTINATION ${CMAKE_INSTALL_MANDIR}            
             RESOURCE DESTINATION ${CMAKE_INSTALL_FULL_}/var/lib/vscp/vscpd) 

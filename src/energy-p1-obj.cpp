@@ -1,4 +1,4 @@
-// tcpipsrv.cpp: implementation of the CTcpipSrv class.
+// energy-p1-obj.cpp: implementation of the CEnergyP1 class.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -67,7 +67,7 @@
 #include <vscpdatetime.h>
 #include <vscphelper.h>
 #include <vscpremotetcpif.h>
-#include "tcpipsrv.h"
+#include "energy-p1-obj.h"
 
 #include <json.hpp>  // Needs C++11  -std=c++11
 #include <mustache.hpp>
@@ -93,10 +93,10 @@ void*
 tcpipListenThread(void* pData);
 
 //////////////////////////////////////////////////////////////////////
-// CTcpipSrv
+// CEnergyP1
 //
 
-CTcpipSrv::CTcpipSrv()
+CEnergyP1::CEnergyP1()
 {
     m_bQuit = false;
 
@@ -108,15 +108,14 @@ CTcpipSrv::CTcpipSrv()
 
     pthread_mutex_init(&m_mutexSendQueue, NULL);
     pthread_mutex_init(&m_mutexReceiveQueue, NULL);
-
-    pthread_mutex_init(&m_mutex_UserList, NULL);    
+   
 }
 
 //////////////////////////////////////////////////////////////////////
-// ~CTcpipSrv
+// ~CEnergyP1
 //
 
-CTcpipSrv::~CTcpipSrv()
+CEnergyP1::~CEnergyP1()
 {
     close();
 
@@ -126,7 +125,6 @@ CTcpipSrv::~CTcpipSrv()
     pthread_mutex_destroy(&m_mutexSendQueue);
     pthread_mutex_destroy(&m_mutexReceiveQueue);
 
-    pthread_mutex_destroy(&m_mutex_UserList);
 }
 
 
@@ -135,7 +133,7 @@ CTcpipSrv::~CTcpipSrv()
 //
 
 bool
-CTcpipSrv::open(std::string& path, const uint8_t* pguid)
+CEnergyP1::open(std::string& path, const uint8_t* pguid)
 {
     if (NULL == pguid) {
         return false;
@@ -194,11 +192,11 @@ CTcpipSrv::open(std::string& path, const uint8_t* pguid)
         spdlog::set_default_logger(logger);
     }
 
-    if (!startTcpipSrvThread()) {  
-        console->error("Failed to start server.");
-        spdlog::drop_all();
-        return false;
-    }
+    // if (!startTcpipSrvThread()) {  
+    //     console->error("Failed to start server.");
+    //     spdlog::drop_all();
+    //     return false;
+    // }
 
     return true;
 }
@@ -208,7 +206,7 @@ CTcpipSrv::open(std::string& path, const uint8_t* pguid)
 //
 
 void
-CTcpipSrv::close(void)
+CEnergyP1::close(void)
 {
     // Do nothing if already terminated
     if (m_bQuit) {
@@ -233,7 +231,7 @@ CTcpipSrv::close(void)
 //
 
 bool
-CTcpipSrv::doLoadConfig(std::string& path)
+CEnergyP1::doLoadConfig(std::string& path)
 {
     try {         
         std::ifstream in(m_path, std::ifstream::in);
@@ -387,7 +385,7 @@ CTcpipSrv::doLoadConfig(std::string& path)
        spdlog::error("ReadConfig: No logging has been setup."); 
     }
 
-    // interface
+    // Serial interface
     if (m_j_config.contains("interface")) {
         try {
             m_interface = m_j_config["interface"].get<std::string>();
@@ -403,25 +401,8 @@ CTcpipSrv::doLoadConfig(std::string& path)
         spdlog::warn("ReadConfig: Failed to read 'interface' Defaults will be used.");
     }
 
-    // Path to user database  
-    if (m_j_config.contains("path-users")) {
-        try {
-            m_pathUsers = m_j_config["path-users"].get<std::string>();
-            if (!m_userList.loadUsersFromFile(m_pathUsers)) {
-                spdlog::critical("ReadConfig: Failed to load users from file 'user-path'='{}'. Terminating!", path); 
-                return false;
-            }
-        }
-        catch (const std::exception& ex) {
-            spdlog::error("ReadConfig: Failed to read 'path-users' Error='{}'", ex.what());    
-        }
-        catch(...) {
-            spdlog::error("ReadConfig: Failed to read 'path-users' due to unknown error.");
-        }
-    }
-    else  {
-        spdlog::warn("ReadConfig: Failed to read 'path-users' Defaults will be used.");
-    }
+    // baudrate 
+    
 
     // Response timeout m_responseTimeout
     if (m_j_config.contains("response-timeout")) {
@@ -482,7 +463,7 @@ CTcpipSrv::doLoadConfig(std::string& path)
         if (j.contains("out-filter")) {
             try {
                 std::string str = j["in-filter"].get<std::string>();
-                vscp_readFilterFromString(&m_filterOut, str.c_str());
+                vscp_readFilterFromString(&m_txfilter, str.c_str());
             }
             catch (const std::exception& ex) {
                 spdlog::error("ReadConfig: Failed to read 'out-filter' Error='{}'", ex.what());    
@@ -499,7 +480,7 @@ CTcpipSrv::doLoadConfig(std::string& path)
         if (j.contains("out-mask")) {
             try {
                 std::string str = j["out-mask"].get<std::string>();
-                vscp_readMaskFromString(&m_filterOut, str.c_str());
+                vscp_readMaskFromString(&m_txfilter, str.c_str());
             }
             catch (const std::exception& ex) {
                 spdlog::error("ReadConfig: Failed to read 'out-mask' Error='{}'", ex.what());    
@@ -513,171 +494,6 @@ CTcpipSrv::doLoadConfig(std::string& path)
         }
     }
 
-    // TLS / SSL
-    if (m_j_config.contains("tls") && m_j_config["tls"].is_object()) {
-
-        json j = m_j_config["tls"];
-
-        // Certificate
-        if (j.contains("certificate")) {
-            try {
-                m_tls_certificate = j["certificate"].get<std::string>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig: Failed to read 'certificate' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig: Failed to read 'certificate' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: Failed to read 'certificate' Defaults will be used.");
-        } 
-
-        // certificate chain
-        if (j.contains("certificate_chain")) {
-            try {
-                m_tls_certificate_chain = j["certificate_chain"].get<std::string>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig: Failed to read 'certificate_chain' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig: Failed to read 'certificate_chain' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: Failed to read 'certificate_chain' Defaults will be used.");
-        }  
-
-        // verify peer
-        if (j.contains("verify-peer")) {
-            try {
-                m_tls_verify_peer = j["verify-peer"].get<bool>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig: Failed to read 'verify-peer' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig: Failed to read 'verify-peer' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: Failed to read 'verify-peer' Defaults will be used.");
-        } 
-
-        // CA Path
-        if (j.contains("ca-path")) {
-            try {
-                m_tls_ca_file = j["ca-path"].get<std::string>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig: Failed to read 'ca-path' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig: Failed to read 'ca-path' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: ReadConfig: Failed to read 'ca-path' Defaults will be used.");
-        } 
-
-        // CA File
-        if (j.contains("ca-file")) {
-            try {
-                m_tls_ca_file = j["ca-file"].get<std::string>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig: Failed to read 'ca-file' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig: Failed to read 'ca-file' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: ReadConfig: Failed to read 'ca-file' Defaults will be used.");
-        } 
-
-        // Verify depth
-        if (j.contains("verify_depth")) {
-            try {
-                m_tls_verify_depth = j["verify_depth"].get<uint16_t>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig: Failed to read 'verify_depth' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig: Failed to read 'verify_depth' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: Failed to read 'verify_depth' Defaults will be used.");
-        } 
-
-        // Default verify paths
-        if (j.contains("default-verify-paths")) {
-            try {
-                m_tls_default_verify_paths  = j["default-verify-paths"].get<bool>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig:Failed to read 'default-verify-paths' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig:Failed to read 'default-verify-paths' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: Failed to read 'default-verify-paths' Defaults will be used.");
-        } 
-
-        // Chiper list
-        if (j.contains("cipher-list")) {
-            try {
-                m_tls_cipher_list = j["cipher-list"].get<std::string>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig:Failed to read 'cipher-list' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig:Failed to read 'cipher-list' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: Failed to read 'cipher-list' Defaults will be used.");
-        } 
-
-        // Protocol version
-        if (j.contains("protocol-version")) {
-            try {
-                m_tls_protocol_version = j["protocol-version"].get<uint16_t>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig:Failed to read 'protocol-version' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig:Failed to read 'protocol-version' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: Failed to read 'protocol-version' Defaults will be used.");
-        } 
-
-        // Short trust
-        if (j.contains("short-trust")) {
-            try {
-                m_tls_short_trust = j["short-trust"].get<bool>();
-            }
-            catch (const std::exception& ex) {
-                spdlog::error("ReadConfig:Failed to read 'short-trust' Error='{}'", ex.what());    
-            }
-            catch(...) {
-                spdlog::error("ReadConfig:Failed to read 'short-trust' due to unknown error.");
-            }
-        }
-        else  {
-            spdlog::debug("ReadConfig: Failed to read 'short-trust' Defaults will be used.");
-        } 
-    }
 
     // vscpEvent ev;
     // ev.vscp_class = VSCP_CLASS2_HLO;
@@ -727,7 +543,7 @@ CTcpipSrv::doLoadConfig(std::string& path)
 //
 
 bool
-CTcpipSrv::doSaveConfig(void)
+CEnergyP1::doSaveConfig(void)
 {
     if (m_j_config.value("write", false)) {
 
@@ -740,7 +556,7 @@ CTcpipSrv::doSaveConfig(void)
 //
 
 bool
-CTcpipSrv::handleHLO(vscpEvent* pEvent)
+CEnergyP1::handleHLO(vscpEvent* pEvent)
 {
     vscpEventEx ex;
 
@@ -863,7 +679,7 @@ CTcpipSrv::handleHLO(vscpEvent* pEvent)
 //
 
 bool
-CTcpipSrv::readVariable(vscpEventEx& ex, const json& json_req)
+CEnergyP1::readVariable(vscpEventEx& ex, const json& json_req)
 {
     json j;
 
@@ -979,7 +795,7 @@ CTcpipSrv::readVariable(vscpEventEx& ex, const json& json_req)
 //
 
 bool
-CTcpipSrv::writeVariable(vscpEventEx& ex, const json& json_req)
+CEnergyP1::writeVariable(vscpEventEx& ex, const json& json_req)
 {
     json j;
 
@@ -1283,7 +1099,7 @@ CTcpipSrv::writeVariable(vscpEventEx& ex, const json& json_req)
 //
 
 bool
-CTcpipSrv::deleteVariable(vscpEventEx& ex, const json& json_reg)
+CEnergyP1::deleteVariable(vscpEventEx& ex, const json& json_reg)
 {
     json j;
 
@@ -1338,7 +1154,7 @@ abort:
 //
 
 bool
-CTcpipSrv::stop(void)
+CEnergyP1::stop(void)
 {
     return true;
 }
@@ -1348,7 +1164,7 @@ CTcpipSrv::stop(void)
 //
 
 bool
-CTcpipSrv::start(void)
+CEnergyP1::start(void)
 {
     return true;
 }
@@ -1358,7 +1174,7 @@ CTcpipSrv::start(void)
 //
 
 bool
-CTcpipSrv::restart(void)
+CEnergyP1::restart(void)
 {
     if (!stop()) {    
         spdlog::get("logger")->warn("Failed to stop VSCP tcp/ip server.");     
@@ -1376,7 +1192,7 @@ CTcpipSrv::restart(void)
 //
 
 bool
-CTcpipSrv::eventExToReceiveQueue(vscpEventEx& ex)
+CEnergyP1::eventExToReceiveQueue(vscpEventEx& ex)
 {
     vscpEvent* pev = new vscpEvent();
     if (!vscp_convertEventExToEvent(pev, &ex)) {        
@@ -1409,7 +1225,7 @@ CTcpipSrv::eventExToReceiveQueue(vscpEventEx& ex)
 //
 
 bool
-CTcpipSrv::addEvent2SendQueue(const vscpEvent* pEvent)
+CEnergyP1::addEvent2SendQueue(const vscpEvent* pEvent)
 {
     pthread_mutex_lock(&m_mutexSendQueue);
     m_sendList.push_back((vscpEvent*)pEvent);
@@ -1425,7 +1241,7 @@ CTcpipSrv::addEvent2SendQueue(const vscpEvent* pEvent)
 //
 
 bool
-CTcpipSrv::addEvent2ReceiveQueue(const vscpEvent* pEvent)
+CEnergyP1::addEvent2ReceiveQueue(const vscpEvent* pEvent)
 {
     pthread_mutex_lock(&m_mutexReceiveQueue);
     m_receiveList.push_back((vscpEvent*)pEvent);    
@@ -1438,258 +1254,161 @@ CTcpipSrv::addEvent2ReceiveQueue(const vscpEvent* pEvent)
 // sendEventToClient
 //
 
-bool
-CTcpipSrv::sendEventToClient(CClientItem* pClientItem, const vscpEvent* pEvent)
-{
-    // Must be valid pointers
-    if (NULL == pClientItem) {       
-        spdlog::get("logger")->error("sendEventToClient - Pointer to clientitem is null");     
-        return false;
-    }
-    if (NULL == pEvent) {        
-        spdlog::get("logger")->error("sendEventToClient - Pointer to event is null");   
-        return false;
-    }
+// bool
+// CEnergyP1::sendEventToClient(CClientItem* pClientItem, const vscpEvent* pEvent)
+// {
+//     // Must be valid pointers
+//     if (NULL == pClientItem) {       
+//         spdlog::get("logger")->error("sendEventToClient - Pointer to clientitem is null");     
+//         return false;
+//     }
+//     if (NULL == pEvent) {        
+//         spdlog::get("logger")->error("sendEventToClient - Pointer to event is null");   
+//         return false;
+//     }
 
-    // Check if filtered out - if so do nothing here
-    if (!vscp_doLevel2Filter(pEvent, &pClientItem->m_filter)) {
-        if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {           
-            spdlog::get("logger")->debug("sendEventToClient - Filtered out");          
-        }
-        return false;
-    }
+//     // Check if filtered out - if so do nothing here
+//     if (!vscp_doLevel2Filter(pEvent, &pClientItem->m_filter)) {
+//         if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {           
+//             spdlog::get("logger")->debug("sendEventToClient - Filtered out");          
+//         }
+//         return false;
+//     }
 
-    // If the client queue is full for this client then the
-    // client will not receive the message
-    if (pClientItem->m_clientInputQueue.size() > m_j_config.value("max-out-queue", MAX_ITEMS_IN_QUEUE)) {
-        if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {          
-            spdlog::get("logger")->debug("sendEventToClient - overrun");       
-        }
-        // Overrun
-        pClientItem->m_statistics.cntOverruns++;
-        return false;
-    }
+//     // If the client queue is full for this client then the
+//     // client will not receive the message
+//     if (pClientItem->m_clientInputQueue.size() > m_j_config.value("max-out-queue", MAX_ITEMS_IN_QUEUE)) {
+//         if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {          
+//             spdlog::get("logger")->debug("sendEventToClient - overrun");       
+//         }
+//         // Overrun
+//         pClientItem->m_statistics.cntOverruns++;
+//         return false;
+//     }
 
-    // Create a new event
-    vscpEvent* pnewvscpEvent = new vscpEvent;
-    if (NULL != pnewvscpEvent) {
+//     // Create a new event
+//     vscpEvent* pnewvscpEvent = new vscpEvent;
+//     if (NULL != pnewvscpEvent) {
 
-        // Copy in the new event
-        if (!vscp_copyEvent(pnewvscpEvent, pEvent)) {
-            vscp_deleteEvent_v2(&pnewvscpEvent);
-            return false;
-        }
+//         // Copy in the new event
+//         if (!vscp_copyEvent(pnewvscpEvent, pEvent)) {
+//             vscp_deleteEvent_v2(&pnewvscpEvent);
+//             return false;
+//         }
 
-        // Add the new event to the input queue
-        pthread_mutex_lock(&pClientItem->m_mutexClientInputQueue);
-        pClientItem->m_clientInputQueue.push_back(pnewvscpEvent);
-        pthread_mutex_unlock(&pClientItem->m_mutexClientInputQueue);
-        sem_post(&pClientItem->m_semClientInputQueue);
-    }
+//         // Add the new event to the input queue
+//         pthread_mutex_lock(&pClientItem->m_mutexClientInputQueue);
+//         pClientItem->m_clientInputQueue.push_back(pnewvscpEvent);
+//         pthread_mutex_unlock(&pClientItem->m_mutexClientInputQueue);
+//         sem_post(&pClientItem->m_semClientInputQueue);
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
 ///////////////////////////////////////////////////////////////////////////////
 // sendEventAllClients
 //
 
-bool
-CTcpipSrv::sendEventAllClients(const vscpEvent* pEvent)
-{
-    CClientItem* pClientItem;
-    std::deque<CClientItem*>::iterator it;
+// bool
+// CEnergyP1::sendEventAllClients(const vscpEvent* pEvent)
+// {
+//     CClientItem* pClientItem;
+//     std::deque<CClientItem*>::iterator it;
 
-    if (NULL == pEvent) {        
-        spdlog::get("logger")->error("sendEventAllClients - No event to send");      
-        return false;
-    }
+//     if (NULL == pEvent) {        
+//         spdlog::get("logger")->error("sendEventAllClients - No event to send");      
+//         return false;
+//     }
 
-    pthread_mutex_lock(&m_clientList.m_mutexItemList);
-    for (it = m_clientList.m_itemList.begin();
-         it != m_clientList.m_itemList.end();
-         ++it) {
-        pClientItem = *it;
+//     pthread_mutex_lock(&m_clientList.m_mutexItemList);
+//     for (it = m_clientList.m_itemList.begin();
+//          it != m_clientList.m_itemList.end();
+//          ++it) {
+//         pClientItem = *it;
 
-        if (NULL != pClientItem) {
-            if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {
-                spdlog::get("logger")->debug("Send event to client [%s]",
-                                                pClientItem->m_strDeviceName.c_str());
-            }
-            if (!sendEventToClient(pClientItem, pEvent)) {               
-                spdlog::get("logger")->error("sendEventAllClients - Failed to send event");
-            }
-        }
-    }
+//         if (NULL != pClientItem) {
+//             if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {
+//                 spdlog::get("logger")->debug("Send event to client [%s]",
+//                                                 pClientItem->m_strDeviceName.c_str());
+//             }
+//             if (!sendEventToClient(pClientItem, pEvent)) {               
+//                 spdlog::get("logger")->error("sendEventAllClients - Failed to send event");
+//             }
+//         }
+//     }
 
-    pthread_mutex_unlock(&m_clientList.m_mutexItemList);
+//     pthread_mutex_unlock(&m_clientList.m_mutexItemList);
 
-    return true;
-}
+//     return true;
+// }
 
 /////////////////////////////////////////////////////////////////////////////
-// startTcpWorkerThread
+// startWorkerThread
 //
 
 bool
-CTcpipSrv::startTcpipSrvThread(void)
+CEnergyP1::startWorkerThread(void)
 {
     if (__VSCP_DEBUG_TCP) {
-        spdlog::get("logger")->debug("Controlobject: Starting TCP/IP interface...");    
+        spdlog::get("logger")->debug("Starting P1 energy meter interface...");    
     }
 
-    // Create the tcp/ip server data object
-    m_ptcpipSrvObject = (tcpipListenThreadObj*)new tcpipListenThreadObj(this);
-    if (NULL == m_ptcpipSrvObject) {      
-        spdlog::get("logger")->error(
-               "Controlobject: Failed to allocate storage for tcp/ip.");            
-    }
+    // // Create the tcp/ip server data object
+    // m_energyObject = (CEnergyP1*)new CEnergyP1(this);
+    // if (NULL == CEnergyP1) {      
+    //     spdlog::get("logger")->error(
+    //            "Controlobject: Failed to allocate storage for tcp/ip.");            
+    // }
 
-    // Set the port to listen for connections on
-    m_ptcpipSrvObject->setListeningPort(m_j_config["interface"].get<std::string>());
+    // // Set the port to listen for connections on
+    // CEnergyP1->setListeningPort(m_j_config["interface"].get<std::string>());
 
-    if (pthread_create(&m_tcpipListenThread,
-                       NULL,
-                       tcpipListenThread,
-                       m_ptcpipSrvObject)) {
-        delete m_ptcpipSrvObject;
-        m_ptcpipSrvObject = NULL;    
-        spdlog::get("logger")->error("Controlobject: Unable to start the tcp/ip listen thread.");          
-        return false;
-    }
+    // if (pthread_create(&m_tcpipListenThread,
+    //                    NULL,
+    //                    tcpipListenThread,
+    //                    CEnergyP1)) {
+    //     delete CEnergyP1;
+    //     CEnergyP1 = NULL;    
+    //     spdlog::get("logger")->error("Controlobject: Unable to start the tcp/ip listen thread.");          
+    //     return false;
+    // }
 
     return true;
 }
 
 /////////////////////////////////////////////////////////////////////////////
-// stopTcpWorkerThread
+// stopWorkerThread
 //
 
 bool
-CTcpipSrv::stopTcpipSrvThread(void)
+CEnergyP1::stopWorkerThread(void)
 {
-    // Tell the thread it's time to quit
-    m_ptcpipSrvObject->m_nStopTcpIpSrv = VSCP_TCPIP_SRV_STOP;
+    // // Tell the thread it's time to quit
+    // CEnergyP1->m_nStopTcpIpSrv = VSCP_TCPIP_SRV_STOP;
 
-    if (__VSCP_DEBUG_TCP) {
-        spdlog::get("logger")->debug("Controlobject: Terminating TCP thread.");
-    }
+    // if (__VSCP_DEBUG_TCP) {
+    //     spdlog::get("logger")->debug("Controlobject: Terminating TCP thread.");
+    // }
 
-    pthread_join(m_tcpipListenThread, NULL);
-    delete m_ptcpipSrvObject;
-    m_ptcpipSrvObject = NULL;
+    // pthread_join(m_tcpipListenThread, NULL);
+    // delete CEnergyP1;
+    // CEnergyP1 = NULL;
 
-    if (__VSCP_DEBUG_TCP) {   
-        spdlog::get("logger")->debug("Controlobject: Terminated TCP thread.");
-    }
+    // if (__VSCP_DEBUG_TCP) {   
+    //     spdlog::get("logger")->debug("Controlobject: Terminated TCP thread.");
+    // }
 
     return true;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-// addClient
-//
-
-bool
-CTcpipSrv::addClient(CClientItem* pClientItem, uint32_t id)
-{
-    // Check pointer
-    if ( NULL == pClientItem ) {
-        return false;
-    }
-
-    // Add client to client list
-    if (!m_clientList.addClient(pClientItem, id)) {
-        return false;
-    }
-
-    // Set GUID for interface
-    pClientItem->m_guid = m_guid;
-
-    // Fill in client id
-    pClientItem->m_guid.setNicknameID(0);
-    pClientItem->m_guid.setClientID(pClientItem->m_clientID);
-
-    return true;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-// addClient - GUID (for drivers with set GUID)
-//
-
-bool
-CTcpipSrv::addClient(CClientItem* pClientItem, cguid& guid)
-{
-    // Check pointer
-    if ( NULL == pClientItem ) {
-        return false;
-    }
-
-    // Add client to client list
-    if (!m_clientList.addClient(pClientItem, guid)) {
-        return false;
-    }
-
-    return true;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-// removeClient
-//
-
-void
-CTcpipSrv::removeClient(CClientItem* pClientItem)
-{
-    // Do not try to handle invalid clients
-    if (NULL == pClientItem)
-        return;
-
-    // Remove the client
-    m_clientList.removeClient(pClientItem);
-}
-
-/////////////////////////////////////////////////////////////////////////////
-// generateSessionId
-//
-
-bool
-CTcpipSrv::generateSessionId(const char* pKey, char* psid)
-{
-    char buf[8193];
-
-    // Check pointers
-    if (NULL == pKey)
-        return false;
-    if (NULL == psid)
-        return false;
-
-    if (strlen(pKey) > 256)
-        return false;
-
-    // Generate a random session ID
-    time_t t;
-    t = time(NULL);
-    snprintf(buf, sizeof(buf),
-            "__%s_%X%X%X%X_be_hungry_stay_foolish_%X%X",
-            pKey,
-            (unsigned int)rand(),
-            (unsigned int)rand(),
-            (unsigned int)rand(),
-            (unsigned int)t,
-            (unsigned int)rand(),
-            1337);
-
-    vscp_md5(psid, (const unsigned char*)buf, strlen(buf));
-
-    return true;
-}
 
 /////////////////////////////////////////////////////////////////////////////
 // readEncryptionKey
 //
 
 bool
-CTcpipSrv::readEncryptionKey(const std::string& path)
+CEnergyP1::readEncryptionKey(const std::string& path)
 {
     try {
         std::ifstream in(path, std::ifstream::in);

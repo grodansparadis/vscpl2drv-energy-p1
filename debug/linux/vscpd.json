@@ -92,8 +92,8 @@
             {
                 "enable" : true,
                 "name" : "tcpip-srv",
-                "path-driver" : "/home/akhe/development/VSCP/vscpl2drv-tcpipsrv/build/libvscpl2drv-tcpipsrv.so",
-                "path-config" : "/home/akhe/development/VSCP/vscpl2drv-tcpipsrv/debug/conf_standard.json",
+                "path-driver" : "/home/akhe/development/VSCP/vscpl2drv-energy-p1/build/libvscpl2drv-energy-p1.so",
+                "path-config" : "/home/akhe/development/VSCP/vscpl2drv-energy-p1/debug/conf_standard.json",
                 "guid" : "FF:FF:FF:FF:FF:FF:FF:F5:02:00:00:00:00:00:00:01",
                 "mqtt" : {
                     "host" : "192.168.1.7",

@@ -1,4 +1,4 @@
-// vscp2drv_tcpiplink.h : main header file for the canallogger.dll
+// vscp2drv-energy-p1.h : main header file for the canallogger.dll
 // Linux version
 //
 // This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@
 #include <vscp.h>
 #include <hlo.h>
 
-#include "tcpipsrv.h"
+#include "energy-p1-obj.h"
 
 #ifndef BOOL
 typedef int BOOL;
@@ -72,7 +72,7 @@ typedef int BOOL;
     @return handle or 0 for error
 */
 long
-addDriverObject(CTcpipSrv *pif);
+addDriverObject(CEnergyP1 *pif);
 
 /*!
     Get a driver object from its handle
@@ -81,7 +81,7 @@ addDriverObject(CTcpipSrv *pif);
     @return pointer to object or NULL if invalid
             handle.
 */
-CTcpipSrv *
+CEnergyP1 *
 getDriverObject(long handle);
 
 /*!

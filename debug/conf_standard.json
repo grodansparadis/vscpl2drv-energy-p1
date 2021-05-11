@@ -4,21 +4,138 @@
     "key-file" : "/etc/vscp/vscp.key",
     "max-out-queue" : 32000,
     "max-in-queue" : 32000,
-    "interface" : "9598",
-    "encryption" : "aes256",
-    "path-users" : "/home/akhe/development/VSCP/vscpl2drv-tcpipsrv/debug/users.json",
-    "tls" : {
-        "certificate" : "",
-        "certificate-chain" : "",
-        "verify-peer" : false,
-        "ca-path" : "",
-        "ca-file" : "",
-        "verify-depth" : 9,
-        "default-verify-paths" : true,
-        "cipher-list" : "DES-CBC3-SHA:AES128-SHA:AES128-GCM-SHA256",
-        "protocol-version" : 3,
-        "short-trust" : false
+
+    "interface" :  {
+        "port" : "/dev/ttyUSB1",
+        "baudrate" : 115200,
+        "timeout" : 20
     },
+    
+    "one-shot" : false,
+
+    "send-energy" : true,
+    "send-active_effect" : true,
+    "send-reactive_effect" : true,
+    "send-voltage" : true,
+    "send-current" : true,
+
+    "zone" : 0,
+    "subzone" : 0,
+
+    "sensorindex" : {
+        "sum-active-energy-out" : 1,
+        "sum-active-energy-in" : 2,
+        "sum-reactive-energy-out" : 3,
+        "sum-reactive-energy-in" : 4,
+
+        "momentan-active-effect-out" : 5,
+        "momentan-active-effect-in" : 6,
+        "momentan-reactive-effect-out" : 7,
+        "momentan-reactive-effect-in" : 8,
+
+        "momentan-active-effect-l1-out" : 9,
+        "momentan-active-effect-l1-in" : 10,
+
+        "momentan-active-effect-l2-out" : 11,
+        "momentan-active-effect-l2-in" : 12,
+
+        "momentan-active-effect-l3-out" : 13,
+        "momentan-active-effect-l3-in" : 14,
+
+        "momentan-reactive-effect-l1-out" : 15,
+        "momentan-reactive-effect-l1-in" : 16,
+
+        "momentan-reactive-effect-l2-out" : 17,
+        "momentan-reactive-effect-l2-in" : 18,
+
+        "momentan-reactive-effect-l3-out" : 19,
+        "momentan-reactive-effect-l3-in" : 20,
+
+        "voltage-l1" : 21,
+        "voltage-l2" : 22,
+        "voltage-l3" : 23,
+
+        "current-l1" : 24,
+        "current-l2" : 25,
+        "current-l3" : 26,
+    },
+
+    "id" : {
+        "sum-active-energy-out" : 1,
+        "sum-active-energy-in" : 2,
+        "sum-reactive-energy-out" : 3,
+        "sum-reactive-energy-in" : 4,
+
+        "momentan-active-effect-out" : 5,
+        "momentan-active-effect-in" : 6,
+        "momentan-reactive-effect-out" : 7,
+        "momentan-reactive-effect-in" : 8,
+
+        "momentan-active-effect-l1-out" : 9,
+        "momentan-active-effect-l1-in" : 10,
+
+        "momentan-active-effect-l2-out" : 11,
+        "momentan-active-effect-l2-in" : 12,
+
+        "momentan-active-effect-l3-out" : 13,
+        "momentan-active-effect-l3-in" : 14,
+
+        "momentan-reactive-effect-l1-out" : 15,
+        "momentan-reactive-effect-l1-in" : 16,
+
+        "momentan-reactive-effect-l2-out" : 17,
+        "momentan-reactive-effect-l2-in" : 18,
+
+        "momentan-reactive-effect-l3-out" : 19,
+        "momentan-reactive-effect-l3-in" : 20,
+
+        "voltage-l1" : 21,
+        "voltage-l2" : 22,
+        "voltage-l3" : 23,
+
+        "current-l1" : 24,
+        "current-l2" : 25,
+        "current-l3" : 26
+    },
+
+    "note" : {
+        "sum_active_energy_out" : "Meter reading active energy out",
+        "sum_active_energy_in" : "Meter reading active energy in",
+        "sum_reactive_energy_out" : "Meter reading reactive energy out",
+        "sum_reactive_energy_in" : "Meter reading reactive energy in",
+
+        "momentan_active_effect_out" : "Active effect out",
+        "momentan_active_effect_in" : "Active effect in",
+        "momentan_reactive_effect_out" : "Reactive effect out",
+        "momentan_reactive_effect_in" : "Reactive effect in",
+
+        "momentan_active_effect_l1_out" : "Active effect L1 out",
+        "momentan_active_effect_l1_in" : "Active effect L1 in",
+
+        "momentan_active_effect_l2_out" : "Active effect L2 out",
+        "momentan_active_effect_l2_in" : "Active effect L2 in",
+
+        "momentan_active_effect_l3_out" : "Active effect L3 out",
+        "momentan_active_effect_l3_in" : "Active effect L3 in",
+
+        "momentan_reactive_effect_l1_out" : "Reactive effect L1 out",
+        "momentan_reactive_effect_l1_in" : "Reactive effect L1 in",
+
+        "momentan_reactive_effect_l2_out" : "Reactive effect L2 out",
+        "momentan_reactive_effect_l2_in" : "Reactive effect L2 in",
+
+        "momentan_reactive_effect_l3_out" : "Reactive effect L3 out",
+        "momentan_reactive_effect_l3_in" : "Reactive effect L3 in",
+
+        "voltage_l1" : "Voltage L1",
+        "voltage_l2" : "Voltage L2",
+        "voltage_l3" : "Voltage L3",
+
+        "current_l1" : "Current L1",
+        "current_l2" : "Current L2",
+        "current_l3" : "Current L3"
+    },
+
     "logging" : {
         "file-enable-log": true,
         "file-log-level" : "debug",

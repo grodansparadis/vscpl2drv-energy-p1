@@ -1,4 +1,4 @@
-// tcpipsrv.h: interface for the socketcan class.
+// energy-p1-obj.h: interface for the socketcan class.
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -21,8 +21,8 @@
 // Boston, MA 02111-1307, USA.
 //
 
-#if !defined(VSCPTCPIPLINK_H__6F5CD90E_ACF7_459A_9ACB_849A57595639__INCLUDED_)
-#define VSCPTCPIPLINK_H__6F5CD90E_ACF7_459A_9ACB_849A57595639__INCLUDED_
+#if !defined(VSCPENERGYP1_H__202105112227__INCLUDED_)
+#define VSCPENERGYP1_H__202105112227__INCLUDED_
 
 #define _POSIX
 
@@ -77,20 +77,16 @@ const uint16_t MAX_ITEMS_IN_QUEUE = 32000;
 #define HLO_OP_LOCAL_DISCONNECT   HLO_OP_USER_DEFINED + 1
 
 // Forward declarations
-class CWrkSendTread;
-class CWrkReceiveTread;
-class VscpRemoteTcpIf;
 class CHLO;
-class CClientItem;
 
-class CTcpipSrv
+class CEnergyP1
 {
   public:
     /// Constructor
-    CTcpipSrv();
+    CEnergyP1();
 
     /// Destructor
-    virtual ~CTcpipSrv();
+    virtual ~CEnergyP1();
 
     /*!
         Open
@@ -137,6 +133,10 @@ class CTcpipSrv
 
     bool restart(void);  
 
+    bool startWorkerThread(void);
+
+    bool stopWorkerThread(void);
+
     /*!
         Put event on receive queue and signal
         that a new event is available
@@ -156,74 +156,8 @@ class CTcpipSrv
     */
     bool addEvent2ReceiveQueue(const vscpEvent* pEvent);
 
-    /*!
-        Starting TCP/IP worker thread
-        @return true on success
-     */
-    bool startTcpipSrvThread(void);
-
-    /*!
-        Stop the TCP/IP worker thread
-        @return true on success
-     */
-    bool stopTcpipSrvThread(void);
-
-    /*!
-        Add a new client to the client list
-
-        @param Pointer to client that should be added.
-        @param Normally not used but can be used to set a special
-        client id.
-        @return True on success.
-    */
-    bool addClient(CClientItem* pClientItem, uint32_t id = 0);
-
-    /*!
-        Add a new client to the client list using GUID. 
-
-        This add client method is for drivers that specify a
-        full GUID (two lsb nilled).
-
-        @param Pointer to client that should be added.
-        @param guid The guid that is used for the client. Two least
-        significant bytes will be set to zero.
-        @return True on success.
-     */
-    bool addClient(CClientItem* pClientItem, cguid& guid);
-
-    /*!
-        Remove a new client from the client list
-
-        @param pClientItem Pointer to client that should be added.
-     */
-    void removeClient(CClientItem* pClientItem);
-
     // Send event to host
     bool sendEvent( CClientItem *pClientItem, vscpEvent *pEvent);
-
-    /*!
-      Send event to specific client
-
-      @param pClientItem Pointer to client that should received event.
-      @param pEvent Pointer to VSCP event that should be sent.
-      @return True on success, false on failure.
-    */
-    bool sendEventToClient(CClientItem* pClientItem, const vscpEvent* pEvent);
-
-    /*!
-      Send event to all clients
-
-      @param pEvent Pointer to VSCP event that should be sent.
-      @return True on success, false on failure.
-    */
-    bool sendEventAllClients(const vscpEvent* pEvent);
-
-    /*!
-        Generate a random session key from a string key
-        @param pKey Null terminated string key (max 255 characters)
-        @param pSid Pointer to 33 byte sid that will receive sid
-     */
-    bool generateSessionId(const char* pKey, char* pSid);
 
     /*!
       Read encryption key
@@ -258,19 +192,6 @@ class CTcpipSrv
 
     /// Filters for input/output
     vscpEventFilter m_filterIn;
-    vscpEventFilter m_filterOut;
-
-    /// TLS / SSL
-    std::string m_tls_certificate;
-    std::string m_tls_certificate_chain;
-    bool m_tls_verify_peer;
-    std::string m_tls_ca_path;
-    std::string m_tls_ca_file;
-    uint8_t m_tls_verify_depth;
-    bool m_tls_default_verify_paths;
-    std::string  m_tls_cipher_list;
-    uint8_t m_tls_protocol_version;
-    bool m_tls_short_trust;
 
     /////////////////////////////////////////////////////////
     //                      Logging
@@ -303,49 +224,12 @@ class CTcpipSrv
         0x7f, 0x72, 0xdf, 0x06, 0xeb, 0xe4, 0x45, 0x63, 0xed, 0xf4, 0xa1, 0x07, 0x3c, 0xab, 0xc7, 0xd4
     };
 
-    /////////////////////////////////////////////////////////
-    //                      TCP/IP server
-    /////////////////////////////////////////////////////////
-
-    // Enable encryption on tcp/ip interface if enabled.
-    // 0 = Disabled
-    // 1 = AES-128
-    // 2 = AES-192
-    // 3 = AES-256
-    uint8_t m_encryptionTcpip;
-
-    // Data object for the tcp/ip Listen thread
-    tcpipListenThreadObj* m_ptcpipSrvObject;
-
-    // Listen thread for tcp/ip connections
-    pthread_t m_tcpipListenThread;
-
-    //**************************************************************************
-    //                                USERS
-    //**************************************************************************
-
-    // The list of users
-    CUserList m_userList;
-
-    // Mutex for users
-    pthread_mutex_t m_mutex_UserList;
-
-
-    //**************************************************************************
-    //                                CLIENTS
-    //**************************************************************************
-
-    // The list with active clients. (protecting mutex in object)
-    CClientList m_clientList;
-
-    // Mutex for client queue
-    pthread_mutex_t m_mutex_clientList;
+ 
+    // ------------------------------------------------------------------------
 
     // Queue
     std::list<vscpEvent*> m_sendList;
     std::list<vscpEvent*> m_receiveList;
-
-    // ------------------------------------------------------------------------
 
     // Maximum number of events in the outgoing queue
     uint16_t m_maxItemsInClientReceiveQueue;
@@ -361,4 +245,4 @@ class CTcpipSrv
     pthread_mutex_t m_mutexReceiveQueue;
 };
 
-#endif  // !defined(VSCPTCPIPLINK_H__6F5CD90E_ACF7_459A_9ACB_849A57595639__INCLUDED_)
+#endif  // !defined(VSCPENERGYP1_H__202105112227__INCLUDED_)
