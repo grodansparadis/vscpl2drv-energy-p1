@@ -11,130 +11,347 @@
         "timeout" : 20
     },
     
-    "one-shot" : false,
+    "sensors" : [
 
-    "send-energy" : true,
-    "send-active_effect" : true,
-    "send-reactive_effect" : true,
-    "send-voltage" : true,
-    "send-current" : true,
-
-    "zone" : 0,
-    "subzone" : 0,
-
-    "sensorindex" : {
-        "sum-active-energy-out" : 1,
-        "sum-active-energy-in" : 2,
-        "sum-reactive-energy-out" : 3,
-        "sum-reactive-energy-in" : 4,
-
-        "momentan-active-effect-out" : 5,
-        "momentan-active-effect-in" : 6,
-        "momentan-reactive-effect-out" : 7,
-        "momentan-reactive-effect-in" : 8,
-
-        "momentan-active-effect-l1-out" : 9,
-        "momentan-active-effect-l1-in" : 10,
-
-        "momentan-active-effect-l2-out" : 11,
-        "momentan-active-effect-l2-in" : 12,
-
-        "momentan-active-effect-l3-out" : 13,
-        "momentan-active-effect-l3-in" : 14,
-
-        "momentan-reactive-effect-l1-out" : 15,
-        "momentan-reactive-effect-l1-in" : 16,
-
-        "momentan-reactive-effect-l2-out" : 17,
-        "momentan-reactive-effect-l2-in" : 18,
-
-        "momentan-reactive-effect-l3-out" : 19,
-        "momentan-reactive-effect-l3-in" : 20,
-
-        "voltage-l1" : 21,
-        "voltage-l2" : 22,
-        "voltage-l3" : 23,
-
-        "current-l1" : 24,
-        "current-l2" : 25,
-        "current-l3" : 26,
-    },
-
-    "id" : {
-        "sum-active-energy-out" : 1,
-        "sum-active-energy-in" : 2,
-        "sum-reactive-energy-out" : 3,
-        "sum-reactive-energy-in" : 4,
-
-        "momentan-active-effect-out" : 5,
-        "momentan-active-effect-in" : 6,
-        "momentan-reactive-effect-out" : 7,
-        "momentan-reactive-effect-in" : 8,
-
-        "momentan-active-effect-l1-out" : 9,
-        "momentan-active-effect-l1-in" : 10,
-
-        "momentan-active-effect-l2-out" : 11,
-        "momentan-active-effect-l2-in" : 12,
-
-        "momentan-active-effect-l3-out" : 13,
-        "momentan-active-effect-l3-in" : 14,
-
-        "momentan-reactive-effect-l1-out" : 15,
-        "momentan-reactive-effect-l1-in" : 16,
-
-        "momentan-reactive-effect-l2-out" : 17,
-        "momentan-reactive-effect-l2-in" : 18,
-
-        "momentan-reactive-effect-l3-out" : 19,
-        "momentan-reactive-effect-l3-in" : 20,
-
-        "voltage-l1" : 21,
-        "voltage-l2" : 22,
-        "voltage-l3" : 23,
-
-        "current-l1" : 24,
-        "current-l2" : 25,
-        "current-l3" : 26
-    },
-
-    "note" : {
-        "sum_active_energy_out" : "Meter reading active energy out",
-        "sum_active_energy_in" : "Meter reading active energy in",
-        "sum_reactive_energy_out" : "Meter reading reactive energy out",
-        "sum_reactive_energy_in" : "Meter reading reactive energy in",
-
-        "momentan_active_effect_out" : "Active effect out",
-        "momentan_active_effect_in" : "Active effect in",
-        "momentan_reactive_effect_out" : "Reactive effect out",
-        "momentan_reactive_effect_in" : "Reactive effect in",
-
-        "momentan_active_effect_l1_out" : "Active effect L1 out",
-        "momentan_active_effect_l1_in" : "Active effect L1 in",
-
-        "momentan_active_effect_l2_out" : "Active effect L2 out",
-        "momentan_active_effect_l2_in" : "Active effect L2 in",
-
-        "momentan_active_effect_l3_out" : "Active effect L3 out",
-        "momentan_active_effect_l3_in" : "Active effect L3 in",
-
-        "momentan_reactive_effect_l1_out" : "Reactive effect L1 out",
-        "momentan_reactive_effect_l1_in" : "Reactive effect L1 in",
-
-        "momentan_reactive_effect_l2_out" : "Reactive effect L2 out",
-        "momentan_reactive_effect_l2_in" : "Reactive effect L2 in",
-
-        "momentan_reactive_effect_l3_out" : "Reactive effect L3 out",
-        "momentan_reactive_effect_l3_in" : "Reactive effect L3 in",
-
-        "voltage_l1" : "Voltage L1",
-        "voltage_l2" : "Voltage L2",
-        "voltage_l3" : "Voltage L3",
-
-        "current_l1" : "Current L1",
-        "current_l2" : "Current L2",
-        "current_l3" : "Current L3"
-    },
+        {
+            "enable" : true,
+            "p1id" : "1-0:1.8.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 13,
+            "unit": 1,
+            "id" : 1,
+            "index" : 1,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Meter reading active energy out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:2.8.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 13,
+            "unit": 1,
+            "id" : 2,
+            "index" : 2,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Meter reading active energy in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:3.8.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 65,
+            "unit": 1,
+            "id" : 3,
+            "index" : 3,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Meter reading reactive energy out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:4.8.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 65,
+            "unit": 1,
+            "id" : 4,
+            "index" : 4,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Meter reading reactive energy in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:1.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 14,
+            "unit": 0,
+            "id" : 5,
+            "index" : 5,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Active effect out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:2.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 14,
+            "unit": 0,
+            "id" : 6,
+            "index" : 6,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Active effect in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:3.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 64,
+            "unit": 0,
+            "id" : 7,
+            "index" : 7,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Reactive effect out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:4.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 64,
+            "unit": 0,
+            "id" : 8,
+            "index" : 8,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Reactive effect in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:21.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 14,
+            "unit": 0,
+            "id" : 9,
+            "index" : 9,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Active effect L1 out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:22.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 14,
+            "unit": 0,
+            "id" : 10,
+            "index" : 10,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Active effect L1 in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:41.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 14,
+            "unit": 0,
+            "id" : 11,
+            "index" : 11,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Active effect L2 out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:42.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 14,
+            "unit": 0,
+            "id" : 12,
+            "index" : 12,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Active effect L2 in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:61.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 14,
+            "unit": 0,
+            "id" : 13,
+            "index" : 13,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Active effect L3 out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:62.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 14,
+            "unit": 0,
+            "id" : 14,
+            "index" : 14,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Active effect L3 in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:23.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 64,
+            "unit": 0,
+            "id" : 15,
+            "index" : 15,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Reactive effect L1 out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:24.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 64,
+            "unit": 0,
+            "id" : 16,
+            "index" : 16,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Reactive effect L1 in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:43.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 64,
+            "unit": 0,
+            "id" : 17,
+            "index" : 17,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Reactive effect L2 out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:44.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 64,
+            "unit": 0,
+            "id" : 18,
+            "index" : 18,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Reactive effect L2 in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:63.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 64,
+            "unit": 0,
+            "id" : 19,
+            "index" : 19,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Reactive effect L3 out"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:64.7.0 ",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 64,
+            "unit": 0,
+            "id" : 20,
+            "index" : 20,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Reactive effect L3 in"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:32.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 16,
+            "unit": 0,
+            "id" : 21,
+            "index" : 21,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Voltage L1"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:52.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 16,
+            "unit": 0,
+            "id" : 22,
+            "index" : 22,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Voltage L2"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:72.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 16,
+            "unit": 0,
+            "id" : 23,
+            "index" : 23,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Voltage L3"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:31.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 5,
+            "unit": 0,
+            "id" : 24,
+            "index" : 24,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Current L1"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:51.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 5,
+            "unit": 0,
+            "id" : 25,
+            "index" : 25,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Current L2"
+        },
+        {
+            "enable" : true,
+            "p1id" : "1-0:71.7.0",
+            "guid" : "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00",
+            "class" : 1040,
+            "type" : 5,
+            "unit": 0,
+            "id" : 26,
+            "index" : 26,
+            "zone" : 0,
+            "subzone" : 0,
+            "note": "Current L3"
+        }
+    ],
 
     "logging" : {
         "file-enable-log": true,
