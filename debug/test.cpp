@@ -3,9 +3,225 @@
 #include <sstream>
 #include <string>
 #include <deque>
+#include <map>
+
+class CP1Item {
+
+public:
+
+  /// CTOR
+  CP1Item();
+
+  CP1Item(const std::string token,
+            const std::string description,
+            uint16_t vscp_class,
+            uint16_t vscp_type,
+            uint8_t sensorindex = 0,
+            uint8_t zone = 0,
+            uint8_t subzone = 0);
+
+  /// DTOR
+  ~CP1Item();
+
+  /*!
+    Set up P1 item
+    @param token The P1 string token to search for.
+    @param description The description of the token.
+    @param vscp_class The VSCP class for the event to constuct. Only
+                      10,60.65,80,85 are valid values.
+    @param vscp_type The VSCP type for the event to constuct.
+    @param vscp_sensorindex The VSCP class for the event to constuct.
+    @param vscp_zone The VSCP class for the event to constuct.
+    @param vscp_subzone The VSCP class for the event to constuct.
+    @return true on success
+  */
+  bool initItem(const std::string& token,
+                    const std::string& description,
+                    uint16_t vscp_class,
+                    uint16_t vscp_type,
+                    uint8_t sensorindex = 0,
+                    uint8_t zone = 0,
+                    uint8_t subzone = 0 );
+
+  /*!
+    Add unit to unit map
+    @param p1unit Unit string for P1 unit (such as "kW", "V" and "A")
+    @param vscp_unit VSCP unit code.
+  */
+  void addUnit(const std::string& p1unit, uint8_t vscp_unit) 
+        { m_map_unit[p1unit] = vscp_unit; };
+
+private:
+
+  /*!
+    Measurement value id such as "1-0:1.8.0"
+  */
+  std::string m_token;
+
+  /*!
+    P1 item description such as "Voltage L1"
+  */
+  std::string m_description;
+
+  /*!
+    VSCP class the P1 value should translated to
+    Allowed classes
+    10   - Level I measurement            CLASS1.MEASUREMENT
+    60   - Level I float 64 measurement   CLASS1.MEASUREMENT64
+    65   - Level I measurement zone       CLASS1.MEASUREZONE
+    70   - Level I measurement float 32   CLASS1.MEASUREMENT32
+    85   - Level I set value              CLASS1.SETVALUEZONE
+    1040 - Level II measurement string    CLASS2.MEASUREMENT_STR 
+    1060 - Level II measurement float     CLASS2.MEASUREMENT_FLOAT
+  */
+  uint16_t m_vscp_class;
+
+  /*!
+    VSCP type the P1 value should translated to
+  */
+  uint16_t m_vscp_type;
+
+  /*!
+    Sensor index to use for event
+  */
+  uint8_t m_sensorindex;
+
+  /*!
+    Zone to use for event
+  */
+  uint8_t m_zone;
+
+  /*!
+    Subzone to use for event
+  */
+  uint8_t m_subzone;  
+
+  /*!
+    Maps P1 unit to VSCP unit code
+  */
+  std::map<std::string, uint8_t> m_map_unit;
+
+};
+
+///////////////////////////////////////////////////////////////////////////////
+// CTOR
+//
+
+CP1Item::CP1Item() {
+  m_token = "";
+  m_description = "Undefined";
+  m_vscp_class = 0;
+  m_vscp_type = 0;
+  m_sensorindex = 0;
+  m_zone = 0;
+  m_subzone = 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CTOR
+//
+
+CP1Item::CP1Item(const std::string token,
+                    const std::string description,
+                    uint16_t vscp_class,
+                    uint16_t vscp_type,
+                    uint8_t sensorindex,
+                    uint8_t zone,
+                    uint8_t subzone) {
+  initItem(token,
+            description,
+            vscp_class,
+            vscp_type,
+            sensorindex,
+            zone,
+            subzone);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// DTOR
+//
+
+CP1Item::~CP1Item() {
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// initItem
+//
+
+bool CP1Item::initItem(const std::string& token,
+                    const std::string& description,
+                    uint16_t vscp_class,
+                    uint16_t vscp_type,
+                    uint8_t sensorindex,
+                    uint8_t zone,
+                    uint8_t subzone)
+{
+  // Must be a token
+  if (!token.length()) {
+    return false;
+  }
+
+  m_token = token;
+  m_description = description;
+
+  // Must be a valid VSCP measurement class
+  if ( (0 != vscp_class) &&
+       (60 != vscp_class) &&
+       (65 != vscp_class) &&
+       (70 != vscp_class) &&
+       (75 != vscp_class) && 
+       (85 != vscp_class)) {
+    return false;       
+  }
+  
+  m_vscp_class = vscp_class;
+  m_vscp_type = vscp_type;
+
+  m_sensorindex = sensorindex;
+  m_zone = zone;
+  m_subzone = subzone;
+
+  return true;
+}
+
+// ----------------------------------------------------------------------------
 
 int main() {
 
+  std::deque<CP1Item *> listp1;
+
+  // Active energy out
+  CP1Item *pItem = new CP1Item("1-0:1.8.0",
+                                "Active energy out",
+                                1040,
+                                13,
+                                1,0,0);
+  listp1.push_back(pItem);
+
+  // Active energy in
+  CP1Item *pItem = new CP1Item("1-0:2.8.0",
+                                "Active energy in",
+                                1040,
+                                13,
+                                2,0,0);
+  listp1.push_back(pItem);                                
+
+  // Reactive energy out
+  CP1Item *pItem = new CP1Item("1-0:3.8.0",
+                                "Reactive energy out",
+                                1040,
+                                13,
+                                3,0,0);
+  listp1.push_back(pItem);
+
+  // Reactive energy in
+  CP1Item *pItem = new CP1Item("1-0:3.8.0",
+                                "Reactive energy in",
+                                1040,
+                                13,
+                                4,0,0);
+  listp1.push_back(pItem);
+  
   const std::string inputstr = "0-0:1.0.0(210511210508W)\n"\
                 "1-0:1.8.0(00001576.782*kWh)\n"\
                 "1-0:2.8.0(00000000.001*kWh)\n"\
@@ -41,8 +257,14 @@ int main() {
   for(std::string s; iss>>s ;) {
     inp_array.push_back(s);
     std::cout << s << std::endl;
-    if (s.rfind("1-0:51.7.0", 0) == 0) {
-      std::cout << "\t" << s << " - " << std::stod(s.substr(10 + 1)) << std::endl;
+    size_t pos1_unit = s.find("*");
+    size_t pos2_unit = s.find(")");
+    int diff = pos2_unit - pos1_unit - 1;
+    if (s.rfind("1-0:62.7.0", 0) == 0) {
+      std::cout << "\t" << s << " - value = " 
+                << std::stod(s.substr(10 + 1)) 
+                << "\t" << pos1_unit << " " << pos2_unit << " - " + s.substr(pos1_unit + 1, diff)
+                << std::endl;
     }
   }
 
