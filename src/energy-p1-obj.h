@@ -1,4 +1,4 @@
-// energy-p1-obj.h: interface for the socketcan class.
+// energy-p1-obj.h: 
 //
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU General Public License
@@ -48,9 +48,8 @@
 #include <dllist.h>
 #include <guid.h>
 #include <vscp.h>
-#include "srv.h"
-#include <vscpremotetcpif.h>
-#include "clientlist.h"
+
+#include "p1item.h"
 
 #include <json.hpp>  // Needs C++11  -std=c++11
 
@@ -65,12 +64,12 @@ const uint16_t MAX_ITEMS_IN_QUEUE = 32000;
 #define DRIVER_COPYRIGHT "Copyright © 2000-2021 Ake Hedman, the VSCP Project, https://www.vscp.org"
 
 // Seconds before trying to reconnect to a broken connection
-#define VSCP_TCPIPLINK_DEFAULT_RECONNECT_TIME 30
+#define VSCP_ENERGYP1_DEFAULT_RECONNECT_TIME 30
 
-#define VSCP_TCPIPLINK_SYSLOG_DRIVER_ID "[vscpl2drv-tcpipsrv] "
+#define VSCP_ENERGYP1_SYSLOG_DRIVER_ID "[vscpl2drv-energyp1] "
 #define VSCP_LEVEL2_DLL_LOGGER_OBJ_MUTEX                                       \
     "___VSCP__DLL_L2TCPIPLINK_OBJ_MUTEX____"
-#define VSCP_SOCKETCAN_LIST_MAX_MSG 2048
+#define VSCP_ENERGYP1_LIST_MAX_MSG 2048
 
 // Module Local HLO op's
 #define HLO_OP_LOCAL_CONNECT      HLO_OP_USER_DEFINED + 0
@@ -157,7 +156,7 @@ class CEnergyP1
     bool addEvent2ReceiveQueue(const vscpEvent* pEvent);
 
     // Send event to host
-    bool sendEvent( CClientItem *pClientItem, vscpEvent *pEvent);
+    bool sendEvent(vscpEvent *pEvent);
 
     /*!
       Read encryption key
@@ -178,20 +177,56 @@ class CEnergyP1
     /// Path to configuration file
     std::string m_path;
 
-    /// True if config is remote writable
+    /*! 
+      True if config is remote writable
+    */
     bool m_bWriteEnable;
+
+    /*!
+      True to enable debug mode
+    */
+    bool m_bDebug;
     
-    /// interface to listen on
-    std::string m_interface;
+    /*! 
+      Serial device
+    */
+    std::string m_serialDevice;
 
-    /// Path to user data base (must be present)
-    std::string m_pathUsers;
+    /*! 
+      Serial baudrate
+    */
+    std::string m_serialBaudrate;
 
-    /// Response timeout
-    uint32_t m_responseTimeout;
+    /*! 
+      Serial parity
+    */
+    std::string m_serialParity;
 
-    /// Filters for input/output
-    vscpEventFilter m_filterIn;
+    /*! 
+      Serial number of data bits
+    */
+    std::string m_serialCountDataBits;
+
+    /*! 
+      Serial number of stopbits
+    */
+    uint8_t m_serialCountStopbits;
+
+    /*! 
+      Enable hardware flow control
+    */
+    bool m_bSerialHwFlowCtrl;
+
+    /*! 
+      Enable software flow control
+    */
+    bool m_bSerialSwFlowCtrl;
+
+    /*!
+      Enable DTR on start, disable on close.
+    */
+    bool m_bDtrOnStart;
+
 
     /////////////////////////////////////////////////////////
     //                      Logging
@@ -224,11 +259,17 @@ class CEnergyP1
         0x7f, 0x72, 0xdf, 0x06, 0xeb, 0xe4, 0x45, 0x63, 0xed, 0xf4, 0xa1, 0x07, 0x3c, 0xab, 0xc7, 0xd4
     };
 
+    /*!
+      List with P1 meaurement item defines
+    */
+    std::deque<CP1Item *> m_listItems;
  
     // ------------------------------------------------------------------------
 
-    // Queue
+    /// Send queue
     std::list<vscpEvent*> m_sendList;
+
+    /// Receive queue
     std::list<vscpEvent*> m_receiveList;
 
     // Maximum number of events in the outgoing queue
@@ -238,11 +279,22 @@ class CEnergyP1
         Event object to indicate that there is an event in the output queue
      */
     sem_t m_semSendQueue;
+
+    /*!
+      Event object to indicate that there is an event in the input queue
+    */
     sem_t m_semReceiveQueue;
 
-    // Mutex to protect the output queue
+    /// Mutex to protect the output queue
     pthread_mutex_t m_mutexSendQueue;
+
+    /// Mutex to protet the input queue
     pthread_mutex_t m_mutexReceiveQueue;
+
+    /*!
+      Serial worker thread
+    */
+    pthread_t m_workerThread;
 };
 
 #endif  // !defined(VSCPENERGYP1_H__202105112227__INCLUDED_)

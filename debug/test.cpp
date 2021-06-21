@@ -5,6 +5,7 @@
 #include <deque>
 #include <map>
 
+
 class CP1Item {
 
 public:
@@ -50,6 +51,29 @@ public:
   */
   void addUnit(const std::string& p1unit, uint8_t vscp_unit) 
         { m_map_unit[p1unit] = vscp_unit; };
+
+  /*!
+    Get measurement value
+    @param line Meter reding line
+    @return Measurement value as a double
+  */
+  double getValue(const std::string& line) 
+    { return std::stod(line.substr(10 + 1)); };   
+
+  /*!
+    Get VSCP numerical unit code from textual unit
+    @param line Meter reding line
+    @return Unit as integer. -1 if not found
+  */
+  int getUnit(const std::string& line);     
+
+  // Getters / Setters
+
+  /*
+    Token
+  */
+  std::string getToken(void) { return m_token; };
+  void setToken(const std::string& token) { m_token = token; };
 
 private:
 
@@ -184,43 +208,103 @@ bool CP1Item::initItem(const std::string& token,
   return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// getUnit
+//
+
+int CP1Item::getUnit(const std::string& line)
+{
+  size_t pos1_unit = line.find("*");
+  size_t pos2_unit = line.find(")");
+  int diff = pos2_unit - pos1_unit - 1;
+
+  for (auto const& x : m_map_unit) {
+    if (x.first == line.substr(pos1_unit + 1, diff)) {
+      return x.second;
+    }
+  }
+  return -1;
+}
+
 // ----------------------------------------------------------------------------
 
-int main() {
-
+int main() 
+{
+  CP1Item *pItem;
   std::deque<CP1Item *> listp1;
 
   // Active energy out
-  CP1Item *pItem = new CP1Item("1-0:1.8.0",
-                                "Active energy out",
-                                1040,
-                                13,
-                                1,0,0);
+  pItem = new CP1Item("1-0:1.8.0",
+                        "Active energy out",
+                        1040,
+                        13,
+                        1,0,0);
   listp1.push_back(pItem);
+  pItem->addUnit("kWh",13);
 
   // Active energy in
-  CP1Item *pItem = new CP1Item("1-0:2.8.0",
-                                "Active energy in",
-                                1040,
-                                13,
-                                2,0,0);
-  listp1.push_back(pItem);                                
-
-  // Reactive energy out
-  CP1Item *pItem = new CP1Item("1-0:3.8.0",
-                                "Reactive energy out",
-                                1040,
-                                13,
-                                3,0,0);
+  pItem = new CP1Item("1-0:2.8.0",
+                        "Active energy in",
+                        1040,
+                        13,
+                        2,0,0);
   listp1.push_back(pItem);
+  pItem->addUnit("kWh",13);                             
 
-  // Reactive energy in
-  CP1Item *pItem = new CP1Item("1-0:3.8.0",
-                                "Reactive energy in",
-                                1040,
-                                13,
-                                4,0,0);
+  // Voltage L1
+  pItem = new CP1Item("1-0:32.7.0",
+                        "Voltage L1",
+                        1040,
+                        13,
+                        21,0,0);
   listp1.push_back(pItem);
+  pItem->addUnit("V",16);
+
+  // Voltage L2
+  pItem = new CP1Item("1-0:52.7.0",
+                        "Voltage L3",
+                        1040,
+                        13,
+                        22,0,0);
+  listp1.push_back(pItem);
+  pItem->addUnit("V",16);
+
+  // Voltage L3
+  pItem = new CP1Item("1-0:72.7.0",
+                        "Voltage L3",
+                        1040,
+                        13,
+                        23,0,0);
+  listp1.push_back(pItem);
+  pItem->addUnit("V",16);
+
+
+  // Current L1
+  pItem = new CP1Item("1-0:31.7.0",
+                        "Current L1",
+                        1040,
+                        13,
+                        24,0,0);
+  listp1.push_back(pItem);
+  pItem->addUnit("A",5);
+
+  // Current L2
+  pItem = new CP1Item("1-0:51.7.0",
+                        "Current L2",
+                        1040,
+                        13,
+                        25,0,0);
+  listp1.push_back(pItem);
+  pItem->addUnit("A",5);
+
+  // Current L3
+  pItem = new CP1Item("1-0:71.7.0",
+                        "Current L3",
+                        1040,
+                        13,
+                        26,0,0);
+  listp1.push_back(pItem);
+  pItem->addUnit("A",5);
   
   const std::string inputstr = "0-0:1.0.0(210511210508W)\n"\
                 "1-0:1.8.0(00001576.782*kWh)\n"\
@@ -254,7 +338,7 @@ int main() {
 
   std::deque<std::string> inp_array; // = {7, 5, 16, 8};
   std::istringstream iss(inputstr);
-  for(std::string s; iss>>s ;) {
+  for(std::string s; iss >> s;) {
     inp_array.push_back(s);
     std::cout << s << std::endl;
     size_t pos1_unit = s.find("*");
@@ -266,6 +350,32 @@ int main() {
                 << "\t" << pos1_unit << " " << pos2_unit << " - " + s.substr(pos1_unit + 1, diff)
                 << std::endl;
     }
+
+    for (auto const& pItem : listp1) {
+      if (s.rfind(pItem->getToken(), 0) == 0) {
+        std::cout << ">>> Found " 
+                  << pItem->getToken() 
+                  << " value = "
+                  << pItem->getValue(s)
+                  << " unit = "
+                  << pItem->getUnit(s)
+                  << std::endl;
+      }
+    }
+
+  }
+
+  // Clean up
+  for (auto const& x : listp1) {
+    delete x;
+  }
+
+  std::string str = "This is line 1\nThis is line2\nThis is line3\n";
+  size_t pos_cr;
+  if (std::string::npos != (pos_cr = str.find("\n"))) {
+    std::string exstr = str.substr(0,pos_cr);
+    std::string rest = str.substr(pos_cr+1);
+    std::cout << "[" << exstr << "] - [" << rest << "]\n";
   }
 
   return 0;

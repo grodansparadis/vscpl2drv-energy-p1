@@ -199,6 +199,8 @@ set(RESOURCE_FILES
 add_library(vscpl2drv-energy-p1
     ./src/vscpl2drv-energy-p1.h   
     ./src/vscpl2drv-energy-p1.cpp
+    ./src/p1item.h 
+    ./src/p1item.cpp 
     ./src/energy-p1-obj.h 
     ./src/energy-p1-obj.cpp  
     ${VSCP_PATH}/src/common/third_party/mustache.hpp
@@ -229,6 +231,8 @@ add_library(vscpl2drv-energy-p1
     ${VSCP_PATH}/src/common/vscpmd5.c
     ${VSCP_PATH}/src/common/fastpbkdf2.h
     ${VSCP_PATH}/src/common/fastpbkdf2.c
+    ${VSCP_PATH}/src/common/com_linux.h
+    ${VSCP_PATH}/src/common/com_linux.cpp
   ) 
 
 if (WIN32)
