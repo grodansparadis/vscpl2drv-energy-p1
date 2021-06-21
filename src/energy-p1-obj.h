@@ -232,6 +232,7 @@ class CEnergyP1
     //                      Logging
     /////////////////////////////////////////////////////////
     
+    
     bool m_bEnableFileLog;                    // True to enable logging
     spdlog::level::level_enum m_fileLogLevel; // log level
     std::string m_fileLogPattern;             // log file pattern
@@ -260,16 +261,21 @@ class CEnergyP1
     };
 
     /*!
-      List with P1 meaurement item defines
+      List with P1 measurement item defines
     */
     std::deque<CP1Item *> m_listItems;
+
+    /*!
+      Map with last measurement value
+    */
+   std::map<std::string, double> m_lastValue;
  
     // ------------------------------------------------------------------------
 
-    /// Send queue
+    /// Send queue (Send to device)
     std::list<vscpEvent*> m_sendList;
 
-    /// Receive queue
+    /// Receive queue (Send event to host)
     std::list<vscpEvent*> m_receiveList;
 
     // Maximum number of events in the outgoing queue

@@ -45,6 +45,7 @@ CP1Item::CP1Item() {
   m_zone = 0;
   m_subzone = 0;
   m_level1Coding = VSCP_DATACODING_STRING;
+  m_factor = 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -10,13 +10,13 @@
     "logging" : {
         "file-enable-log": true,
         "file-log-level" : "debug",
-        "file-pattern" : "[vscp] [%^%l%$] %v",
+        "file-pattern" : "[vscp: %c] [%^%l%$] %v",
         "file-path" : "/tmp/vscpd.log",
         "file-max-size" : 5242880,
         "file-max-files" : 7,
         "console-enable-log": true,
         "console-log-level" : "debug",
-        "console-pattern" : "[vscp] [%^%l%$] %v"
+        "console-pattern" : "[vscp: %c] [%^%l%$] %v"
     },
 
     "mqtt" : {
@@ -24,7 +24,7 @@
         "port" : 1883,
         "user" : "vscp",
 	    "password": "secret",
-	    "clientid" : "mosq-vscp-daemon-000011",
+	    "clientid" : "mosq-vscp-daemon-test",
 	    "format" : "json",
         "qos" : 1,
         "bcleansession" : false,
@@ -91,7 +91,7 @@
         "level2" : [
             {
                 "enable" : true,
-                "name" : "tcpip-srv",
+                "name" : "energy-p1",
                 "path-driver" : "/home/akhe/development/VSCP/vscpl2drv-energy-p1/build/libvscpl2drv-energy-p1.so",
                 "path-config" : "/home/akhe/development/VSCP/vscpl2drv-energy-p1/debug/conf_standard.json",
                 "guid" : "FF:FF:FF:FF:FF:FF:FF:F5:02:00:00:00:00:00:00:01",
@@ -100,7 +100,7 @@
                     "port" : 1883,
                     "user" : "vscp",
                     "password": "secret",
-                    "clientid" : "mosq-vscp-daemon-tcpipsrv",
+                    "clientid" : "mosq-vscp-daemon-energy-p1",
                     "format" : "json",
                     "qos" : 0,
                     "bcleansession" : false,
@@ -118,7 +118,7 @@
                         "vscp/#"
                     ],
                     "publish" : [
-                        "vsclp2drv-tcpipsrv"
+                        "vsclp2drv-energy-p1"
                     ]
                 }
             }

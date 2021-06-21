@@ -202,7 +202,9 @@ add_library(vscpl2drv-energy-p1
     ./src/p1item.h 
     ./src/p1item.cpp 
     ./src/energy-p1-obj.h 
-    ./src/energy-p1-obj.cpp  
+    ./src/energy-p1-obj.cpp
+    ./src/alarm.h 
+    ./src/alarm.cpp
     ${VSCP_PATH}/src/common/third_party/mustache.hpp
     ${VSCP_PATH}/src/common/third_party/spdlog-1.8.5/include    
     ${VSCP_PATH}/src/vscp/common/vscp.h

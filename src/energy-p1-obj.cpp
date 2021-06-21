@@ -159,8 +159,10 @@ CEnergyP1::open(std::string &path, const uint8_t *pguid)
   auto console = spdlog::stdout_color_mt("console");
   // Start out with level=info. Config may change this
   console->set_level(spdlog::level::info);
-  console->set_pattern("[vscp] [%^%l%$] %v");
+  console->set_pattern("[vcpl2drv-energy-p1: %c] [%^%l%$] %v");
   spdlog::set_default_logger(console);
+
+  console->debug("About to read configurationfile {}.", path.c_str());
 
   // Read configuration file
   if (!doLoadConfig(path)) {
@@ -191,9 +193,13 @@ CEnergyP1::open(std::string &path, const uint8_t *pguid)
                                                          spdlog::async_overflow_policy::block);
     // The separate sub loggers will handle trace levels
     logger->set_level(spdlog::level::trace);
+    logger->flush_on(spdlog::level::debug); 
+    spdlog::flush_every(std::chrono::seconds(5));
     spdlog::register_logger(logger);
     spdlog::set_default_logger(logger);
   }
+
+  spdlog::debug("Logging starts here after config file is read.");
 
   if (!startWorkerThread()) {
     console->error("Failed to start worker thread.");
@@ -277,6 +283,22 @@ CEnergyP1::doLoadConfig(std::string &path)
   if (m_j_config.contains("logging") && m_j_config["logging"].is_object()) {
 
     json j = m_j_config["logging"];
+
+    // Logging: file-enable-log
+    if (j.contains("file-enable-log") && j["file-enable-log"].is_boolean()) {
+      try {
+        m_bEnableFileLog = j["file-enable-log"].get<bool>();
+      }
+      catch (const std::exception &ex) {
+        spdlog::error("ReadConfig:Failed to read 'file-enable-log' Error='{}'", ex.what());
+      }
+      catch (...) {
+        spdlog::error("ReadConfig:Failed to read 'file-enable-log' due to unknown error.");
+      }
+    }
+    else {
+      spdlog::debug("ReadConfig: Failed to read LOGGING 'file-enable-log' Defaults will be used.");
+    }
 
     // Logging: file-log-level
     if (j.contains("file-log-level")) {
@@ -393,12 +415,12 @@ CEnergyP1::doLoadConfig(std::string &path)
 
   if (m_j_config.contains("serial") && m_j_config["serial"].is_object()) {
 
-    json j = m_j_config["logging"];
+    json j = m_j_config["serial"];
 
     // Serial interface
     if (j.contains("port") && j["port"].is_string()) {
       try {
-        m_serialDevice = m_j_config["port"].get<std::string>();
+        m_serialDevice = j["port"].get<std::string>();
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'port' Error='{}'", ex.what());
@@ -415,7 +437,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("baudrate") && j["baudrate"].is_number()) {
       try {
         int baudrate     = 115200;
-        baudrate         = m_j_config["baudrate"].get<int>();
+        baudrate         = j["baudrate"].get<int>();
         m_serialBaudrate = vscp_str_format("%d", baudrate);
       }
       catch (const std::exception &ex) {
@@ -432,7 +454,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     // Parity
     if (j.contains("parity") && j["parity"].is_string()) {
       try {
-        m_serialParity = m_j_config["baudrate"].get<std::string>();
+        m_serialParity = j["parity"].get<std::string>();
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'parity' Error='{}'", ex.what());
@@ -449,7 +471,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("bits") && j["bits"].is_number()) {
       try {
         int bits              = 8;
-        bits                  = m_j_config["bits"].get<int>();
+        bits                  = j["bits"].get<int>();
         m_serialCountDataBits = vscp_str_format("%d", bits);
       }
       catch (const std::exception &ex) {
@@ -466,7 +488,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     // Stop bits
     if (j.contains("stopbits") && j["stopbits"].is_number()) {
       try {
-        m_serialCountStopbits = m_j_config["stopbits"].get<int>();
+        m_serialCountStopbits = j["stopbits"].get<int>();
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'stopbits' Error='{}'", ex.what());
@@ -482,7 +504,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     // HW Flow control
     if (j.contains("hwflowctrl") && j["hwflowctrl"].is_boolean()) {
       try {
-        m_bSerialHwFlowCtrl = m_j_config["hwflowctrl"].get<bool>();
+        m_bSerialHwFlowCtrl = j["hwflowctrl"].get<bool>();
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'hwflowctrl' Error='{}'", ex.what());
@@ -498,7 +520,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     // SW Flow control
     if (j.contains("swflowctrl") && j["swflowctrl"].is_boolean()) {
       try {
-        m_bSerialSwFlowCtrl = m_j_config["swflowctrl"].get<bool>();
+        m_bSerialSwFlowCtrl = j["swflowctrl"].get<bool>();
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'swflowctrl' Error='{}'", ex.what());
@@ -514,7 +536,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     // DTR control
     if (j.contains("dtr-on-start") && j["dtr-on-start"].is_boolean()) {
       try {
-        m_bDtrOnStart = m_j_config["dtr-on-start"].get<bool>();
+        m_bDtrOnStart = j["dtr-on-start"].get<bool>();
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'dtr-on-start' Error='{}'", ex.what());
@@ -536,14 +558,15 @@ CEnergyP1::doLoadConfig(std::string &path)
     for (auto it : m_j_config["items"]) {
 
       CP1Item *pItem = new CP1Item;
-      if (nullptr != pItem) {
-        continue;
+      if (nullptr == pItem) {
+        spdlog::critical("ReadConfig: Unable to allocate data for p1 measurement item.");
+        return false;
       }
 
       // token
       if (it.contains("token") && it["token"].is_string()) {
         try {
-          pItem->setToken(it.get<std::string>());
+          pItem->setToken(it["token"].get<std::string>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'token' Error='{}'", ex.what());
@@ -559,7 +582,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       // description
       if (it.contains("description") && it["description"].is_string()) {
         try {
-          pItem->setDescription(it.get<std::string>());
+          pItem->setDescription(it["description"].get<std::string>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'description' Error='{}'", ex.what());
@@ -573,41 +596,41 @@ CEnergyP1::doLoadConfig(std::string &path)
       }
 
       // vscp_class
-      if (it.contains("vscp_class") && it["vscp_class"].is_number_unsigned()) {
+      if (it.contains("vscp-class") && it["vscp-class"].is_number_unsigned()) {
         try {
-          pItem->setVscpClass(it.get<uint16_t>());
+          pItem->setVscpClass(it["vscp-class"].get<uint16_t>());
         }
         catch (const std::exception &ex) {
-          spdlog::error("ReadConfig: Failed to read 'vscp_class' Error='{}'", ex.what());
+          spdlog::error("ReadConfig: Failed to read 'vscp-class' Error='{}'", ex.what());
         }
         catch (...) {
-          spdlog::error("ReadConfig: Failed to read 'vscp_class' due to unknown error.");
+          spdlog::error("ReadConfig: Failed to read 'vscp-class' due to unknown error.");
         }
       }
       else {
-        spdlog::warn("ReadConfig: Failed to read 'vscp_class' Defaults will be used.");
+        spdlog::warn("ReadConfig: Failed to read 'vscp-class' Defaults will be used.");
       }
 
       // vscp_type
-      if (it.contains("vscp_type") && it["vscp_type"].is_number_unsigned()) {
+      if (it.contains("vscp-type") && it["vscp-type"].is_number_unsigned()) {
         try {
-          pItem->setVscpType(it.get<uint16_t>());
+          pItem->setVscpType(it["vscp_type"].get<uint16_t>());
         }
         catch (const std::exception &ex) {
-          spdlog::error("ReadConfig: Failed to read 'vscp_type' Error='{}'", ex.what());
+          spdlog::error("ReadConfig: Failed to read 'vscp-type' Error='{}'", ex.what());
         }
         catch (...) {
-          spdlog::error("ReadConfig: Failed to read 'vscp_type' due to unknown error.");
+          spdlog::error("ReadConfig: Failed to read 'vscp-type' due to unknown error.");
         }
       }
       else {
-        spdlog::warn("ReadConfig: Failed to read 'vscp_type' Defaults will be used.");
+        spdlog::warn("ReadConfig: Failed to read 'vscp-type' Defaults will be used.");
       }
 
       // sensorindex
       if (it.contains("sensorindex") && it["sensorindex"].is_number_unsigned()) {
         try {
-          pItem->setSensorIndex(it.get<uint8_t>());
+          pItem->setSensorIndex(it["sensorindex"].get<uint8_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'sensorindex' Error='{}'", ex.what());
@@ -623,7 +646,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       // guid-lsb
       if (it.contains("guid-lsb") && it["guid-lsb"].is_number_unsigned()) {
         try {
-          pItem->setGuidLsb(it.get<uint8_t>());
+          pItem->setGuidLsb(it["guid-lsb"].get<uint8_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'guid-lsb' Error='{}'", ex.what());
@@ -639,7 +662,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       // zone
       if (it.contains("zone") && it["zone"].is_number_unsigned()) {
         try {
-          pItem->setZone(it.get<uint8_t>());
+          pItem->setZone(it["zone"].get<uint8_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'zone' Error='{}'", ex.what());
@@ -655,7 +678,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       // subzone
       if (it.contains("subzone") && it["subzone"].is_number_unsigned()) {
         try {
-          pItem->setSubZone(it.get<uint8_t>());
+          pItem->setSubZone(it["subzone"].get<uint8_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'subzone' Error='{}'", ex.what());
@@ -668,10 +691,42 @@ CEnergyP1::doLoadConfig(std::string &path)
         spdlog::warn("ReadConfig: Failed to read 'subzone' Defaults will be used.");
       }
 
-      // units
-      if (m_j_config["items"].contains("units") && m_j_config["items"]["units"].is_object()) {
+      // factor
+      if (it.contains("factor") && it["factor"].is_number_unsigned()) {
+        try {
+          pItem->setFactor(it["factor"].get<double>());
+        }
+        catch (const std::exception &ex) {
+          spdlog::error("ReadConfig: Failed to read 'factor' Error='{}'", ex.what());
+        }
+        catch (...) {
+          spdlog::error("ReadConfig: Failed to read 'factor' due to unknown error.");
+        }
+      }
+      else {
+        spdlog::warn("ReadConfig: Failed to read 'factor' Defaults will be used.");
+      }
 
-        for (auto &itt : m_j_config["items"]["units"].items()) {
+      // storage-name
+      if (it.contains("store") && it["store"].is_string()) {
+        try {
+          pItem->setStorageName(it["store"].get<std::string>());
+        }
+        catch (const std::exception &ex) {
+          spdlog::error("ReadConfig: Failed to read 'store' Error='{}'", ex.what());
+        }
+        catch (...) {
+          spdlog::error("ReadConfig: Failed to read 'store' due to unknown error.");
+        }
+      }
+      else {
+        spdlog::warn("ReadConfig: Failed to read 'store' Defaults will be used.");
+      }
+
+      // units
+      if (it.contains("units") && it["units"].is_object()) {
+
+        for (auto &itt : it["units"].items()) {
           pItem->addUnit(itt.key(), itt.value());
         }
       }
@@ -1320,6 +1375,7 @@ CEnergyP1::eventExToReceiveQueue(vscpEventEx &ex)
 //////////////////////////////////////////////////////////////////////
 // addEvent2SendQueue
 //
+// Send event to device
 //
 
 bool
@@ -1347,99 +1403,6 @@ CEnergyP1::addEvent2ReceiveQueue(const vscpEvent *pEvent)
   sem_post(&m_semReceiveQueue);
   return true;
 }
-
-///////////////////////////////////////////////////////////////////////////////
-// sendEventToClient
-//
-
-// bool
-// CEnergyP1::sendEventToClient(const vscpEvent* pEvent)
-// {
-//     // Must be valid pointers
-//     if (NULL == pClientItem) {
-//         spdlog::get("logger")->error("sendEventToClient - Pointer to clientitem is null");
-//         return false;
-//     }
-//     if (NULL == pEvent) {
-//         spdlog::get("logger")->error("sendEventToClient - Pointer to event is null");
-//         return false;
-//     }
-
-//     // Check if filtered out - if so do nothing here
-//     if (!vscp_doLevel2Filter(pEvent, &pClientItem->m_filter)) {
-//         if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {
-//             spdlog::get("logger")->debug("sendEventToClient - Filtered out");
-//         }
-//         return false;
-//     }
-
-//     // If the client queue is full for this client then the
-//     // client will not receive the message
-//     if (pClientItem->m_clientInputQueue.size() > m_j_config.value("max-out-queue", MAX_ITEMS_IN_QUEUE)) {
-//         if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {
-//             spdlog::get("logger")->debug("sendEventToClient - overrun");
-//         }
-//         // Overrun
-//         pClientItem->m_statistics.cntOverruns++;
-//         return false;
-//     }
-
-//     // Create a new event
-//     vscpEvent* pnewvscpEvent = new vscpEvent;
-//     if (NULL != pnewvscpEvent) {
-
-//         // Copy in the new event
-//         if (!vscp_copyEvent(pnewvscpEvent, pEvent)) {
-//             vscp_deleteEvent_v2(&pnewvscpEvent);
-//             return false;
-//         }
-
-//         // Add the new event to the input queue
-//         pthread_mutex_lock(&pClientItem->m_mutexClientInputQueue);
-//         pClientItem->m_clientInputQueue.push_back(pnewvscpEvent);
-//         pthread_mutex_unlock(&pClientItem->m_mutexClientInputQueue);
-//         sem_post(&pClientItem->m_semClientInputQueue);
-//     }
-
-//     return true;
-// }
-
-///////////////////////////////////////////////////////////////////////////////
-// sendEventAllClients
-//
-
-// bool
-// CEnergyP1::sendEventAllClients(const vscpEvent* pEvent)
-// {
-//     CClientItem* pClientItem;
-//     std::deque<CClientItem*>::iterator it;
-
-//     if (NULL == pEvent) {
-//         spdlog::get("logger")->error("sendEventAllClients - No event to send");
-//         return false;
-//     }
-
-//     pthread_mutex_lock(&m_clientList.m_mutexItemList);
-//     for (it = m_clientList.m_itemList.begin();
-//          it != m_clientList.m_itemList.end();
-//          ++it) {
-//         pClientItem = *it;
-
-//         if (NULL != pClientItem) {
-//             if (m_j_config.contains("debug") && m_j_config["debug"].get<bool>()) {
-//                 spdlog::get("logger")->debug("Send event to client [%s]",
-//                                                 pClientItem->m_strDeviceName.c_str());
-//             }
-//             if (!sendEventToClient(pClientItem, pEvent)) {
-//                 spdlog::get("logger")->error("sendEventAllClients - Failed to send event");
-//             }
-//         }
-//     }
-
-//     pthread_mutex_unlock(&m_clientList.m_mutexItemList);
-
-//     return true;
-// }
 
 /////////////////////////////////////////////////////////////////////////////
 // startWorkerThread
@@ -1471,7 +1434,7 @@ CEnergyP1::stopWorkerThread(void)
   // CEnergyP1->m_nStopTcpIpSrv = VSCP_TCPIP_SRV_STOP;
 
   // if (__VSCP_DEBUG_TCP) {
-  //     spdlog::get("logger")->debug("Controlobject: Terminating TCP thread.");
+  //     spdlog::get("logger")->debug("Terminating TCP thread.");
   // }
 
   // pthread_join(m_tcpipListenThread, NULL);
@@ -1479,7 +1442,7 @@ CEnergyP1::stopWorkerThread(void)
   // CEnergyP1 = NULL;
 
   // if (__VSCP_DEBUG_TCP) {
-  //     spdlog::get("logger")->debug("Controlobject: Terminated TCP thread.");
+  //     spdlog::get("logger")->debug("Terminated TCP thread.");
   // }
 
   return true;
@@ -1523,8 +1486,11 @@ workerThread(void *pData)
   Comm com;
 
   CEnergyP1 *pObj = (CEnergyP1 *) pData;
-  if (nullptr == pData)
+  if (nullptr == pData) {    
     return NULL;
+  }
+
+  spdlog::debug("Starting Worker loop");
 
   // Open the serial port
   if (!com.open((const char *) pObj->m_serialDevice.c_str())) {
@@ -1649,14 +1615,28 @@ workerThread(void *pData)
           } break;
 
           case VSCP_CLASS2_MEASUREMENT_STR: {
-            if (!vscp_makeLevel2StringMeasurementEventEx(&ex,
-                                                         pItem->getVscpType(),
-                                                         value,
-                                                         pItem->getUnit(exstr),
-                                                         pItem->getSensorIndex(),
-                                                         pItem->getZone(),
-                                                         pItem->getSubZone())) {
-              break;
+            if (vscp_makeLevel2StringMeasurementEventEx(&ex,
+                                                        pItem->getVscpType(),
+                                                        value,
+                                                        pItem->getUnit(exstr),
+                                                        pItem->getSensorIndex(),
+                                                        pItem->getZone(),
+                                                        pItem->getSubZone())) {
+              vscpEvent *pEvent = new vscpEvent;
+              if (nullptr != pEvent) {
+                pEvent->pdata    = nullptr;
+                pEvent->sizeData = 0;
+                vscp_convertEventExToEvent(pEvent, &ex);
+                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+                  spdlog::error("Failed to add event to receive queue.");
+                }
+              }
+              else {
+                spdlog::error("Failed to allocate memory for event.");
+              }
+            }
+            else {
+              spdlog::error("Failed to build level II string measurement event.");
             }
           } break;
 
@@ -1668,7 +1648,21 @@ workerThread(void *pData)
                                                         pItem->getSensorIndex(),
                                                         pItem->getZone(),
                                                         pItem->getSubZone())) {
-              break;
+              vscpEvent *pEvent = new vscpEvent;
+              if (nullptr != pEvent) {
+                pEvent->pdata    = nullptr;
+                pEvent->sizeData = 0;
+                vscp_convertEventExToEvent(pEvent, &ex);
+                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+                  spdlog::error("Failed to add event to receive queue.");
+                }
+              }
+              else {
+                spdlog::error("Failed to allocate memory for event.");
+              }
+            }
+            else {
+              spdlog::error("Failed to build level II string measurement event.");
             }
           } break;
         }
@@ -1684,6 +1678,8 @@ workerThread(void *pData)
 
   // Close the serial port
   com.close();
+
+  spdlog::debug("Ending Worker loop");
 
   return NULL;
 }

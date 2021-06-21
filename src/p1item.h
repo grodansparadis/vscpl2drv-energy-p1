@@ -92,7 +92,7 @@ public:
     @param line Meter reding line
     @return Measurement value as a double
   */
-  double getValue(const std::string &line) { return std::stod(line.substr(10 + 1)); };
+  double getValue(const std::string &line) { return (m_factor * std::stod(line.substr(10 + 1))); };
 
   /*!
     Get VSCP numerical unit code from textual unit
@@ -101,7 +101,9 @@ public:
   */
   int getUnit(const std::string &line);
 
+
   // Getters / Setters
+
 
   /*
     Token
@@ -157,6 +159,18 @@ public:
   uint8_t getLevel1Coding(void) { return m_level1Coding; };
   void setLevel1Coding(uint8_t coding) { m_level1Coding = coding; };
 
+  /*
+    Factor
+  */
+  double getFactor(void) { return m_factor; };
+  void setFactor(double factor) { m_factor = factor; };
+
+  /*
+    Storage name
+  */
+  std::string getStorageName(void) { return m_storageName; };
+  void setStorageName(const std::string& storage) { m_storageName = storage; };
+
 private:
   /*!
     Measurement value id such as "1-0:1.8.0"
@@ -211,10 +225,23 @@ private:
   */
   uint8_t m_level1Coding;
 
+  /*
+    Factor
+    Multiply read value with factor to 
+    get value in VSCP unit.
+  */
+  double m_factor;
+
+  /*
+    Name that value will be stored as
+  */
+  std::string m_storageName;
+
   /*!
     Maps P1 unit to VSCP unit code
   */
   std::map<std::string, uint8_t> m_map_unit;
+
 };
 
 #endif // VSCP_P1ITEM_H__INCLUDED_
