@@ -289,6 +289,7 @@ CEnergyP1::doLoadConfig(std::string &path)
   try {
     std::ifstream in(m_path, std::ifstream::in);
     in >> m_j_config;
+    spdlog::debug("doLoadConfig: JSON loaded.");
   }
   catch (json::parse_error) {
     spdlog::critical("Failed to load/parse JSON configuration.");
@@ -299,6 +300,7 @@ CEnergyP1::doLoadConfig(std::string &path)
   if (m_j_config.contains("write")) {
     try {
       m_bWriteEnable = m_j_config["write"].get<bool>();
+      spdlog::debug("doLoadConfig: Write enable {}", m_bWriteEnable);
     }
     catch (const std::exception &ex) {
       spdlog::error("Failed to read 'write' Error='{}'", ex.what());
@@ -318,7 +320,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     }
   }
   else {
-    spdlog::warn("WARNING!!! Default key will be used.");
+    spdlog::debug("doLoadConfig: VSCP Key file loaded {}", m_j_config["key-file"].get<std::string>());
   }
 
   // * * * Logging * * *
@@ -333,6 +335,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("console-enable")) {
       try {
         m_bConsoleLogEnable = j["console-enable"].get<bool>();
+        spdlog::debug("doLoadConfig: 'console-enable' {}", m_bConsoleLogEnable);
       }
       catch (const std::exception &ex) {
         spdlog::error("Failed to read 'console-enable' Error='{}'", ex.what());
@@ -350,6 +353,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       std::string str;
       try {
         str = j["console-level"].get<std::string>();
+        spdlog::debug("doLoadConfig: 'console-level' {}", str);
       }
       catch (const std::exception &ex) {
         spdlog::error("Failed to read 'console-level' Error='{}'", ex.what());
@@ -393,6 +397,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("console-pattern")) {
       try {
         m_consoleLogPattern = j["console-pattern"].get<std::string>();
+        spdlog::debug("doLoadConfig: 'console-pattern' {}", m_consoleLogPattern);
       }
       catch (const std::exception &ex) {
         spdlog::error("Failed to read 'console-pattern' Error='{}'", ex.what());
@@ -411,6 +416,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("file-log-enable") && j["file-enable-log"].is_boolean()) {
       try {
         m_bFileLogEnable = j["file-log-enable"].get<bool>();
+        spdlog::debug("doLoadConfig: 'file-log-enable' {}", m_bFileLogEnable);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig:Failed to read 'file-log-enable' Error='{}'", ex.what());
@@ -428,6 +434,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       std::string str;
       try {
         str = j["file-log-level"].get<std::string>();
+        spdlog::debug("doLoadConfig: 'file-log-level' {}", str);
       }
       catch (const std::exception &ex) {
         spdlog::error("[vscpl2drv-energyp1] Failed to read 'file-log-level' Error='{}'", ex.what());
@@ -469,6 +476,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("file-pattern")) {
       try {
         m_fileLogPattern = j["file-pattern"].get<std::string>();
+        spdlog::debug("doLoadConfig: 'file-pattern' {}", m_fileLogPattern);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig:Failed to read 'file-pattern' Error='{}'", ex.what());
@@ -485,6 +493,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("file-log-path")) {
       try {
         m_path_to_log_file = j["file-log-path"].get<std::string>();
+        spdlog::debug("doLoadConfig: 'file-log-path' {}", m_path_to_log_file);
       }
       catch (const std::exception &ex) {
         spdlog::error("Failed to read 'file-log-path' Error='{}'", ex.what());
@@ -501,6 +510,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("file-log-max-size")) {
       try {
         m_max_log_size = j["file-log-max-size"].get<uint32_t>();
+        spdlog::debug("doLoadConfig: 'file-log-max-size' {}", m_max_log_size);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig:Failed to read 'file-log-max-size' Error='{}'", ex.what());
@@ -517,6 +527,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("file-log-max-files")) {
       try {
         m_max_log_files = j["file-log-max-files"].get<uint16_t>();
+        spdlog::debug("doLoadConfig: 'file-log-max-files' {}", m_max_log_files);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig:Failed to read 'file-log-max-files' Error='{}'", ex.what());
@@ -541,12 +552,14 @@ CEnergyP1::doLoadConfig(std::string &path)
   // Console log
   auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
   if (m_bConsoleLogEnable) {
+    spdlog::debug("doLoadConfig: Enable console log");
     console_sink->set_level(m_consoleLogLevel);
     console_sink->set_pattern(m_consoleLogPattern);
   }
   else {
     // If disabled set to off
     console_sink->set_level(spdlog::level::off);
+    spdlog::debug("doLoadConfig: 'Disable console log");
   }
 
   // auto rotating =
@@ -558,10 +571,12 @@ CEnergyP1::doLoadConfig(std::string &path)
   if (m_bFileLogEnable) {
     rotating_file_sink->set_level(m_fileLogLevel);
     rotating_file_sink->set_pattern(m_fileLogPattern);
+    spdlog::debug("doLoadConfig: 'Enable file log");
   }
   else {
     // If disabled set to off
     rotating_file_sink->set_level(spdlog::level::off);
+    spdlog::debug("doLoadConfig: 'Disable file log");
   }
 
   std::vector<spdlog::sink_ptr> sinks{ console_sink, rotating_file_sink };
@@ -573,6 +588,8 @@ CEnergyP1::doLoadConfig(std::string &path)
   // The separate sub loggers will handle trace levels
   logger->set_level(spdlog::level::trace);
   spdlog::register_logger(logger);
+
+  spdlog::debug("doLoadConfig: Logging has been set up");
 
   // ------------------------------------------------------------------------
 
@@ -586,6 +603,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("port") && j["port"].is_string()) {
       try {
         m_serialDevice = j["port"].get<std::string>();
+        spdlog::debug("doLoadConfig: 'port' {}", m_serialDevice);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'port' Error='{}'", ex.what());
@@ -604,6 +622,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         int baudrate     = 115200;
         baudrate         = j["baudrate"].get<int>();
         m_serialBaudrate = vscp_str_format("%d", baudrate);
+        spdlog::debug("doLoadConfig: 'baudrate' {}", m_serialBaudrate);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'baudrate' Error='{}'", ex.what());
@@ -620,6 +639,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("parity") && j["parity"].is_string()) {
       try {
         m_serialParity = j["parity"].get<std::string>();
+        spdlog::debug("doLoadConfig: 'parity' {}", m_serialParity);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'parity' Error='{}'", ex.what());
@@ -638,6 +658,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         int bits              = 8;
         bits                  = j["bits"].get<int>();
         m_serialCountDataBits = vscp_str_format("%d", bits);
+        spdlog::debug("doLoadConfig: 'bits' {}", m_serialCountDataBits);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'bits' Error='{}'", ex.what());
@@ -654,6 +675,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("stopbits") && j["stopbits"].is_number()) {
       try {
         m_serialCountStopbits = j["stopbits"].get<int>();
+        spdlog::debug("doLoadConfig: 'stopbits' {}", m_serialCountStopbits);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'stopbits' Error='{}'", ex.what());
@@ -670,6 +692,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("hwflowctrl") && j["hwflowctrl"].is_boolean()) {
       try {
         m_bSerialHwFlowCtrl = j["hwflowctrl"].get<bool>();
+        spdlog::debug("doLoadConfig: 'hwflowctrl' {}", m_bSerialHwFlowCtrl);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'hwflowctrl' Error='{}'", ex.what());
@@ -686,6 +709,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("swflowctrl") && j["swflowctrl"].is_boolean()) {
       try {
         m_bSerialSwFlowCtrl = j["swflowctrl"].get<bool>();
+        spdlog::debug("doLoadConfig: 'swflowctrl' {}", m_bSerialSwFlowCtrl);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'swflowctrl' Error='{}'", ex.what());
