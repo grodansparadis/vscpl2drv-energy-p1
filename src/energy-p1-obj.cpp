@@ -135,12 +135,12 @@ CEnergyP1::CEnergyP1()
 
   m_bConsoleLogEnable = true;
   m_consoleLogLevel   = spdlog::level::info;
-  m_consoleLogPattern = "[vscpl2drv-tcpiplink %c] [%^%l%$] %v";
+  m_consoleLogPattern = "[vscpl2drv-energy.p1 %c] [%^%l%$] %v";
 
   m_bFileLogEnable   = true;
   m_fileLogLevel     = spdlog::level::info;
-  m_fileLogPattern   = "[vscpl2drv-tcpiplink %c] [%^%l%$] %v";
-  m_path_to_log_file = "/var/log/vscp/vscpl2drv-tcpiplink.log";
+  m_fileLogPattern   = "[vscpl2drv-energy-p1 %c] [%^%l%$] %v";
+  m_path_to_log_file = "/var/log/vscp/vscpl2drv-energy-p1.log";
   m_max_log_size     = 5242880;
   m_max_log_files    = 7;
 
@@ -1097,7 +1097,7 @@ CEnergyP1::handleHLO(vscpEvent *pEvent)
 
   // Check pointers
   if (NULL == pEvent || (NULL == pEvent->pdata)) {
-    spdlog::get("logger")->error("HLO handler: NULL event pointer.");
+    spdlog::error("HLO handler: NULL event pointer.");
     return false;
   }
 
@@ -1107,7 +1107,7 @@ CEnergyP1::handleHLO(vscpEvent *pEvent)
 
   // CHLO hlo;
   // if (!hlo.parseHLO(j, pEvent )) {
-  spdlog::get("logger")->error("Failed to parse HLO.");
+  spdlog::error("Failed to parse HLO.");
   //     return false;
   // }
 
@@ -1135,7 +1135,7 @@ CEnergyP1::handleHLO(vscpEvent *pEvent)
 
   // Must be an operation
   if (!j["op"].is_string() || j["op"].is_null()) {
-    spdlog::get("logger")->error("HLO-command: Missing op [%s]", j.dump().c_str());
+    spdlog::error("HLO-command: Missing op [%s]", j.dump().c_str());
     return false;
   }
 
@@ -1287,7 +1287,7 @@ CEnergyP1::readVariable(vscpEventEx &ex, const json &json_req)
   else if ("users" == j.value("name", "")) {
 
     if (!m_j_config["users"].is_array()) {
-      spdlog::get("logger")->warn("'users' must be of type array.");
+      spdlog::warn("'users' must be of type array.");
       j["result"] = VSCP_ERROR_SUCCESS;
       goto abort;
     }
@@ -1295,7 +1295,7 @@ CEnergyP1::readVariable(vscpEventEx &ex, const json &json_req)
     int index = j.value("index", 0); // get index
     if (index >= m_j_config["users"].size()) {
       // Index to large
-      spdlog::get("logger")->warn("index of array is to large [%u].", index >= m_j_config["users"].size());
+      spdlog::warn("index of array is to large [%u].", index >= m_j_config["users"].size());
       j["result"] = VSCP_ERROR_INDEX_OOB;
       goto abort;
     }
@@ -1305,7 +1305,7 @@ CEnergyP1::readVariable(vscpEventEx &ex, const json &json_req)
   }
   else {
     j["result"] = VSCP_ERROR_MISSING;
-    spdlog::get("logger")->error("Variable [] is unknown.");
+    spdlog::error("Variable [] is unknown.");
   }
 
 abort:
@@ -1549,14 +1549,14 @@ CEnergyP1::writeVariable(vscpEventEx &ex, const json &json_req)
 
     // users must be array
     if (!m_j_config["users"].is_array()) {
-      spdlog::get("logger")->warn("'users' must be of type array.");
+      spdlog::warn("'users' must be of type array.");
       j["result"] = VSCP_ERROR_INVALID_TYPE;
       goto abort;
     }
 
     // Must be object
     if (!m_j_config["args"].is_object()) {
-      spdlog::get("logger")->warn("The user info must be an object.");
+      spdlog::warn("The user info must be an object.");
       j["result"] = VSCP_ERROR_INVALID_TYPE;
       goto abort;
     }
@@ -1564,7 +1564,7 @@ CEnergyP1::writeVariable(vscpEventEx &ex, const json &json_req)
     int index = j.value("index", 0); // get index
     if (index >= m_j_config["users"].size()) {
       // Index to large
-      spdlog::get("logger")->warn("index of array is to large [%u].", index >= m_j_config["users"].size());
+      spdlog::warn("index of array is to large [%u].", index >= m_j_config["users"].size());
       j["result"] = VSCP_ERROR_INDEX_OOB;
       goto abort;
     }
@@ -1576,7 +1576,7 @@ CEnergyP1::writeVariable(vscpEventEx &ex, const json &json_req)
   }
   else {
     j["result"] = VSCP_ERROR_MISSING;
-    spdlog::get("logger")->error("Variable [] is unknown.");
+    spdlog::error("Variable [] is unknown.");
   }
 
 abort:
@@ -1605,14 +1605,14 @@ CEnergyP1::deleteVariable(vscpEventEx &ex, const json &json_reg)
 
     // users must be array
     if (!m_j_config["users"].is_array()) {
-      spdlog::get("logger")->warn("'users' must be of type array.");
+      spdlog::warn("'users' must be of type array.");
       j["result"] = VSCP_ERROR_INVALID_TYPE;
       goto abort;
     }
 
     // Must be object
     if (!m_j_config["args"].is_object()) {
-      spdlog::get("logger")->warn("The user info must be an object.");
+      spdlog::warn("The user info must be an object.");
       j["result"] = VSCP_ERROR_INVALID_TYPE;
       goto abort;
     }
@@ -1620,7 +1620,7 @@ CEnergyP1::deleteVariable(vscpEventEx &ex, const json &json_reg)
     int index = j.value("index", 0); // get index
     if (index >= m_j_config["users"].size()) {
       // Index to large
-      spdlog::get("logger")->warn("index of array is to large [%u].", index >= m_j_config["users"].size());
+      spdlog::warn("index of array is to large [%u].", index >= m_j_config["users"].size());
       j["result"] = VSCP_ERROR_INDEX_OOB;
       goto abort;
     }
@@ -1629,7 +1629,7 @@ CEnergyP1::deleteVariable(vscpEventEx &ex, const json &json_reg)
   }
   else {
     j["result"] = VSCP_ERROR_MISSING;
-    spdlog::get("logger")->warn("Variable [%s] is unknown.", j.value("name", "").c_str());
+    spdlog::warn("Variable [%s] is unknown.", j.value("name", "").c_str());
   }
 
 abort:
@@ -1669,11 +1669,11 @@ bool
 CEnergyP1::restart(void)
 {
   if (!stop()) {
-    spdlog::get("logger")->warn("Failed to stop VSCP tcp/ip server.");
+    spdlog::warn("Failed to stop VSCP worker loop.");
   }
 
   if (!start()) {
-    spdlog::get("logger")->warn("Failed to start VSCP tcp/ip server.");
+    spdlog::warn("Failed to start VSCP worker loop.");
   }
 
   return true;
@@ -1688,7 +1688,7 @@ CEnergyP1::eventExToReceiveQueue(vscpEventEx &ex)
 {
   vscpEvent *pev = new vscpEvent();
   if (!vscp_convertEventExToEvent(pev, &ex)) {
-    spdlog::get("logger")->error("Failed to convert event from ex to ev.");
+    spdlog::error("Failed to convert event from ex to ev.");
     vscp_deleteEvent(pev);
     return false;
   }
@@ -1705,7 +1705,7 @@ CEnergyP1::eventExToReceiveQueue(vscpEventEx &ex)
     }
   }
   else {
-    spdlog::get("logger")->error("Unable to allocate event storage.");
+    spdlog::error("Unable to allocate event storage.");
   }
   return true;
 }
@@ -1750,11 +1750,11 @@ bool
 CEnergyP1::startWorkerThread(void)
 {
   if (m_bDebug) {
-    spdlog::get("logger")->debug("Starting P1 energy meter interface...");
+    spdlog::debug("Starting P1 energy meter interface...");
   }
 
   if (pthread_create(&m_workerThread, NULL, workerThread, this)) {
-    spdlog::get("logger")->error("Unable to start the workerthread.");
+    spdlog::error("Unable to start the workerthread.");
     return false;
   }
 
@@ -1772,7 +1772,7 @@ CEnergyP1::stopWorkerThread(void)
   // CEnergyP1->m_nStopTcpIpSrv = VSCP_TCPIP_SRV_STOP;
 
   // if (__VSCP_DEBUG_TCP) {
-  //     spdlog::get("logger")->debug("Terminating TCP thread.");
+  //     spdlog::debug("Terminating TCP thread.");
   // }
 
   // pthread_join(m_tcpipListenThread, NULL);
@@ -1780,7 +1780,7 @@ CEnergyP1::stopWorkerThread(void)
   // CEnergyP1 = NULL;
 
   // if (__VSCP_DEBUG_TCP) {
-  //     spdlog::get("logger")->debug("Terminated TCP thread.");
+  //     spdlog::debug("Terminated TCP thread.");
   // }
 
   return true;
@@ -1800,7 +1800,7 @@ CEnergyP1::readEncryptionKey(const std::string &path)
     return vscp_hexStr2ByteArray(m_vscp_key, 32, strStream.str().c_str());
   }
   catch (...) {
-    spdlog::get("logger")->error("Failed to read encryption key file [%s]", m_path.c_str());
+    spdlog::error("Failed to read encryption key file [%s]", m_path.c_str());
     return false;
   }
 
