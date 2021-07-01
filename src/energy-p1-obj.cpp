@@ -470,20 +470,20 @@ CEnergyP1::doLoadConfig(std::string &path)
     }
 
     // Logging: file-pattern
-    if (j.contains("file-pattern")) {
+    if (j.contains("file-log-pattern")) {
       try {
-        m_fileLogPattern = j["file-pattern"].get<std::string>();
-        spdlog::debug("doLoadConfig: 'file-pattern' {}", m_fileLogPattern);
+        m_fileLogPattern = j["file-log-pattern"].get<std::string>();
+        spdlog::debug("doLoadConfig: 'file-log-pattern' {}", m_fileLogPattern);
       }
       catch (const std::exception &ex) {
-        spdlog::error("ReadConfig:Failed to read 'file-pattern' Error='{}'", ex.what());
+        spdlog::error("ReadConfig:Failed to read 'file-log-pattern' Error='{}'", ex.what());
       }
       catch (...) {
-        spdlog::error("ReadConfig:Failed to read 'file-pattern' due to unknown error.");
+        spdlog::error("ReadConfig:Failed to read 'file-log-pattern' due to unknown error.");
       }
     }
     else {
-      spdlog::debug("ReadConfig: Failed to read LOGGING 'file-pattern' Defaults will be used.");
+      spdlog::debug("ReadConfig: Failed to read LOGGING 'file-log-pattern' Defaults will be used.");
     }
 
     // Logging: file-path
