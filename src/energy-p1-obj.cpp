@@ -128,10 +128,10 @@ CEnergyP1::CEnergyP1()
   auto console = spdlog::stdout_color_mt("console");
   // Start out with level=info. Config may change this
   spdlog::set_level(spdlog::level::debug);
-  spdlog::set_pattern("[vscpl2drv-websrv] [%^%l%$] %v");
+  spdlog::set_pattern("[vscpl2drv-energy-p1] [%^%l%$] %v");
   spdlog::set_default_logger(console);
 
-  spdlog::debug("Starting the vscpl2drv-websrv...");
+  spdlog::debug("Starting the vscpl2drv-energy-p1 driver...");
 
   m_bConsoleLogEnable = true;
   m_consoleLogLevel   = spdlog::level::info;
@@ -144,9 +144,6 @@ CEnergyP1::CEnergyP1()
   m_max_log_size     = 5242880;
   m_max_log_files    = 7;
 
-  // Shutdown logger in a nice way
-  spdlog::drop_all();
-  spdlog::shutdown();
 }
 
 //////////////////////////////////////////////////////////////////////
