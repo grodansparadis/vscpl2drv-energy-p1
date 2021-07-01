@@ -118,6 +118,35 @@ CEnergyP1::CEnergyP1()
 
   pthread_mutex_init(&m_mutexSendQueue, NULL);
   pthread_mutex_init(&m_mutexReceiveQueue, NULL);
+
+  // Init pool
+  spdlog::init_thread_pool(8192, 1);
+
+  // Flush log every five seconds
+  spdlog::flush_every(std::chrono::seconds(5));
+
+  auto console = spdlog::stdout_color_mt("console");
+  // Start out with level=info. Config may change this
+  spdlog::set_level(spdlog::level::debug);
+  spdlog::set_pattern("[vscpl2drv-websrv] [%^%l%$] %v");
+  spdlog::set_default_logger(console);
+
+  spdlog::debug("Starting the vscpl2drv-websrv...");
+
+  m_bConsoleLogEnable = true;
+  m_consoleLogLevel   = spdlog::level::info;
+  m_consoleLogPattern = "[vscpl2drv-tcpiplink %c] [%^%l%$] %v";
+
+  m_bFileLogEnable   = true;
+  m_fileLogLevel     = spdlog::level::info;
+  m_fileLogPattern   = "[vscpl2drv-tcpiplink %c] [%^%l%$] %v";
+  m_path_to_log_file = "/var/log/vscp/vscpl2drv-tcpiplink.log";
+  m_max_log_size     = 5242880;
+  m_max_log_files    = 7;
+
+  // Shutdown logger in a nice way
+  spdlog::drop_all();
+  spdlog::shutdown();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -156,6 +185,10 @@ CEnergyP1::~CEnergyP1()
     delete item;
   }
   m_listItems.clear();
+
+  // Shutdown logger in a nice way
+  spdlog::drop_all();
+  spdlog::shutdown();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -175,23 +208,11 @@ CEnergyP1::open(std::string &path, const uint8_t *pguid)
   // Save path to config file
   m_path = path;
 
-  // Init pool
-  spdlog::init_thread_pool(8192, 1);
-
-  // Flush log every five seconds
-  spdlog::flush_every(std::chrono::seconds(5));
-
-  auto console = spdlog::stdout_color_mt("console");
-  // Start out with level=info. Config may change this
-  console->set_level(spdlog::level::info);
-  console->set_pattern("[vcpl2drv-energy-p1: %c] [%^%l%$] %v");
-  spdlog::set_default_logger(console);
-
-  console->debug("About to read configurationfile {}.", path.c_str());
+  spdlog::debug("About to read configurationfile {}.", path.c_str());
 
   // Read configuration file
   if (!doLoadConfig(path)) {
-    console->error("Failed to load configuration file [{}]", path.c_str());
+    spdlog::error("Failed to load configuration file [{}]", path.c_str());
     spdlog::drop_all();
     return false;
   }
@@ -201,7 +222,7 @@ CEnergyP1::open(std::string &path, const uint8_t *pguid)
     auto rotating_file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(m_path_to_log_file.c_str(),
                                                                                      m_max_log_size,
                                                                                      m_max_log_files);
-    if (m_bEnableFileLog) {
+    if (m_bFileLogEnable) {
       rotating_file_sink->set_level(m_fileLogLevel);
       rotating_file_sink->set_pattern(m_fileLogPattern);
     }
@@ -227,7 +248,7 @@ CEnergyP1::open(std::string &path, const uint8_t *pguid)
   spdlog::debug("Logging starts here after config file is read.");
 
   if (!startWorkerThread()) {
-    console->error("Failed to start worker thread.");
+    spdlog::error("Failed to start worker thread.");
     spdlog::drop_all();
     return false;
   }
@@ -309,20 +330,100 @@ CEnergyP1::doLoadConfig(std::string &path)
 
     json j = m_j_config["logging"];
 
-    // Logging: file-enable-log
-    if (j.contains("file-enable-log") && j["file-enable-log"].is_boolean()) {
+    // * * *  CONSOLE  * * *
+
+    // Logging: console-log-enable
+    if (j.contains("console-enable")) {
       try {
-        m_bEnableFileLog = j["file-enable-log"].get<bool>();
+        m_bConsoleLogEnable = j["console-enable"].get<bool>();
       }
       catch (const std::exception &ex) {
-        spdlog::error("ReadConfig:Failed to read 'file-enable-log' Error='{}'", ex.what());
+        spdlog::error("Failed to read 'console-enable' Error='{}'", ex.what());
       }
       catch (...) {
-        spdlog::error("ReadConfig:Failed to read 'file-enable-log' due to unknown error.");
+        spdlog::error("Failed to read 'console-enable' due to unknown error.");
       }
     }
     else {
-      spdlog::debug("ReadConfig: Failed to read LOGGING 'file-enable-log' Defaults will be used.");
+      spdlog::debug("Failed to read LOGGING 'console-enable' Defaults will be used.");
+    }
+
+    // Logging: console-log-level
+    if (j.contains("console-level")) {
+      std::string str;
+      try {
+        str = j["console-level"].get<std::string>();
+      }
+      catch (const std::exception &ex) {
+        spdlog::error("Failed to read 'console-level' Error='{}'", ex.what());
+      }
+      catch (...) {
+        spdlog::error("Failed to read 'console-level' due to unknown error.");
+      }
+      vscp_makeLower(str);
+      if (std::string::npos != str.find("off")) {
+        m_consoleLogLevel = spdlog::level::off;
+      }
+      else if (std::string::npos != str.find("critical")) {
+        m_consoleLogLevel = spdlog::level::critical;
+      }
+      else if (std::string::npos != str.find("err")) {
+        m_consoleLogLevel = spdlog::level::err;
+      }
+      else if (std::string::npos != str.find("warn")) {
+        m_consoleLogLevel = spdlog::level::warn;
+      }
+      else if (std::string::npos != str.find("info")) {
+        m_consoleLogLevel = spdlog::level::info;
+      }
+      else if (std::string::npos != str.find("debug")) {
+        m_consoleLogLevel = spdlog::level::debug;
+      }
+      else if (std::string::npos != str.find("trace")) {
+        m_consoleLogLevel = spdlog::level::trace;
+      }
+      else {
+        spdlog::error("Failed to read LOGGING 'console-level' has invalid "
+                      "value [{}]. Default value used.",
+                      str);
+      }
+    }
+    else {
+      spdlog::error("Failed to read LOGGING 'console-level' Defaults will be used.");
+    }
+
+    // Logging: console-log-pattern
+    if (j.contains("console-pattern")) {
+      try {
+        m_consoleLogPattern = j["console-pattern"].get<std::string>();
+      }
+      catch (const std::exception &ex) {
+        spdlog::error("Failed to read 'console-pattern' Error='{}'", ex.what());
+      }
+      catch (...) {
+        spdlog::error("Failed to read 'console-pattern' due to unknown error.");
+      }
+    }
+    else {
+      spdlog::debug("Failed to read LOGGING 'console-pattern' Defaults will be used.");
+    }
+
+    // * * *  FILE  * * *
+
+    // Logging: file-enable-log
+    if (j.contains("file-log-enable") && j["file-enable-log"].is_boolean()) {
+      try {
+        m_bFileLogEnable = j["file-log-enable"].get<bool>();
+      }
+      catch (const std::exception &ex) {
+        spdlog::error("ReadConfig:Failed to read 'file-log-enable' Error='{}'", ex.what());
+      }
+      catch (...) {
+        spdlog::error("ReadConfig:Failed to read 'file-log-enable' due to unknown error.");
+      }
+    }
+    else {
+      spdlog::debug("ReadConfig: Failed to read LOGGING 'file-log-enable' Defaults will be used.");
     }
 
     // Logging: file-log-level
@@ -384,15 +485,15 @@ CEnergyP1::doLoadConfig(std::string &path)
     }
 
     // Logging: file-path
-    if (j.contains("file-path")) {
+    if (j.contains("file-log-path")) {
       try {
-        m_path_to_log_file = j["file-path"].get<std::string>();
+        m_path_to_log_file = j["file-log-path"].get<std::string>();
       }
       catch (const std::exception &ex) {
-        spdlog::error("Failed to read 'file-path' Error='{}'", ex.what());
+        spdlog::error("Failed to read 'file-log-path' Error='{}'", ex.what());
       }
       catch (...) {
-        spdlog::error("ReadConfig:Failed to read 'file-path' due to unknown error.");
+        spdlog::error("ReadConfig:Failed to read 'file-log-path' due to unknown error.");
       }
     }
     else {
@@ -400,41 +501,83 @@ CEnergyP1::doLoadConfig(std::string &path)
     }
 
     // Logging: file-max-size
-    if (j.contains("file-max-size")) {
+    if (j.contains("file-log-max-size")) {
       try {
-        m_max_log_size = j["file-max-size"].get<uint32_t>();
+        m_max_log_size = j["file-log-max-size"].get<uint32_t>();
       }
       catch (const std::exception &ex) {
-        spdlog::error("ReadConfig:Failed to read 'file-max-size' Error='{}'", ex.what());
+        spdlog::error("ReadConfig:Failed to read 'file-log-max-size' Error='{}'", ex.what());
       }
       catch (...) {
-        spdlog::error("ReadConfig:Failed to read 'file-max-size' due to unknown error.");
+        spdlog::error("ReadConfig:Failed to read 'file-log-max-size' due to unknown error.");
       }
     }
     else {
-      spdlog::error("ReadConfig: Failed to read LOGGING 'file-max-size' Defaults will be used.");
+      spdlog::error("ReadConfig: Failed to read LOGGING 'file-log-max-size' Defaults will be used.");
     }
 
     // Logging: file-max-files
-    if (j.contains("file-max-files")) {
+    if (j.contains("file-log-max-files")) {
       try {
-        m_max_log_files = j["file-max-files"].get<uint16_t>();
+        m_max_log_files = j["file-log-max-files"].get<uint16_t>();
       }
       catch (const std::exception &ex) {
-        spdlog::error("ReadConfig:Failed to read 'file-max-files' Error='{}'", ex.what());
+        spdlog::error("ReadConfig:Failed to read 'file-log-max-files' Error='{}'", ex.what());
       }
       catch (...) {
-        spdlog::error("ReadConfig:Failed to read 'file-max-files' due to unknown error.");
+        spdlog::error("ReadConfig:Failed to read 'file-log-max-files' due to unknown error.");
       }
     }
     else {
-      spdlog::error("ReadConfig: Failed to read LOGGING 'file-max-files' Defaults will be used.");
+      spdlog::error("ReadConfig: Failed to read LOGGING 'file-log-max-files' Defaults will be used.");
     }
 
   } // Logging
   else {
     spdlog::error("ReadConfig: No logging has been setup.");
   }
+
+  ///////////////////////////////////////////////////////////////////////////
+  //                          Setup logger
+  ///////////////////////////////////////////////////////////////////////////
+
+  // Console log
+  auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+  if (m_bConsoleLogEnable) {
+    console_sink->set_level(m_consoleLogLevel);
+    console_sink->set_pattern(m_consoleLogPattern);
+  }
+  else {
+    // If disabled set to off
+    console_sink->set_level(spdlog::level::off);
+  }
+
+  // auto rotating =
+  // std::make_shared<spdlog::sinks::rotating_file_sink_mt>("log_filename",
+  // 1024*1024, 5, false);
+  auto rotating_file_sink =
+    std::make_shared<spdlog::sinks::rotating_file_sink_mt>(m_path_to_log_file.c_str(), m_max_log_size, m_max_log_files);
+
+  if (m_bFileLogEnable) {
+    rotating_file_sink->set_level(m_fileLogLevel);
+    rotating_file_sink->set_pattern(m_fileLogPattern);
+  }
+  else {
+    // If disabled set to off
+    rotating_file_sink->set_level(spdlog::level::off);
+  }
+
+  std::vector<spdlog::sink_ptr> sinks{ console_sink, rotating_file_sink };
+  auto logger = std::make_shared<spdlog::async_logger>("logger",
+                                                       sinks.begin(),
+                                                       sinks.end(),
+                                                       spdlog::thread_pool(),
+                                                       spdlog::async_overflow_policy::block);
+  // The separate sub loggers will handle trace levels
+  logger->set_level(spdlog::level::trace);
+  spdlog::register_logger(logger);
+
+  // ------------------------------------------------------------------------
 
   // * * * Serial settings * * *
 
@@ -1743,10 +1886,10 @@ workerThread(void *pData)
       ex.timestamp = vscp_makeTimeStamp();
       vscp_setEventExDateTimeBlockToNow(&ex);
       ex.vscp_class = pItem->getVscpClass();
-      ex.vscp_type = pItem->getVscpType();
+      ex.vscp_type  = pItem->getVscpType();
       memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-      ex.GUID[15]   = pItem->getGuidLsb();
-      double value  = pItem->getValue(exstr);
+      ex.GUID[15]  = pItem->getGuidLsb();
+      double value = pItem->getValue(exstr);
 
       if (exstr.rfind(pItem->getToken(), 0) == 0) {
 
@@ -1887,13 +2030,13 @@ workerThread(void *pData)
               ex.timestamp = vscp_makeTimeStamp();
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
-              ex.vscp_type = VSCP_TYPE_ALARM_ALARM;
+              ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
               memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-              ex.GUID[15]   = pItem->getGuidLsb();
-              ex.sizeData = 3;
-              ex.data[0] = pAlarm->getAlarmByte();
-              ex.data[1] = pAlarm->getZone();
-              ex.data[2] = pAlarm->getSubZone();
+              ex.GUID[15]       = pItem->getGuidLsb();
+              ex.sizeData       = 3;
+              ex.data[0]        = pAlarm->getAlarmByte();
+              ex.data[1]        = pAlarm->getZone();
+              ex.data[2]        = pAlarm->getSubZone();
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
@@ -1914,19 +2057,19 @@ workerThread(void *pData)
           }
           else if (alarm_op::lt == pAlarm->getOp()) {
             if (pAlarm->getValue() < value) {
-              //send alarm
+              // send alarm
               vscpEventEx ex;
               ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
               ex.timestamp = vscp_makeTimeStamp();
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
-              ex.vscp_type = VSCP_TYPE_ALARM_ALARM;
+              ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
               memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-              ex.GUID[15]   = pItem->getGuidLsb();
-              ex.sizeData = 3;
-              ex.data[0] = pAlarm->getAlarmByte();
-              ex.data[1] = pAlarm->getZone();
-              ex.data[2] = pAlarm->getSubZone();
+              ex.GUID[15]       = pItem->getGuidLsb();
+              ex.sizeData       = 3;
+              ex.data[0]        = pAlarm->getAlarmByte();
+              ex.data[1]        = pAlarm->getZone();
+              ex.data[2]        = pAlarm->getSubZone();
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
@@ -1939,7 +2082,6 @@ workerThread(void *pData)
                   spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
                   pAlarm->setSentFlag();
                   // Reset Possible OFF flag
-
                 }
               }
               else {
@@ -1960,13 +2102,13 @@ workerThread(void *pData)
               ex.timestamp = vscp_makeTimeStamp();
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
-              ex.vscp_type = VSCP_TYPE_ALARM_RESET;
+              ex.vscp_type  = VSCP_TYPE_ALARM_RESET;
               memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-              ex.GUID[15]   = pItem->getGuidLsb();
-              ex.sizeData = 3;
-              ex.data[0] = pAlarm->getAlarmByte();
-              ex.data[1] = pAlarm->getZone();
-              ex.data[2] = pAlarm->getSubZone();
+              ex.GUID[15]       = pItem->getGuidLsb();
+              ex.sizeData       = 3;
+              ex.data[0]        = pAlarm->getAlarmByte();
+              ex.data[1]        = pAlarm->getZone();
+              ex.data[2]        = pAlarm->getSubZone();
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
@@ -1987,19 +2129,19 @@ workerThread(void *pData)
           }
           else if (alarm_op::lt == pAlarm->getOp()) {
             if (pAlarm->getValue() < value) {
-              //send alarm
+              // send alarm
               vscpEventEx ex;
               ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
               ex.timestamp = vscp_makeTimeStamp();
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
-              ex.vscp_type = VSCP_TYPE_ALARM_ALARM;
+              ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
               memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-              ex.GUID[15]   = pItem->getGuidLsb();
-              ex.sizeData = 3;
-              ex.data[0] = pAlarm->getAlarmByte();
-              ex.data[1] = pAlarm->getZone();
-              ex.data[2] = pAlarm->getSubZone();
+              ex.GUID[15]       = pItem->getGuidLsb();
+              ex.sizeData       = 3;
+              ex.data[0]        = pAlarm->getAlarmByte();
+              ex.data[1]        = pAlarm->getZone();
+              ex.data[2]        = pAlarm->getSubZone();
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
@@ -2012,7 +2154,6 @@ workerThread(void *pData)
                   spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
                   pAlarm->setSentFlag();
                   // Reset Possible ON flag
-
                 }
               }
               else {
@@ -2021,7 +2162,6 @@ workerThread(void *pData)
             }
           }
         }
-
       }
     }
 

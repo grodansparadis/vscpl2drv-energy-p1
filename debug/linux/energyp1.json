@@ -13,7 +13,7 @@
   },
 
   "logging" : {
-    "file-enable-log": true,
+    "file-log-enable": true,
     "file-log-level" : "debug",
     "file-pattern" : "[vcpl2drv-energy-p1: %c] [%^%l%$] %v",
     "file-path" : "/var/log/vscp/vscpl2drv-energy-p1.log",
@@ -420,7 +420,7 @@
   "alarms": [
     {
       "type":"on",
-      "variable": "current_l3",
+      "variable": "current_l1",
       "op": ">",
       "value": 1234,
       "one-shot": false,

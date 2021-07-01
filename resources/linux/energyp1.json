@@ -12,6 +12,10 @@
     "dtr-on-start": true
   },
   "logging": { 
+    "console-enable": true,
+    "console-level": "trace",    
+    "console-pattern": "[vcpl2drv-energyp1 %c] [%^%l%$] %v",
+    "file-log-enable": true,
     "file-log-level": "off|critical|error|warn|info|debug|trace",
     "file-log-path" : "/var/log/vscp/vscpl2drv-energyp1.log",
     "file-log-pattern": "[vscpl2drv-energyp1: %c] [%^%l%$] %v", 
@@ -26,8 +30,8 @@
       "vscp-type": 13,
       "sensorindex": 1,
       "guid-lsb": 1,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kWh": 1
@@ -41,8 +45,8 @@
       "vscp-type": 13,
       "sensorindex": 1,
       "guid-lsb": 1,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kWh": 1
@@ -56,8 +60,8 @@
       "vscp-type": 65,
       "sensorindex": 1,
       "guid-lsb": 1,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVArh": 0
@@ -71,8 +75,8 @@
       "vscp-type": 65,
       "sensorindex": 2,
       "guid-lsb": 2,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVArh": 0
@@ -86,8 +90,8 @@
       "vscp-type": 13,
       "sensorindex": 3,
       "guid-lsb": 3,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1000,
       "units": {
         "kW": 1
@@ -101,8 +105,8 @@
       "vscp-type": 13,
       "sensorindex": 4,
       "guid-lsb": 4,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1000,
       "units": {
         "kW": 1
@@ -116,8 +120,8 @@
       "vscp-type": 64,
       "sensorindex": 5,
       "guid-lsb": 5,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVAr": 0
@@ -131,8 +135,8 @@
       "vscp-type": 64,
       "sensorindex": 6,
       "guid-lsb": 6,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVAr": 0
@@ -146,8 +150,8 @@
       "vscp-type": 13,
       "sensorindex": 7,
       "guid-lsb": 7,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1000,
       "units": {
         "kW": 1
@@ -161,8 +165,8 @@
       "vscp-type": 13,
       "sensorindex": 8,
       "guid-lsb": 8,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1000,
       "units": {
         "kW": 1
@@ -176,8 +180,8 @@
       "vscp-type": 13,
       "sensorindex": 9,
       "guid-lsb": 9,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1000,
       "units": {
         "kW": 1
@@ -191,8 +195,8 @@
       "vscp-type": 13,
       "sensorindex": 10,
       "guid-lsb": 10,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1000,
       "units": {
         "kW": 1
@@ -206,8 +210,8 @@
       "vscp-type": 13,
       "sensorindex": 11,
       "guid-lsb": 11,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1000,
       "units": {
         "kW": 1
@@ -221,8 +225,8 @@
       "vscp-type": 13,
       "sensorindex": 12,
       "guid-lsb": 12,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1000,
       "units": {
         "kW": 1
@@ -236,8 +240,8 @@
       "vscp-type": 64,
       "sensorindex": 13,
       "guid-lsb": 13,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVAr": 0
@@ -251,8 +255,8 @@
       "vscp-type": 64,
       "sensorindex": 14,
       "guid-lsb": 14,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVAr": 0
@@ -266,8 +270,8 @@
       "vscp-type": 64,
       "sensorindex": 15,
       "guid-lsb": 15,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVAr": 0
@@ -281,8 +285,8 @@
       "vscp-type": 64,
       "sensorindex": 16,
       "guid-lsb": 16,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVAr": 0
@@ -296,8 +300,8 @@
       "vscp-type": 64,
       "sensorindex": 17,
       "guid-lsb": 17,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVAr": 0
@@ -311,8 +315,8 @@
       "vscp-type": 64,
       "sensorindex": 18,
       "guid-lsb": 18,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
         "kVAr": 0
@@ -326,8 +330,8 @@
       "vscp-type": 16,
       "sensorindex": 19,
       "guid-lsb": 19,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
           "V": 0 
@@ -341,8 +345,8 @@
       "vscp-type": 16,
       "sensorindex": 20,
       "guid-lsb": 20,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
           "V": 0 
@@ -356,8 +360,8 @@
       "vscp-type": 16,
       "sensorindex": 21,
       "guid-lsb": 21,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
           "V": 0 
@@ -371,8 +375,8 @@
       "vscp-type": 5,
       "sensorindex": 22,
       "guid-lsb": 22,
-      "Zone": 0,
-      "Subzone": 5,
+      "zone": 0,
+      "subzone": 5,
       "factor": 1,
       "units": {
           "A": 0
@@ -385,8 +389,8 @@
       "vscp-class": 1040,
       "vscp-type": 5,
       "sensorindex": 23,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
           "A": 0
@@ -399,8 +403,8 @@
       "vscp-class": 1040,
       "vscp-type": 5,
       "sensorindex": 24,
-      "Zone": 0,
-      "Subzone": 0,
+      "zone": 0,
+      "subzone": 0,
       "factor": 1,
       "units": {
           "A": 0
@@ -425,6 +429,28 @@
       "op": "<",
       "value": 1234,
       "one-shoot": false,
+      "alarm-byte":1234,
+      "zone": 1234,
+      "subzone": 1234
+    }
+  ],
+  "alarms": [
+    {
+      "type":"on",
+      "variable": "current_l1",
+      "op": ">",
+      "value": 1234,
+      "one-shot": false,
+      "alarm-byte":1234,
+      "zone": 1234,
+      "subzone": 1234
+    },
+    {
+      "type":"off",
+      "variable": "current_l3",
+      "op": "<",
+      "value": 1234,
+      "one-shot": false,
       "alarm-byte":1234,
       "zone": 1234,
       "subzone": 1234
