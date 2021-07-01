@@ -405,6 +405,7 @@
       "description": "Current L3",
       "vscp-class": 1040,
       "vscp-type": 5,
+      "guid-lsb": 24,
       "sensorindex": 24,
       "guid-lsb": 24,
       "zone": 0,

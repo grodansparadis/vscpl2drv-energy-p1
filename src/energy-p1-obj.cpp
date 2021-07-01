@@ -822,6 +822,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("sensorindex") && it["sensorindex"].is_number_unsigned()) {
         try {
           pItem->setSensorIndex(it["sensorindex"].get<uint8_t>());
+          spdlog::debug("doLoadConfig: 'sensorindex' {}", it["sensorindex"].get<uint8_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'sensorindex' Error='{}'", ex.what());
@@ -838,6 +839,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("guid-lsb") && it["guid-lsb"].is_number_unsigned()) {
         try {
           pItem->setGuidLsb(it["guid-lsb"].get<uint8_t>());
+          spdlog::debug("doLoadConfig: 'guid-lsb' {}", it["guid-lsb"].get<uint8_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'guid-lsb' Error='{}'", ex.what());
@@ -854,6 +856,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("zone") && it["zone"].is_number_unsigned()) {
         try {
           pItem->setZone(it["zone"].get<uint8_t>());
+          spdlog::debug("doLoadConfig: 'zone' {}", it["zone"].get<uint8_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'zone' Error='{}'", ex.what());
@@ -870,6 +873,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("subzone") && it["subzone"].is_number_unsigned()) {
         try {
           pItem->setSubZone(it["subzone"].get<uint8_t>());
+          spdlog::debug("doLoadConfig: 'subzone' {}", it["subzone"].get<uint8_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'subzone' Error='{}'", ex.what());
@@ -886,6 +890,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("factor") && it["factor"].is_number_unsigned()) {
         try {
           pItem->setFactor(it["factor"].get<double>());
+          spdlog::debug("doLoadConfig: 'factor' {}", it["factor"].get<double>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'factor' Error='{}'", ex.what());
@@ -902,6 +907,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("store") && it["store"].is_string()) {
         try {
           pItem->setStorageName(it["store"].get<std::string>());
+          spdlog::debug("doLoadConfig: 'store' {}", it["store"].get<std::string>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'store' Error='{}'", ex.what());
@@ -919,6 +925,7 @@ CEnergyP1::doLoadConfig(std::string &path)
 
         for (auto &itt : it["units"].items()) {
           pItem->addUnit(itt.key(), itt.value());
+          spdlog::debug("doLoadConfig: 'units' {} {}", itt.key(), itt.value());
         }
       }
 
@@ -942,6 +949,7 @@ CEnergyP1::doLoadConfig(std::string &path)
           try {
             strType = it["type"].get<std::string>();
             vscp_makeLower(strType);
+            spdlog::debug("doLoadConfig: 'type' {}", strType);
           }
           catch (const std::exception &ex) {
             spdlog::error("ReadConfig: Failed to read 'op' Error='{}'", ex.what());
@@ -958,6 +966,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         if (it.contains("variable") && it["variable"].is_string()) {
           try {
             pAlarm->setVariable(it["variable"].get<std::string>());
+            spdlog::debug("doLoadConfig: 'variable' {}", it["variable"].get<std::string>());
           }
           catch (const std::exception &ex) {
             spdlog::error("ReadConfig: Failed to read 'variable' Error='{}'", ex.what());
@@ -974,6 +983,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         if (it.contains("op") && it["op"].is_string()) {
           try {
             pAlarm->setOperation(it["op"].get<std::string>());
+            spdlog::debug("doLoadConfig: 'op' {}", it["op"].get<std::string>());
           }
           catch (const std::exception &ex) {
             spdlog::error("ReadConfig: Failed to read 'op' Error='{}'", ex.what());
@@ -990,6 +1000,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         if (it.contains("value") && it["value"].is_number()) {
           try {
             pAlarm->setValue(it["value"].get<double>());
+            spdlog::debug("doLoadConfig: 'value' {}", it["value"].get<double>());
           }
           catch (const std::exception &ex) {
             spdlog::error("ReadConfig: Failed to read 'value' Error='{}'", ex.what());
@@ -1006,6 +1017,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         if (it.contains("one-shot") && it["one-shot"].is_boolean()) {
           try {
             pAlarm->setOneShot(it["one-shot"].get<bool>());
+            spdlog::debug("doLoadConfig: 'one-shot' {}", it["one-shot"].get<bool>());
           }
           catch (const std::exception &ex) {
             spdlog::error("ReadConfig: Failed to read 'one-shot' Error='{}'", ex.what());
@@ -1022,6 +1034,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         if (it.contains("alarm-byte") && it["alarm-byte"].is_number_unsigned()) {
           try {
             pAlarm->setAlarmByte(it["alarm-byte"].get<uint8_t>());
+            spdlog::debug("doLoadConfig: 'alarm-byte' {}", it["alarm-byte"].get<uint8_t>());
           }
           catch (const std::exception &ex) {
             spdlog::error("ReadConfig: Failed to read 'alarm-byte' Error='{}'", ex.what());
@@ -1038,6 +1051,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         if (it.contains("zone") && it["zone"].is_number_unsigned()) {
           try {
             pAlarm->setZone(it["zone"].get<uint8_t>());
+            spdlog::debug("doLoadConfig: 'zone' {}", it["zone"].get<uint8_t>());
           }
           catch (const std::exception &ex) {
             spdlog::error("ReadConfig: Failed to read 'zone' Error='{}'", ex.what());
@@ -1054,6 +1068,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         if (it.contains("subzone") && it["subzone"].is_number_unsigned()) {
           try {
             pAlarm->setSubZone(it["subzone"].get<uint8_t>());
+            spdlog::debug("doLoadConfig: 'subzone' {}", it["subzone"].get<uint8_t>());
           }
           catch (const std::exception &ex) {
             spdlog::error("ReadConfig: Failed to read 'subzone' Error='{}'", ex.what());
@@ -1069,6 +1084,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         if ("on" == strType) {
           if (nullptr == m_mapAlarmOn[pAlarm->getVariable()]) {
             m_mapAlarmOn[pAlarm->getVariable()] = pAlarm;
+            spdlog::debug("doLoadConfig: 'ON'");
           }
           else {
             spdlog::warn("ReadConfig: Doublet of ON alarms detected [{}]", pAlarm->getVariable());
@@ -1079,6 +1095,7 @@ CEnergyP1::doLoadConfig(std::string &path)
         else if ("off" == strType) {
           if (nullptr == m_mapAlarmOn[pAlarm->getVariable()]) {
             m_mapAlarmOff[pAlarm->getVariable()] = pAlarm;
+            spdlog::debug("doLoadConfig: 'OFF'");
           }
           else {
             spdlog::warn("ReadConfig: Doublet of OFF alarms detected [{}]", pAlarm->getVariable());
@@ -1097,6 +1114,8 @@ CEnergyP1::doLoadConfig(std::string &path)
     } // Alarms
 
   } // config
+
+  spdlog::debug("doLoadConfig: done");
 
   return true;
 }
