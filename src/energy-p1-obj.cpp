@@ -314,13 +314,10 @@ CEnergyP1::doLoadConfig(std::string &path)
   }
 
   // VSCP key file
-  if (m_j_config.contains("key-file") && m_j_config["logging"].is_string()) {
+  if (m_j_config.contains("key-file") && m_j_config["key-file"].is_string()) {
     if (!readEncryptionKey(m_j_config["key-file"].get<std::string>())) {
-      spdlog::warn("WARNING!!! Default key will be used.");
+      spdlog::warn("WARNING!!! Failed to load encryption key. Default key will be used.");
     }
-  }
-  else {
-    spdlog::debug("doLoadConfig: VSCP Key file loaded {}", m_j_config["key-file"].get<std::string>());
   }
 
   // * * * Logging * * *
@@ -774,6 +771,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("description") && it["description"].is_string()) {
         try {
           pItem->setDescription(it["description"].get<std::string>());
+          spdlog::debug("doLoadConfig: 'description' {}", it["description"].get<std::string>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'description' Error='{}'", ex.what());
@@ -790,6 +788,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("vscp-class") && it["vscp-class"].is_number_unsigned()) {
         try {
           pItem->setVscpClass(it["vscp-class"].get<uint16_t>());
+          spdlog::debug("doLoadConfig: 'vscp-class' {}", it["vscp-class"].get<uint16_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'vscp-class' Error='{}'", ex.what());
@@ -806,6 +805,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("vscp-type") && it["vscp-type"].is_number_unsigned()) {
         try {
           pItem->setVscpType(it["vscp-type"].get<uint16_t>());
+          spdlog::debug("doLoadConfig: 'vscp-type' {}", it["vscp-type"].get<uint16_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'vscp-type' Error='{}'", ex.what());
