@@ -26,8 +26,8 @@
 // SOFTWARE.
 //
 
-#if !defined(VSCP_P1ITEM_H__INCLUDED_)
-#define VSCP_P1ITEM_H__INCLUDED_
+#if !defined(VSCP_ALARM_H__INCLUDED_)
+#define VSCP_ALARM_H__INCLUDED_
 
 #include <deque>
 #include <iostream>
@@ -35,7 +35,7 @@
 #include <sstream>
 #include <string>
 
-enum alarm_op { gt, lt };
+enum class alarm_op { gt, lt };
 
 class CAlarm {
 
@@ -74,16 +74,31 @@ public:
   // Getters / Setters
 
   /*
-    Name
+    Name = "variable" in config
   */
-  std::string getName(void) { return m_name; };
-  void setName(const std::string &name) { m_name = name; };
+  std::string getVariable(void) { return m_name; };
+  void setVariable(const std::string &name) { m_name = name; };
+
+  /*!
+    Handle sent flag
+  */
+  void setSentFlag(bool sent = true) {m_bSent = sent; };
+  bool isSent(void)  {return m_bSent; };
 
   /*
     op
   */
   alarm_op getOp(void) { return m_op; };
   void setOp(alarm_op op) { m_op = op; };
+
+  /*!
+    Set operation from string
+    @param strop Operation in string format
+            "<" - Less than
+            ">" - Greate than
+    @return true on success        
+  */
+  bool setOperation(const std::string& strop);
 
   /*
     Value
@@ -122,6 +137,11 @@ private:
   std::string m_name;
 
   /*!
+    True if alarm has been sent
+  */
+  bool m_bSent;
+
+  /*!
     Compare operation to perform
   */
   alarm_op m_op;
@@ -153,4 +173,4 @@ private:
   uint8_t m_subzone;
 };
 
-#endif // VSCP_P1ITEM_H__INCLUDED_
+#endif // VSCP_ALARM_H__INCLUDED_

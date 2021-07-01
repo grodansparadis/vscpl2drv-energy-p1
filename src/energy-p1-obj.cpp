@@ -57,7 +57,9 @@
 
 #include <expat.h>
 
+#include "alarm.h"
 #include "energy-p1-obj.h"
+
 #include <com.h>
 #include <hlo.h>
 #include <remotevariablecodes.h>
@@ -126,11 +128,34 @@ CEnergyP1::~CEnergyP1()
 {
   close();
 
+  m_bQuit = true;
+  pthread_join(m_workerThread, NULL);
+
   sem_destroy(&m_semSendQueue);
   sem_destroy(&m_semReceiveQueue);
 
   pthread_mutex_destroy(&m_mutexSendQueue);
   pthread_mutex_destroy(&m_mutexReceiveQueue);
+
+  // Deallocate ON alarms
+  for (auto const &alarm : m_mapAlarmOn) {
+    delete alarm.second;
+  }
+
+  m_mapAlarmOn.clear();
+
+  // Deallocate OFF alarms
+  for (auto const &alarm : m_mapAlarmOff) {
+    delete alarm.second;
+  }
+
+  m_mapAlarmOff.clear();
+
+  // Deallocate measurement items
+  for (auto const &item : m_listItems) {
+    delete item;
+  }
+  m_listItems.clear();
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -193,7 +218,7 @@ CEnergyP1::open(std::string &path, const uint8_t *pguid)
                                                          spdlog::async_overflow_policy::block);
     // The separate sub loggers will handle trace levels
     logger->set_level(spdlog::level::trace);
-    logger->flush_on(spdlog::level::debug); 
+    logger->flush_on(spdlog::level::debug);
     spdlog::flush_every(std::chrono::seconds(5));
     spdlog::register_logger(logger);
     spdlog::set_default_logger(logger);
@@ -614,7 +639,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       // vscp_type
       if (it.contains("vscp-type") && it["vscp-type"].is_number_unsigned()) {
         try {
-          pItem->setVscpType(it["vscp_type"].get<uint16_t>());
+          pItem->setVscpType(it["vscp-type"].get<uint16_t>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'vscp-type' Error='{}'", ex.what());
@@ -731,8 +756,181 @@ CEnergyP1::doLoadConfig(std::string &path)
         }
       }
 
-    } // items
-  }   // config
+    } // iterator items
+
+    // * * * alarms * * *
+
+    if (m_j_config.contains("alarms") && m_j_config["alarms"].is_array()) {
+
+      for (auto it : m_j_config["alarms"]) {
+
+        std::string strType;
+        CAlarm *pAlarm = new CAlarm;
+        if (nullptr == pAlarm) {
+          spdlog::critical("ReadConfig: Unable to allocate data for p1 measurement item.");
+          return false;
+        }
+
+        // Type
+        if (it.contains("type") && it["type"].is_string()) {
+          try {
+            strType = it["type"].get<std::string>();
+            vscp_makeLower(strType);
+          }
+          catch (const std::exception &ex) {
+            spdlog::error("ReadConfig: Failed to read 'op' Error='{}'", ex.what());
+          }
+          catch (...) {
+            spdlog::error("ReadConfig: Failed to read 'op' due to unknown error.");
+          }
+        }
+        else {
+          spdlog::warn("ReadConfig: Failed to read 'op' Defaults will be used.");
+        }
+
+        // stored variable to work on
+        if (it.contains("variable") && it["variable"].is_string()) {
+          try {
+            pAlarm->setVariable(it["variable"].get<std::string>());
+          }
+          catch (const std::exception &ex) {
+            spdlog::error("ReadConfig: Failed to read 'variable' Error='{}'", ex.what());
+          }
+          catch (...) {
+            spdlog::error("ReadConfig: Failed to read 'variable' due to unknown error.");
+          }
+        }
+        else {
+          spdlog::warn("ReadConfig: Failed to read 'variable' Defaults will be used.");
+        }
+
+        // Operation
+        if (it.contains("op") && it["op"].is_string()) {
+          try {
+            pAlarm->setOperation(it["op"].get<std::string>());
+          }
+          catch (const std::exception &ex) {
+            spdlog::error("ReadConfig: Failed to read 'op' Error='{}'", ex.what());
+          }
+          catch (...) {
+            spdlog::error("ReadConfig: Failed to read 'op' due to unknown error.");
+          }
+        }
+        else {
+          spdlog::warn("ReadConfig: Failed to read 'op' Defaults will be used.");
+        }
+
+        // Value
+        if (it.contains("value") && it["value"].is_number()) {
+          try {
+            pAlarm->setValue(it["value"].get<double>());
+          }
+          catch (const std::exception &ex) {
+            spdlog::error("ReadConfig: Failed to read 'value' Error='{}'", ex.what());
+          }
+          catch (...) {
+            spdlog::error("ReadConfig: Failed to read 'value' due to unknown error.");
+          }
+        }
+        else {
+          spdlog::warn("ReadConfig: Failed to read 'value' Defaults will be used.");
+        }
+
+        // one-shot
+        if (it.contains("one-shot") && it["one-shot"].is_boolean()) {
+          try {
+            pAlarm->setOneShot(it["one-shot"].get<bool>());
+          }
+          catch (const std::exception &ex) {
+            spdlog::error("ReadConfig: Failed to read 'one-shot' Error='{}'", ex.what());
+          }
+          catch (...) {
+            spdlog::error("ReadConfig: Failed to read 'one-shot' due to unknown error.");
+          }
+        }
+        else {
+          spdlog::warn("ReadConfig: Failed to read 'one-shot' Defaults will be used.");
+        }
+
+        // Alarm byte
+        if (it.contains("alarm-byte") && it["alarm-byte"].is_number_unsigned()) {
+          try {
+            pAlarm->setAlarmByte(it["alarm-byte"].get<uint8_t>());
+          }
+          catch (const std::exception &ex) {
+            spdlog::error("ReadConfig: Failed to read 'alarm-byte' Error='{}'", ex.what());
+          }
+          catch (...) {
+            spdlog::error("ReadConfig: Failed to read 'alarm-byte' due to unknown error.");
+          }
+        }
+        else {
+          spdlog::warn("ReadConfig: Failed to read 'alarm-byte' Defaults will be used.");
+        }
+
+        // Zone
+        if (it.contains("zone") && it["zone"].is_number_unsigned()) {
+          try {
+            pAlarm->setZone(it["zone"].get<uint8_t>());
+          }
+          catch (const std::exception &ex) {
+            spdlog::error("ReadConfig: Failed to read 'zone' Error='{}'", ex.what());
+          }
+          catch (...) {
+            spdlog::error("ReadConfig: Failed to read 'zone' due to unknown error.");
+          }
+        }
+        else {
+          spdlog::warn("ReadConfig: Failed to read 'zone' Defaults will be used.");
+        }
+
+        // Subzone
+        if (it.contains("subzone") && it["subzone"].is_number_unsigned()) {
+          try {
+            pAlarm->setSubZone(it["subzone"].get<uint8_t>());
+          }
+          catch (const std::exception &ex) {
+            spdlog::error("ReadConfig: Failed to read 'subzone' Error='{}'", ex.what());
+          }
+          catch (...) {
+            spdlog::error("ReadConfig: Failed to read 'subzone' due to unknown error.");
+          }
+        }
+        else {
+          spdlog::warn("ReadConfig: Failed to read 'sunzone' Defaults will be used.");
+        }
+
+        if ("on" == strType) {
+          if (nullptr == m_mapAlarmOn[pAlarm->getVariable()]) {
+            m_mapAlarmOn[pAlarm->getVariable()] = pAlarm;
+          }
+          else {
+            spdlog::warn("ReadConfig: Doublet of ON alarms detected [{}]", pAlarm->getVariable());
+            delete pAlarm;
+            pAlarm = nullptr;
+          }
+        }
+        else if ("off" == strType) {
+          if (nullptr == m_mapAlarmOn[pAlarm->getVariable()]) {
+            m_mapAlarmOff[pAlarm->getVariable()] = pAlarm;
+          }
+          else {
+            spdlog::warn("ReadConfig: Doublet of OFF alarms detected [{}]", pAlarm->getVariable());
+            delete pAlarm;
+            pAlarm = nullptr;
+          }
+        }
+        else {
+          spdlog::error("ReadConfig: Invalid type = {0} for alarm [{1}}.", strType, pAlarm->getVariable());
+          delete pAlarm;
+          pAlarm = nullptr;
+        }
+
+      } // iterator alarms
+
+    } // Alarms
+
+  } // config
 
   return true;
 }
@@ -1486,7 +1684,7 @@ workerThread(void *pData)
   Comm com;
 
   CEnergyP1 *pObj = (CEnergyP1 *) pData;
-  if (nullptr == pData) {    
+  if (nullptr == pData) {
     return NULL;
   }
 
@@ -1545,15 +1743,25 @@ workerThread(void *pData)
       ex.timestamp = vscp_makeTimeStamp();
       vscp_setEventExDateTimeBlockToNow(&ex);
       ex.vscp_class = pItem->getVscpClass();
-      ex.vscp_class = pItem->getVscpType();
+      ex.vscp_type = pItem->getVscpType();
+      memcpy(ex.GUID, pObj->m_guid.m_id, 16);
       ex.GUID[15]   = pItem->getGuidLsb();
       double value  = pItem->getValue(exstr);
 
       if (exstr.rfind(pItem->getToken(), 0) == 0) {
+
+        spdlog::debug("Found token={0} value={1} unit={2}",
+                      pItem->getToken(),
+                      pItem->getValue(exstr),
+                      pItem->getUnit(exstr));
+
         if (pObj->m_bDebug) {
-          std::cout << ">>> Found " << pItem->getToken() << " value = " << pItem->getValue(exstr)
-                    << " unit = " << pItem->getUnit(exstr) << std::endl;
+          ;
         }
+
+        // Save measurement value
+        pObj->m_lastValue[pItem->getStorageName()] = value;
+
         switch (pItem->getVscpClass()) {
           case VSCP_CLASS1_MEASUREMENT: {
             switch (pItem->getLevel1Coding()) {
@@ -1666,6 +1874,154 @@ workerThread(void *pData)
             }
           } break;
         }
+
+        // Check Alarm ON
+        CAlarm *pAlarm;
+        if (nullptr != (pAlarm = pObj->m_mapAlarmOn[pItem->getStorageName()])) {
+
+          if (alarm_op::gt == pAlarm->getOp()) {
+            if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
+              // Send alarm
+              vscpEventEx ex;
+              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+              ex.timestamp = vscp_makeTimeStamp();
+              vscp_setEventExDateTimeBlockToNow(&ex);
+              ex.vscp_class = VSCP_CLASS1_ALARM;
+              ex.vscp_type = VSCP_TYPE_ALARM_ALARM;
+              memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              ex.GUID[15]   = pItem->getGuidLsb();
+              ex.sizeData = 3;
+              ex.data[0] = pAlarm->getAlarmByte();
+              ex.data[1] = pAlarm->getZone();
+              ex.data[2] = pAlarm->getSubZone();
+              vscpEvent *pEvent = new vscpEvent;
+              if (nullptr != pEvent) {
+                pEvent->pdata    = nullptr;
+                pEvent->sizeData = 0;
+                vscp_convertEventExToEvent(pEvent, &ex);
+                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+                  spdlog::error("AlarmOn: Failed to add event to receive queue.");
+                }
+                else {
+                  spdlog::debug("Sent ON alarm [{}]", pAlarm->getVariable());
+                  pAlarm->setSentFlag();
+                }
+              }
+              else {
+                spdlog::error("AlarmOn: Failed to allocate memory for event.");
+              }
+            }
+          }
+          else if (alarm_op::lt == pAlarm->getOp()) {
+            if (pAlarm->getValue() < value) {
+              //send alarm
+              vscpEventEx ex;
+              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+              ex.timestamp = vscp_makeTimeStamp();
+              vscp_setEventExDateTimeBlockToNow(&ex);
+              ex.vscp_class = VSCP_CLASS1_ALARM;
+              ex.vscp_type = VSCP_TYPE_ALARM_ALARM;
+              memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              ex.GUID[15]   = pItem->getGuidLsb();
+              ex.sizeData = 3;
+              ex.data[0] = pAlarm->getAlarmByte();
+              ex.data[1] = pAlarm->getZone();
+              ex.data[2] = pAlarm->getSubZone();
+              vscpEvent *pEvent = new vscpEvent;
+              if (nullptr != pEvent) {
+                pEvent->pdata    = nullptr;
+                pEvent->sizeData = 0;
+                vscp_convertEventExToEvent(pEvent, &ex);
+                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+                  spdlog::error("AlarmOff: Failed to add event to receive queue.");
+                }
+                else {
+                  spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
+                  pAlarm->setSentFlag();
+                  // Reset Possible OFF flag
+
+                }
+              }
+              else {
+                spdlog::error("AlarmOn: Failed to allocate memory for event.");
+              }
+            }
+          }
+        }
+
+        // Check Alarm OFF
+        if (nullptr != (pAlarm = pObj->m_mapAlarmOff[pItem->getStorageName()])) {
+
+          if (alarm_op::gt == pAlarm->getOp()) {
+            if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
+              // Send alarm
+              vscpEventEx ex;
+              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+              ex.timestamp = vscp_makeTimeStamp();
+              vscp_setEventExDateTimeBlockToNow(&ex);
+              ex.vscp_class = VSCP_CLASS1_ALARM;
+              ex.vscp_type = VSCP_TYPE_ALARM_RESET;
+              memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              ex.GUID[15]   = pItem->getGuidLsb();
+              ex.sizeData = 3;
+              ex.data[0] = pAlarm->getAlarmByte();
+              ex.data[1] = pAlarm->getZone();
+              ex.data[2] = pAlarm->getSubZone();
+              vscpEvent *pEvent = new vscpEvent;
+              if (nullptr != pEvent) {
+                pEvent->pdata    = nullptr;
+                pEvent->sizeData = 0;
+                vscp_convertEventExToEvent(pEvent, &ex);
+                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+                  spdlog::error("AlarmOn: Failed to add event to receive queue.");
+                }
+                else {
+                  spdlog::debug("Sent ON alarm [{}]", pAlarm->getVariable());
+                  pAlarm->setSentFlag();
+                }
+              }
+              else {
+                spdlog::error("AlarmOn: Failed to allocate memory for event.");
+              }
+            }
+          }
+          else if (alarm_op::lt == pAlarm->getOp()) {
+            if (pAlarm->getValue() < value) {
+              //send alarm
+              vscpEventEx ex;
+              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+              ex.timestamp = vscp_makeTimeStamp();
+              vscp_setEventExDateTimeBlockToNow(&ex);
+              ex.vscp_class = VSCP_CLASS1_ALARM;
+              ex.vscp_type = VSCP_TYPE_ALARM_ALARM;
+              memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              ex.GUID[15]   = pItem->getGuidLsb();
+              ex.sizeData = 3;
+              ex.data[0] = pAlarm->getAlarmByte();
+              ex.data[1] = pAlarm->getZone();
+              ex.data[2] = pAlarm->getSubZone();
+              vscpEvent *pEvent = new vscpEvent;
+              if (nullptr != pEvent) {
+                pEvent->pdata    = nullptr;
+                pEvent->sizeData = 0;
+                vscp_convertEventExToEvent(pEvent, &ex);
+                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+                  spdlog::error("AlarmOff: Failed to add event to receive queue.");
+                }
+                else {
+                  spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
+                  pAlarm->setSentFlag();
+                  // Reset Possible ON flag
+
+                }
+              }
+              else {
+                spdlog::error("AlarmOn: Failed to allocate memory for event.");
+              }
+            }
+          }
+        }
+
       }
     }
 

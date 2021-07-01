@@ -60,7 +60,16 @@ CAlarm::CAlarm(const std::string name,
 // DTOR
 //
 
-CAlarm::~CAlarm() {}
+CAlarm::~CAlarm()
+{
+  m_bSent  = false;
+  m_name = "";
+  m_op   = alarm_op::gt;
+
+  m_alarmByte = 0;
+  m_zone      = 0;
+  m_subzone   = 0;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // initItem
@@ -75,6 +84,8 @@ CAlarm::init(const std::string name,
              uint8_t subzone,
              bool bOneShoot)
 {
+  m_bSent = false;
+
   // Must be a token
   if (!name.length()) {
     return false;
@@ -87,5 +98,21 @@ CAlarm::init(const std::string name,
   m_zone      = zone;
   m_subzone   = subzone;
 
+  return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// setOperation
+//
+
+bool
+CAlarm::setOperation(const std::string &strop)
+{
+  if (">" == strop) {
+    m_op = alarm_op::gt;
+  }
+  else if ("<" == strop) {
+    m_op = alarm_op::lt;
+  }
   return true;
 }

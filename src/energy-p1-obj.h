@@ -49,6 +49,7 @@
 #include <guid.h>
 #include <vscp.h>
 
+#include "alarm.h"
 #include "p1item.h"
 
 #include <json.hpp>  // Needs C++11  -std=c++11
@@ -269,6 +270,16 @@ class CEnergyP1
       Map with last measurement value
     */
    std::map<std::string, double> m_lastValue;
+
+   /*!
+      Map with set alarm definitions
+    */
+   std::map<std::string, CAlarm *> m_mapAlarmOn;
+
+   /*!
+      Map with reset alarm definitions
+    */
+   std::map<std::string, CAlarm *> m_mapAlarmOff;
  
     // ------------------------------------------------------------------------
 
