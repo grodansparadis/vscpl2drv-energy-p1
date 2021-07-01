@@ -215,32 +215,32 @@ CEnergyP1::open(std::string &path, const uint8_t *pguid)
   }
 
   // Set up logger
-  if (m_path_to_log_file.length()) {
-    auto rotating_file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(m_path_to_log_file.c_str(),
-                                                                                     m_max_log_size,
-                                                                                     m_max_log_files);
-    if (m_bFileLogEnable) {
-      rotating_file_sink->set_level(m_fileLogLevel);
-      rotating_file_sink->set_pattern(m_fileLogPattern);
-    }
-    else {
-      // If disabled set to off
-      rotating_file_sink->set_level(spdlog::level::off);
-    }
+  // if (m_path_to_log_file.length()) {
+  //   auto rotating_file_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(m_path_to_log_file.c_str(),
+  //                                                                                    m_max_log_size,
+  //                                                                                    m_max_log_files);
+  //   if (m_bFileLogEnable) {
+  //     rotating_file_sink->set_level(m_fileLogLevel);
+  //     rotating_file_sink->set_pattern(m_fileLogPattern);
+  //   }
+  //   else {
+  //     // If disabled set to off
+  //     rotating_file_sink->set_level(spdlog::level::off);
+  //   }
 
-    std::vector<spdlog::sink_ptr> sinks{ rotating_file_sink };
-    auto logger = std::make_shared<spdlog::async_logger>("logger",
-                                                         sinks.begin(),
-                                                         sinks.end(),
-                                                         spdlog::thread_pool(),
-                                                         spdlog::async_overflow_policy::block);
-    // The separate sub loggers will handle trace levels
-    logger->set_level(spdlog::level::trace);
-    logger->flush_on(spdlog::level::debug);
-    spdlog::flush_every(std::chrono::seconds(5));
-    spdlog::register_logger(logger);
-    spdlog::set_default_logger(logger);
-  }
+  //   std::vector<spdlog::sink_ptr> sinks{ rotating_file_sink };
+  //   auto logger = std::make_shared<spdlog::async_logger>("logger",
+  //                                                        sinks.begin(),
+  //                                                        sinks.end(),
+  //                                                        spdlog::thread_pool(),
+  //                                                        spdlog::async_overflow_policy::block);
+  //   // The separate sub loggers will handle trace levels
+  //   logger->set_level(spdlog::level::trace);
+  //   logger->flush_on(spdlog::level::debug);
+  //   spdlog::flush_every(std::chrono::seconds(5));
+  //   spdlog::register_logger(logger);
+  //   spdlog::set_default_logger(logger);
+  // }
 
   spdlog::debug("Logging starts here after config file is read.");
 
