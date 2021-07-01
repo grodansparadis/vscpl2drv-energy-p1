@@ -44,6 +44,11 @@ if(NOT DEFINED PATCH_VERSION)
     SET(PATCH_VERSION "0")
 endif()
 
+# Prevent abi warnings in nlohmann
+SET(GCC_VSCP_COMPILE_FLAGS "-Wno-psabi")
+# Profiling
+#SET(GCC_VSCP_LINK_FLAGS    "-lgcov")
+
 SET(CPACK_PACKAGE_DESCRIPTION "VSCP driver for p1 energy meter")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "VSCP level II Driver for VSCP that read p1 energy meter protocol and publish relevant events")
 SET(CPACK_PACKAGE_VENDOR "the VSCP Project")
@@ -203,14 +208,14 @@ set(RESOURCE_FILES
 
 # Add files to library
 add_library(vscpl2drv-energy-p1
-    ./src/vscpl2drv-energy-p1.h   
-    ./src/vscpl2drv-energy-p1.cpp
-    ./src/p1item.h 
-    ./src/p1item.cpp 
-    ./src/energy-p1-obj.h 
-    ./src/energy-p1-obj.cpp
-    ./src/alarm.h 
-    ./src/alarm.cpp
+    ${CMAKE_SOURCE_DIR}/src/vscpl2drv-energy-p1.h   
+    ${CMAKE_SOURCE_DIR}/src/vscpl2drv-energy-p1.cpp
+    ${CMAKE_SOURCE_DIR}/src/p1item.h 
+    ${CMAKE_SOURCE_DIR}/src/p1item.cpp 
+    ${CMAKE_SOURCE_DIR}/src/energy-p1-obj.h 
+    ${CMAKE_SOURCE_DIR}/src/energy-p1-obj.cpp
+    ${CMAKE_SOURCE_DIR}/src/alarm.h 
+    ${CMAKE_SOURCE_DIR}/src/alarm.cpp
     ${VSCP_PATH}/src/common/third_party/mustache.hpp
     ${VSCP_PATH}/src/common/third_party/spdlog-1.8.5/include    
     ${VSCP_PATH}/src/vscp/common/vscp.h
@@ -309,4 +314,6 @@ else()
             LIBRARY DESTINATION ${CMAKE_INSTALL_FULL_}${VSCP_LEVEL2_DRV_DIR}
             RUNTIME DESTINATION ${CMAKE_INSTALL_MANDIR}            
             RESOURCE DESTINATION ${CMAKE_INSTALL_FULL_}/var/lib/vscp/vscpd) 
+    install(FILES ${CMAKE_SOURCE_DIR}/resources/linux/energyp1.json
+            DESTINATION "${CMAKE_INSTALL_DATAROOTDIR}/vscpl2drv-energy-p1/")             
 endif()
