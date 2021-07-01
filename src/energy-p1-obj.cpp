@@ -410,7 +410,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     // * * *  FILE  * * *
 
     // Logging: file-enable-log
-    if (j.contains("file-log-enable") && j["file-enable-log"].is_boolean()) {
+    if (j.contains("file-log-enable") && j["file-log-enable"].is_boolean()) {
       try {
         m_bFileLogEnable = j["file-log-enable"].get<bool>();
         spdlog::debug("doLoadConfig: 'file-log-enable' {}", m_bFileLogEnable);
