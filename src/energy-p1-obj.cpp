@@ -134,11 +134,11 @@ CEnergyP1::CEnergyP1()
   spdlog::debug("Starting the vscpl2drv-energy-p1 driver...");
 
   m_bConsoleLogEnable = true;
-  m_consoleLogLevel   = spdlog::level::info;
+  m_consoleLogLevel   = spdlog::level::debug;
   m_consoleLogPattern = "[vscpl2drv-energy.p1 %c] [%^%l%$] %v";
 
   m_bFileLogEnable   = true;
-  m_fileLogLevel     = spdlog::level::info;
+  m_fileLogLevel     = spdlog::level::debug;
   m_fileLogPattern   = "[vscpl2drv-energy-p1 %c] [%^%l%$] %v";
   m_path_to_log_file = "/var/log/vscp/vscpl2drv-energy-p1.log";
   m_max_log_size     = 5242880;
@@ -726,6 +726,7 @@ CEnergyP1::doLoadConfig(std::string &path)
     if (j.contains("dtr-on-start") && j["dtr-on-start"].is_boolean()) {
       try {
         m_bDtrOnStart = j["dtr-on-start"].get<bool>();
+        spdlog::debug("doLoadConfig: 'dtr-on-start' {}", m_bDtrOnStart);
       }
       catch (const std::exception &ex) {
         spdlog::error("ReadConfig: Failed to read 'dtr-on-start' Error='{}'", ex.what());
@@ -756,6 +757,7 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("token") && it["token"].is_string()) {
         try {
           pItem->setToken(it["token"].get<std::string>());
+          spdlog::debug("doLoadConfig: 'token' {}", it["token"].get<std::string>());
         }
         catch (const std::exception &ex) {
           spdlog::error("ReadConfig: Failed to read 'token' Error='{}'", ex.what());
