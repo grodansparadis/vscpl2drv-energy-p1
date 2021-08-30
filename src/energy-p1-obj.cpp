@@ -1903,7 +1903,6 @@ workerThread(void *pData)
         char c = com.readChar(&read);
         if (read) {
           buf[pos++] = c;
-          continue;
         }
       }
     }
@@ -2213,6 +2212,7 @@ workerThread(void *pData)
           }
         }
       }
+      strbuf = "";
     }
 
   } // Main loop
