@@ -1180,7 +1180,7 @@ CEnergyP1::handleHLO(vscpEvent *pEvent)
 
   // Must be an operation
   if (!j["op"].is_string() || j["op"].is_null()) {
-    spdlog::error("HLO-command: Missing op [%s]", j.dump().c_str());
+    spdlog::error("HLO-command: Missing op [{}]", j.dump().c_str());
     return false;
   }
 
@@ -1674,7 +1674,7 @@ CEnergyP1::deleteVariable(vscpEventEx &ex, const json &json_reg)
   }
   else {
     j["result"] = VSCP_ERROR_MISSING;
-    spdlog::warn("Variable [%s] is unknown.", j.value("name", "").c_str());
+    spdlog::warn("Variable [{}] is unknown.", j.value("name", "").c_str());
   }
 
 abort:
@@ -1845,7 +1845,7 @@ CEnergyP1::readEncryptionKey(const std::string &path)
     return vscp_hexStr2ByteArray(m_vscp_key, 32, strStream.str().c_str());
   }
   catch (...) {
-    spdlog::error("Failed to read encryption key file [%s]", m_path.c_str());
+    spdlog::error("Failed to read encryption key file [{}]", m_path.c_str());
     return false;
   }
 
