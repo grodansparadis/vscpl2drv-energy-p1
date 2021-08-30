@@ -1873,10 +1873,11 @@ workerThread(void *pData)
     return NULL;
   }
 
-  spdlog::debug("Starting Worker loop");
+  spdlog::debug("Working thread: Starting Worker loop");
 
   // Open the serial port
   if (!com.open((const char *) pObj->m_serialDevice.c_str())) {
+    spdlog::debug("Working thread: Failed to open serial port");
     return NULL;
   }
 
@@ -1889,6 +1890,7 @@ workerThread(void *pData)
 
   // Set DTR if requested to do so
   if (pObj->m_bDtrOnStart) {
+    spdlog::debug("Working thread: DTR ON");
     com.DtrOn();
   }
 
@@ -1918,6 +1920,7 @@ workerThread(void *pData)
     size_t pos_cr;
     std::string exstr;
     if (std::string::npos != (pos_cr = strbuf.find("\n"))) {
+      spdlog::debug("Working thread: Line");
       exstr  = strbuf.substr(0, pos_cr);
       strbuf = strbuf.substr(pos_cr + 1);
     }
@@ -2212,13 +2215,15 @@ workerThread(void *pData)
 
   // Set DTR if requested to do so
   if (pObj->m_bDtrOnStart) {
+    spdlog::debug("Working thread: DTR OFF");
     com.DtrOff();
   }
 
   // Close the serial port
+  spdlog::debug("Working thread: Closing serial port");
   com.close();
 
-  spdlog::debug("Ending Worker loop");
+  spdlog::debug("Working thread: Ending Worker loop");
 
   return NULL;
 }
