@@ -1,6 +1,6 @@
 {
   "write" : false,
-  "debug" : false,       
+  "debug" : true,       
   "serial": {
     "port": "/dev/ttyUSB0",
     "baudrate": 115200,
@@ -16,7 +16,7 @@
     "console-level": "trace",    
     "console-pattern": "[vcpl2drv-energyp1 %c] [%^%l%$] %v",
     "file-log-enable": true,
-    "file-log-level": "off|critical|error|warn|info|debug|trace",
+    "file-log-level": "trace",
     "file-log-path" : "/var/log/vscp/vscpl2drv-energyp1.log",
     "file-log-pattern": "[vscpl2drv-energyp1: %c] [%^%l%$] %v", 
     "file-log-max-size": 50000,

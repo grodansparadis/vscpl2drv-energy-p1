@@ -1911,8 +1911,10 @@ workerThread(void *pData)
         char c = com.readChar(&read);
         if (read) {
           buf[pos++] = c;
+	  if (0x0d == c) break;
         }
       }
+      continue; // No CR
     }
     else {
       // If no data we sleep for a second  - no rush here...
@@ -1924,17 +1926,18 @@ workerThread(void *pData)
     strbuf += buf; // Add to the string buffer
 
     // Check for a full line of input
-    size_t pos_cr;
-    std::string exstr;
-    if (std::string::npos != (pos_cr = strbuf.find("\n"))) {
-      spdlog::debug("Working thread: Line");
-      exstr  = strbuf.substr(0, pos_cr);
-      strbuf = strbuf.substr(pos_cr + 1);
-      spdlog::debug("exstr={} strbuf={}", exstr, strbuf);
-    }
-    else {
-      continue;
-    }
+    //size_t pos_cr;
+    //std::string exstr;
+    //if (std::string::npos != (pos_cr = strbuf.find("\r\n"))) {
+    //  spdlog::debug("Working thread: Line {}", strbuf);
+    //  exstr  = strbuf.substr(0, pos_cr);
+    //  strbuf = strbuf.substr(pos_cr + 3);
+    //  spdlog::debug("exstr=**{0}** strbuf=**{1}**", exstr, strbuf);
+    //}
+    //else {
+    //  continue;
+    //}
+    std::string exstr = strbuf;
 
 
     for (auto const &pItem : pObj->m_listItems) {
@@ -2222,6 +2225,7 @@ workerThread(void *pData)
         }
       }
       strbuf = "";
+      *buf = 0;
     }
 
   } // Main loop
