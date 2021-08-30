@@ -1923,7 +1923,10 @@ workerThread(void *pData)
       spdlog::debug("Working thread: Line");
       exstr  = strbuf.substr(0, pos_cr);
       strbuf = strbuf.substr(pos_cr + 1);
-      spdlog::trace("exstr={} strbuf={}", exstr, strbuf);
+      spdlog::debug("exstr={} strbuf={}", exstr, strbuf);
+    }
+    else {
+      continue;
     }
 
     for (auto const &pItem : pObj->m_listItems) {
