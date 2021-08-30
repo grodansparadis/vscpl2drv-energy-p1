@@ -82,5 +82,9 @@
       "my",
       "on",
       "spdlog"
+    ],
+    "cSpell.words": [
+      "get",
+      "int"
     ]
 }

@@ -924,8 +924,8 @@ CEnergyP1::doLoadConfig(std::string &path)
       if (it.contains("units") && it["units"].is_object()) {
 
         for (auto &itt : it["units"].items()) {
-          pItem->addUnit(itt.key(), itt.value());
-          spdlog::debug("doLoadConfig: 'units' {} {}", itt.key(), itt.value());
+          spdlog::debug("doLoadConfig: 'units' {} {}", itt.key(), itt.value().get<int>());
+          pItem->addUnit(itt.key(), itt.value().get<int>());
         }
       }
 
@@ -1901,6 +1901,7 @@ workerThread(void *pData)
         char c = com.readChar(&read);
         if (read) {
           buf[pos++] = c;
+          continue;
         }
       }
     }
