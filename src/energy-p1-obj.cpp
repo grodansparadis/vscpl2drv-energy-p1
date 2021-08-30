@@ -1852,7 +1852,15 @@ CEnergyP1::readEncryptionKey(const std::string &path)
   return true;
 }
 
+
+
+
+
 // ----------------------------------------------------------------------------
+
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////
 // workerThread
@@ -1927,6 +1935,7 @@ workerThread(void *pData)
     else {
       continue;
     }
+
 
     for (auto const &pItem : pObj->m_listItems) {
 
