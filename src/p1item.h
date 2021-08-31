@@ -127,7 +127,7 @@ public:
     vscp_type
   */
   uint16_t getVscpType(void) { return m_vscp_type; };
-  void setVscpType(uint16_t vscp_class) { m_description = vscp_class; };
+  void setVscpType(uint16_t vscp_type) { m_vscp_type = vscp_type; };
 
   /*
     guid_lsb
