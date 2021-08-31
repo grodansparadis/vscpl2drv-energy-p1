@@ -1968,7 +1968,7 @@ dowork:
       	ex.vscp_type  = pItem->getVscpType();
       	//memcpy(ex.GUID, pObj->m_guid.m_id, 16);
         pObj->m_guid.writeGUID(ex.GUID);
-        spdlog::debug("GUID[0] = %02x", ex.GUID[0]);
+        spdlog::debug("GUID[0] = {0}", ex.GUID[0]);
       	ex.GUID[15]  = pItem->getGuidLsb();
       	double value = pItem->getValue(strbuf);
 
