@@ -1967,8 +1967,7 @@ dowork:
       	ex.vscp_class = pItem->getVscpClass();
       	ex.vscp_type  = pItem->getVscpType();
       	//memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-        pObj->m_guid.writeGUID(ex.GUID);
-        spdlog::debug("GUID[0] = {0}", ex.GUID[0]);
+        pObj->m_guid.writeGUID(ex.GUID);        
       	ex.GUID[15]  = pItem->getGuidLsb();
       	double value = pItem->getValue(strbuf);
 
@@ -1986,7 +1985,7 @@ dowork:
 
         switch (pItem->getVscpClass()) {
         
-	  case VSCP_CLASS1_MEASUREMENT: {
+	        case VSCP_CLASS1_MEASUREMENT: {
 
             switch (pItem->getLevel1Coding()) {
 
@@ -2059,6 +2058,7 @@ dowork:
                                                         pItem->getSensorIndex(),
                                                         pItem->getZone(),
                                                         pItem->getSubZone())) {
+              spdlog::debug("GUID[0] = {0}", ex.GUID[0]);                                              
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
@@ -2068,7 +2068,7 @@ dowork:
                   spdlog::error("Failed to add event to receive queue.");
                 }
                 else {
-		  spdlog::debug("Event added to i reeive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
+		  spdlog::debug("Event added to i receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
 		}
 
               }
