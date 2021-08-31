@@ -1877,7 +1877,7 @@ workerThread(void *pData)
 
   // Linux serial port
   Comm com;
-
+  
   CEnergyP1 *pObj = (CEnergyP1 *) pData;
   if (nullptr == pData) {
     return NULL;
@@ -1958,6 +1958,8 @@ dowork:
     for (auto const &pItem : pObj->m_listItems) {
 
       if (exstr.rfind(pItem->getToken(), 0) == 0) {
+
+	// Initialize new event
       	vscpEventEx ex;
       	ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
       	ex.timestamp = vscp_makeTimeStamp();
@@ -1981,8 +1983,11 @@ dowork:
         pObj->m_lastValue[pItem->getStorageName()] = value;
 
         switch (pItem->getVscpClass()) {
-          case VSCP_CLASS1_MEASUREMENT: {
+        
+	  case VSCP_CLASS1_MEASUREMENT: {
+
             switch (pItem->getLevel1Coding()) {
+
               case VSCP_DATACODING_STRING: {
                 if (!vscp_makeStringMeasurementEventEx(&ex,
                                                        (float) value,
@@ -1991,6 +1996,7 @@ dowork:
                   break;
                 }
               } break;
+
               case VSCP_DATACODING_INTEGER: {
                 uint64_t val64 = value;
                 if (!vscp_convertIntegerToNormalizedEventData(ex.data,
@@ -2001,6 +2007,7 @@ dowork:
                   break;
                 }
               } break;
+
               case VSCP_DATACODING_NORMALIZED: {
                 uint64_t val64 = value;
                 if (!vscp_convertIntegerToNormalizedEventData(ex.data,
@@ -2011,6 +2018,7 @@ dowork:
                   break;
                 }
               } break;
+
               case VSCP_DATACODING_SINGLE:
                 if (!vscp_makeFloatMeasurementEventEx(&ex,
                                                       (float) value,
@@ -2019,6 +2027,7 @@ dowork:
                   break;
                 }
                 break;
+
               case VSCP_DATACODING_DOUBLE:
                 break;
             }
@@ -2056,6 +2065,10 @@ dowork:
                 if (!pObj->addEvent2ReceiveQueue(pEvent)) {
                   spdlog::error("Failed to add event to receive queue.");
                 }
+                else {
+		  spdlog::debug("Event added to i reeive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
+		}
+
               }
               else {
                 spdlog::error("Failed to allocate memory for event.");
@@ -2082,6 +2095,10 @@ dowork:
                 if (!pObj->addEvent2ReceiveQueue(pEvent)) {
                   spdlog::error("Failed to add event to receive queue.");
                 }
+		else {
+		  spdlog::debug("Event added to receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
+		}
+
               }
               else {
                 spdlog::error("Failed to allocate memory for event.");
@@ -2153,7 +2170,7 @@ dowork:
                 if (!pObj->addEvent2ReceiveQueue(pEvent)) {
                   spdlog::error("AlarmOff: Failed to add event to receive queue.");
                 }
-                else {
+		else {
                   spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
                   pAlarm->setSentFlag();
                   // Reset Possible OFF flag
