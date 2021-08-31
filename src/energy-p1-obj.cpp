@@ -1883,7 +1883,7 @@ workerThread(void *pData)
     return NULL;
   }
 
-  spdlog::debug("Working thread: Starting Worker loop");
+  spdlog::debug("Working thread: Starting Worker loop GUID = {}", pObj->m_guid.getAsString());
 
   // Open the serial port
   if (!com.open((const char *) pObj->m_serialDevice.c_str())) {
@@ -1959,7 +1959,7 @@ dowork:
 
       if (exstr.rfind(pItem->getToken(), 0) == 0) {
 
-	// Initialize new event
+	      // Initialize new event
       	vscpEventEx ex;
       	ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
       	ex.timestamp = vscp_makeTimeStamp();
@@ -1968,6 +1968,7 @@ dowork:
       	ex.vscp_type  = pItem->getVscpType();
       	//memcpy(ex.GUID, pObj->m_guid.m_id, 16);
         pObj->m_guid.writeGUID(ex.GUID);
+        spdlog::debug("GUID[0] = %02x", ex.GUID[0]);
       	ex.GUID[15]  = pItem->getGuidLsb();
       	double value = pItem->getValue(strbuf);
 
