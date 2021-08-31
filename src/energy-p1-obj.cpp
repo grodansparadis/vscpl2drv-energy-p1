@@ -1912,7 +1912,7 @@ workerThread(void *pData)
 
     if (com.isCharReady()) {
       int read;
-      while (com.isCharReady() && (pos < (sizeof(buf) - 1))) {
+      while (com.isCharReady()) {
         char c = com.readChar(&read);
         if (read) {
           buf[pos++] = c;
@@ -1922,7 +1922,7 @@ workerThread(void *pData)
 	  }
 	  //printf("%c", c);
 	  if (0x0a == c) {
-		goto dowork;
+		  goto dowork;
 	  }
         }
       }
