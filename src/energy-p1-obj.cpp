@@ -1907,13 +1907,24 @@ workerThread(void *pData)
   // Work on
   while (!pObj->m_bQuit) {
 
+    pos = 0;	  
+    *buf = 0;	  
+
     if (com.isCharReady()) {
       int read;
       while (com.isCharReady() && (pos < (sizeof(buf) - 1))) {
         char c = com.readChar(&read);
         if (read) {
           buf[pos++] = c;
-	  if (0x0d == c) break;
+	  if (pos > sizeof(buf)-1) {
+		  spdlog::debug("Working thread: Serial Buffer overlow");  
+		pos = 0;
+	  }
+	  printf("%c", c);
+	  if (0x0a == c) {
+		fprintf(stderr,"]\n");  
+		goto dowork;
+	  }
         }
       }
       continue; // No CR
@@ -1924,26 +1935,30 @@ workerThread(void *pData)
       continue;
     }
 
+dowork:
+
     buf[pos] = 0;  // Add terminating zero
-    strbuf += buf; // Add to the string buffer
+    
+    strbuf = buf; // Add to the string buffer
 
     // Check for a full line of input
-    //size_t pos_cr;
-    //std::string exstr;
-    //if (std::string::npos != (pos_cr = strbuf.find("\r\n"))) {
-    //  spdlog::debug("Working thread: Line {}", strbuf);
-    //  exstr  = strbuf.substr(0, pos_cr);
-    //  strbuf = strbuf.substr(pos_cr + 3);
-    //  spdlog::debug("exstr=**{0}** strbuf=**{1}**", exstr, strbuf);
-    //}
+    size_t pos_find;
+    std::string exstr;
+    std::string valstr;
+    if (std::string::npos != (pos_find = strbuf.find("("))) {
+      spdlog::debug("Working thread: Line {}", strbuf);
+      exstr  = strbuf.substr(0, pos_find);
+      valstr = strbuf.substr(pos_find + 2);
+      spdlog::debug("exstr={0} strbuf={1} {2}", exstr, valstr, pObj->m_listItems.size());
+    }
     //else {
     //  continue;
     //}
-    std::string exstr = strbuf;
 
 
     for (auto const &pItem : pObj->m_listItems) {
 
+	printf("------------------------------------------------->\n");	    
       vscpEventEx ex;
       ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
       ex.timestamp = vscp_makeTimeStamp();
@@ -1952,10 +1967,11 @@ workerThread(void *pData)
       ex.vscp_type  = pItem->getVscpType();
       memcpy(ex.GUID, pObj->m_guid.m_id, 16);
       ex.GUID[15]  = pItem->getGuidLsb();
-      double value = pItem->getValue(exstr);
+      double value = pItem->getValue(valstr);
+      printf("value = %f\n", value);
 
       if (exstr.rfind(pItem->getToken(), 0) == 0) {
-
+        printf("MATCH!\n");
         spdlog::debug("Found token={0} value={1} unit={2}",
                       pItem->getToken(),
                       pItem->getValue(exstr),
@@ -2226,8 +2242,6 @@ workerThread(void *pData)
           }
         }
       }
-      strbuf = "";
-      *buf = 0;
     }
 
   } // Main loop
