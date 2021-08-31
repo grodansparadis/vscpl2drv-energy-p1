@@ -1920,9 +1920,8 @@ workerThread(void *pData)
 		  spdlog::debug("Working thread: Serial Buffer overlow");  
 		pos = 0;
 	  }
-	  printf("%c", c);
+	  //printf("%c", c);
 	  if (0x0a == c) {
-		fprintf(stderr,"]\n");  
 		goto dowork;
 	  }
         }
@@ -1937,45 +1936,42 @@ workerThread(void *pData)
 
 dowork:
 
-    buf[pos] = 0;  // Add terminating zero
-    
-    strbuf = buf; // Add to the string buffer
+    buf[pos] = 0;  // Add terminating zero 
+    strbuf = buf;  // Add to the string buffer
 
     // Check for a full line of input
     size_t pos_find;
     std::string exstr;
     std::string valstr;
     if (std::string::npos != (pos_find = strbuf.find("("))) {
-      spdlog::debug("Working thread: Line {}", strbuf);
+      //spdlog::debug("Working thread: Line {}", strbuf);
       exstr  = strbuf.substr(0, pos_find);
       valstr = strbuf.substr(pos_find + 2);
-      spdlog::debug("exstr={0} strbuf={1} {2}", exstr, valstr, pObj->m_listItems.size());
+      //spdlog::debug("exstr={0} valstr={1}", exstr, valstr);
     }
-    //else {
-    //  continue;
-    //}
+    else {
+      continue;
+    }
 
+    spdlog::trace("exstr={0} valstr={1} strbuf={2}", exstr, valstr, strbuf);
 
     for (auto const &pItem : pObj->m_listItems) {
 
-	printf("------------------------------------------------->\n");	    
-      vscpEventEx ex;
-      ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
-      ex.timestamp = vscp_makeTimeStamp();
-      vscp_setEventExDateTimeBlockToNow(&ex);
-      ex.vscp_class = pItem->getVscpClass();
-      ex.vscp_type  = pItem->getVscpType();
-      memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-      ex.GUID[15]  = pItem->getGuidLsb();
-      double value = pItem->getValue(valstr);
-      printf("value = %f\n", value);
-
       if (exstr.rfind(pItem->getToken(), 0) == 0) {
-        printf("MATCH!\n");
-        spdlog::debug("Found token={0} value={1} unit={2}",
+      	vscpEventEx ex;
+      	ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+      	ex.timestamp = vscp_makeTimeStamp();
+      	vscp_setEventExDateTimeBlockToNow(&ex);
+      	ex.vscp_class = pItem->getVscpClass();
+      	ex.vscp_type  = pItem->getVscpType();
+      	memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+      	ex.GUID[15]  = pItem->getGuidLsb();
+      	double value = pItem->getValue(strbuf);
+
+        spdlog::debug("MATCH! - Found token={0} value={1} unit={2}",
                       pItem->getToken(),
-                      pItem->getValue(exstr),
-                      pItem->getUnit(exstr));
+                      pItem->getValue(strbuf),
+                      pItem->getUnit(strbuf));
 
         if (pObj->m_bDebug) {
           ;
@@ -1991,7 +1987,7 @@ dowork:
                 if (!vscp_makeStringMeasurementEventEx(&ex,
                                                        (float) value,
                                                        pItem->getSensorIndex(),
-                                                       pItem->getUnit(exstr))) {
+                                                       pItem->getUnit(strbuf))) {
                   break;
                 }
               } break;
@@ -2000,7 +1996,7 @@ dowork:
                 if (!vscp_convertIntegerToNormalizedEventData(ex.data,
                                                               &ex.sizeData,
                                                               val64,
-                                                              pItem->getUnit(exstr),
+                                                              pItem->getUnit(strbuf),
                                                               pItem->getSensorIndex())) {
                   break;
                 }
@@ -2010,7 +2006,7 @@ dowork:
                 if (!vscp_convertIntegerToNormalizedEventData(ex.data,
                                                               &ex.sizeData,
                                                               val64,
-                                                              pItem->getUnit(exstr),
+                                                              pItem->getUnit(strbuf),
                                                               pItem->getSensorIndex())) {
                   break;
                 }
@@ -2019,7 +2015,7 @@ dowork:
                 if (!vscp_makeFloatMeasurementEventEx(&ex,
                                                       (float) value,
                                                       pItem->getSensorIndex(),
-                                                      pItem->getUnit(exstr))) {
+                                                      pItem->getUnit(strbuf))) {
                   break;
                 }
                 break;
@@ -2030,7 +2026,7 @@ dowork:
           } break;
 
           case VSCP_CLASS1_MEASUREMENT64: {
-            if (!vscp_makeFloatMeasurementEventEx(&ex, (float) value, pItem->getSensorIndex(), pItem->getUnit(exstr))) {
+            if (!vscp_makeFloatMeasurementEventEx(&ex, (float) value, pItem->getSensorIndex(), pItem->getUnit(strbuf))) {
               break;
             }
           } break;
@@ -2048,7 +2044,7 @@ dowork:
             if (vscp_makeLevel2StringMeasurementEventEx(&ex,
                                                         pItem->getVscpType(),
                                                         value,
-                                                        pItem->getUnit(exstr),
+                                                        pItem->getUnit(strbuf),
                                                         pItem->getSensorIndex(),
                                                         pItem->getZone(),
                                                         pItem->getSubZone())) {
@@ -2074,7 +2070,7 @@ dowork:
             if (!vscp_makeLevel2FloatMeasurementEventEx(&ex,
                                                         pItem->getVscpType(),
                                                         value,
-                                                        pItem->getUnit(exstr),
+                                                        pItem->getUnit(strbuf),
                                                         pItem->getSensorIndex(),
                                                         pItem->getZone(),
                                                         pItem->getSubZone())) {
@@ -2240,9 +2236,9 @@ dowork:
               }
             }
           }
-        }
-      }
-    }
+        } 
+      } // if match
+    } // Iterate
 
   } // Main loop
 
