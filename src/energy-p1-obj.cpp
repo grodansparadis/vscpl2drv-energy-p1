@@ -929,6 +929,8 @@ CEnergyP1::doLoadConfig(std::string &path)
         }
       }
 
+      m_listItems.push_back(pItem);
+
     } // iterator items
 
     // * * * alarms * * *
