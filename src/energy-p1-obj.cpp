@@ -1738,7 +1738,7 @@ CEnergyP1::doWork(std::string &strbuf)
   std::string valstr;
 
   if (std::string::npos != (pos_find = strbuf.find("("))) {
-    spdlog::debug("Working thread: Line {}", strbuf);
+    spdlog::trace("Working thread: Line {}", strbuf);
     exstr  = strbuf.substr(0, pos_find);
     valstr = strbuf.substr(pos_find + 2);
   }
@@ -1746,7 +1746,7 @@ CEnergyP1::doWork(std::string &strbuf)
     return false;
   }
 
-  spdlog::debug("exstr={0} valstr={1} strbuf={2}", exstr, valstr, strbuf);
+  spdlog::trace("exstr={0} valstr={1} strbuf={2}", exstr, valstr, strbuf);
 
   for (auto const &pItem : m_listItems) {
 
@@ -2261,11 +2261,13 @@ workerThread(void *pData)
             spdlog::debug("Working thread: Serial Buffer overlow");
             continue;
           }
-          // printf("%c", c);
+          // Check for EOL
           if (0x0a == c) {
             buf[pos] = 0;           // Add terminating zero
             strbuf   = buf;         // Add to the string buffer
-            pObj->doWork(strbuf);   // Do work
+            //printf("strnuf = %s\n", strbuf.c_str());
+	    pObj->doWork(strbuf);   // Do work
+	    break;
           }
         }
       } // while
