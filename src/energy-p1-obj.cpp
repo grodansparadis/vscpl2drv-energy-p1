@@ -1961,14 +1961,7 @@ dowork:
 
 	      // Initialize new event
       	vscpEventEx ex;
-      	ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
-      	ex.timestamp = vscp_makeTimeStamp();
-      	vscp_setEventExDateTimeBlockToNow(&ex);
-      	ex.vscp_class = pItem->getVscpClass();
-      	ex.vscp_type  = pItem->getVscpType();
-      	//memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-        pObj->m_guid.writeGUID(ex.GUID);        
-      	ex.GUID[15]  = pItem->getGuidLsb();
+      	ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;      	
       	double value = pItem->getValue(strbuf);
 
         spdlog::debug("MATCH! - Found token={0} value={1} unit={2}",
@@ -2058,8 +2051,15 @@ dowork:
                                                         pItem->getSensorIndex(),
                                                         pItem->getZone(),
                                                         pItem->getSubZone())) {
-              pObj->m_guid.writeGUID(ex.GUID);                                            
-              spdlog::debug("GUID[0] = {0}", ex.GUID[0]);                                              
+              
+           
+              ex.timestamp = vscp_makeTimeStamp();
+      	      vscp_setEventExDateTimeBlockToNow(&ex);
+      	      ex.vscp_class = pItem->getVscpClass();
+      	      ex.vscp_type  = pItem->getVscpType();
+              pObj->m_guid.writeGUID(ex.GUID);        
+      	      ex.GUID[15]  = pItem->getGuidLsb();           
+
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
@@ -2089,8 +2089,14 @@ dowork:
                                                         pItem->getSensorIndex(),
                                                         pItem->getZone(),
                                                         pItem->getSubZone())) {
-              pObj->m_guid.writeGUID(ex.GUID);                                            
-              spdlog::debug("GUID[0] = {0}", ex.GUID[0]);
+         
+              ex.timestamp = vscp_makeTimeStamp();
+      	      vscp_setEventExDateTimeBlockToNow(&ex);
+      	      ex.vscp_class = pItem->getVscpClass();
+      	      ex.vscp_type  = pItem->getVscpType();
+              pObj->m_guid.writeGUID(ex.GUID);        
+      	      ex.GUID[15]  = pItem->getGuidLsb();    
+
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
