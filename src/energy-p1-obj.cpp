@@ -929,6 +929,8 @@ CEnergyP1::doLoadConfig(std::string &path)
         }
       }
 
+      m_listItems.push_back(pItem);
+
     } // iterator items
 
     // * * * alarms * * *
@@ -1852,7 +1854,15 @@ CEnergyP1::readEncryptionKey(const std::string &path)
   return true;
 }
 
+
+
+
+
 // ----------------------------------------------------------------------------
+
+
+
+
 
 /////////////////////////////////////////////////////////////////////////////
 // workerThread
@@ -1944,6 +1954,7 @@ dowork:
     //else {
     //  continue;
     //}
+
 
     for (auto const &pItem : pObj->m_listItems) {
 
