@@ -1961,7 +1961,7 @@ dowork:
 
 	      // Initialize new event
       	vscpEventEx ex;
-      	ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;      	
+      	ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;      	
       	double value = pItem->getValue(strbuf);
 
         spdlog::debug("MATCH! - Found token={0} value={1} unit={2}",
@@ -2058,7 +2058,7 @@ dowork:
       	      ex.vscp_class = pItem->getVscpClass();
       	      ex.vscp_type  = pItem->getVscpType();
               pObj->m_guid.writeGUID(ex.GUID);        
-      	      //ex.GUID[15]  = pItem->getGuidLsb();           
+      	      ex.GUID[15]  = pItem->getGuidLsb();           
 
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
@@ -2082,6 +2082,7 @@ dowork:
           } break;
 
           case VSCP_CLASS2_MEASUREMENT_FLOAT: {
+
             if (!vscp_makeLevel2FloatMeasurementEventEx(&ex,
                                                         pItem->getVscpType(),
                                                         value,
@@ -2105,10 +2106,9 @@ dowork:
                 if (!pObj->addEvent2ReceiveQueue(pEvent)) {
                   spdlog::error("Failed to add event to receive queue.");
                 }
-		else {
-		  spdlog::debug("Event added to receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
-		}
-
+		            else {
+		              spdlog::debug("Event added to receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
+		            }
               }
               else {
                 spdlog::error("Failed to allocate memory for event.");
@@ -2126,20 +2126,21 @@ dowork:
 
           if (alarm_op::gt == pAlarm->getOp()) {
             if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
+              
               // Send alarm
               vscpEventEx ex;
-              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
               ex.timestamp = vscp_makeTimeStamp();
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
               ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
-              //memcpy(ex.GUID, pObj->m_guid.m_id, 16);
               pObj->m_guid.writeGUID(ex.GUID);
               ex.GUID[15]       = pItem->getGuidLsb();
               ex.sizeData       = 3;
               ex.data[0]        = pAlarm->getAlarmByte();
               ex.data[1]        = pAlarm->getZone();
               ex.data[2]        = pAlarm->getSubZone();
+
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
@@ -2162,12 +2163,11 @@ dowork:
             if (pAlarm->getValue() < value) {
               // send alarm
               vscpEventEx ex;
-              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
               ex.timestamp = vscp_makeTimeStamp();
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
               ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
-              //memcpy(ex.GUID, pObj->m_guid.m_id, 16);
               pObj->m_guid.writeGUID(ex.GUID);
               ex.GUID[15]       = pItem->getGuidLsb();
               ex.sizeData       = 3;
@@ -2202,7 +2202,7 @@ dowork:
             if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
               // Send alarm
               vscpEventEx ex;
-              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
               ex.timestamp = vscp_makeTimeStamp();
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
@@ -2236,7 +2236,7 @@ dowork:
             if (pAlarm->getValue() < value) {
               // send alarm
               vscpEventEx ex;
-              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL;
+              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
               ex.timestamp = vscp_makeTimeStamp();
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
