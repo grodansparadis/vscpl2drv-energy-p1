@@ -119,6 +119,9 @@ CEnergyP1::CEnergyP1()
   pthread_mutex_init(&m_mutexSendQueue, NULL);
   pthread_mutex_init(&m_mutexReceiveQueue, NULL);
 
+  // Change locale to get the correct decimal point "."
+  setlocale(LC_NUMERIC, "C");
+
   // Init pool
   spdlog::init_thread_pool(8192, 1);
 
@@ -1757,10 +1760,11 @@ CEnergyP1::doWork(std::string &strbuf)
       ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
       double value = pItem->getValue(strbuf);
 
-      spdlog::debug("MATCH! - Found token={0} value={1} unit={2}",
+      spdlog::debug("MATCH! - Found token={0} value={1} unit={2} - {3}",
                     pItem->getToken(),
                     pItem->getValue(strbuf),
-                    pItem->getUnit(strbuf));
+                    pItem->getUnit(strbuf),
+		    strbuf);
 
       if (m_bDebug) {
         ;
@@ -2215,6 +2219,10 @@ workerThread(void *pData)
   char buf[1024];
   std::string strbuf;
   uint16_t pos = 0;
+
+  // Change locale to get the correct decimal point "."
+  std::setlocale(LC_NUMERIC, "C");
+  //setlocale(LC_NUMERIC, "");
 
   // Linux serial port
   Comm com;
