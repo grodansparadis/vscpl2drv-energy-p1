@@ -2058,7 +2058,7 @@ dowork:
       	      ex.vscp_class = pItem->getVscpClass();
       	      ex.vscp_type  = pItem->getVscpType();
               pObj->m_guid.writeGUID(ex.GUID);        
-      	      ex.GUID[15]  = pItem->getGuidLsb();           
+      	      //ex.GUID[15]  = pItem->getGuidLsb();           
 
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
