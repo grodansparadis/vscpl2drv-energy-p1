@@ -84,7 +84,7 @@
       "store": "reactive_energy_in"
     },
     {
-      "token": "1-0:1.7.0 ",
+      "token": "1-0:1.7.0",
       "description": "Active effect out",
       "vscp-class": 1040,
       "vscp-type": 13,
@@ -99,7 +99,7 @@
       "store": "active_effect_out"
     },
     {
-      "token": "1-0:2.7.0 ",
+      "token": "1-0:2.7.0",
       "description": "Active effect in",
       "vscp-class": 1040,
       "vscp-type": 13,
@@ -114,7 +114,7 @@
       "store": "active_effect_in"
     },
     {
-      "token": "1-0:3.7.0 ",
+      "token": "1-0:3.7.0",
       "description": "Reactive effect out",
       "vscp-class": 1040,
       "vscp-type": 64,
@@ -129,7 +129,7 @@
       "store": "reactive_effect_out"
     },
     {
-      "token": "1-0:4.7.0 ",
+      "token": "1-0:4.7.0",
       "description": "Reactive effect in",
       "vscp-class": 1040,
       "vscp-type": 64,
@@ -144,7 +144,7 @@
       "store": "reactive_effect_in"
     },
     {
-      "token": "1-0:21.7.0 ",
+      "token": "1-0:21.7.0",
       "description": "Active effect out L1",
       "vscp-class": 1040,
       "vscp-type": 13,
@@ -159,7 +159,7 @@
       "store": "active_effect_out_l1"
     },
     {
-      "token": "1-0:41.7.0 ",
+      "token": "1-0:41.7.0",
       "description": "Active effect out L2",
       "vscp-class": 1040,
       "vscp-type": 13,
@@ -174,7 +174,7 @@
       "store": "active_effect_out_l2"
     },
     {
-      "token": "1-0:61.7.0 ",
+      "token": "1-0:61.7.0",
       "description": "Active effect out L3",
       "vscp-class": 1040,
       "vscp-type": 13,
@@ -189,7 +189,7 @@
       "store": "active_effect_out_l3"
     },
     {
-      "token": "1-0:22.7.0 ",
+      "token": "1-0:22.7.0",
       "description": "Active effect in L1",
       "vscp-class": 1040,
       "vscp-type": 13,
@@ -204,7 +204,7 @@
       "store": "active_effect_in_l1"
     },
     {
-      "token": "1-0:42.7.0 ",
+      "token": "1-0:42.7.0",
       "description": "Active effect in L2",
       "vscp-class": 1040,
       "vscp-type": 13,
@@ -219,7 +219,7 @@
       "store": "active_effect_in_l1"
     },
     {
-      "token": "1-0:62.7.0 ",
+      "token": "1-0:62.7.0",
       "description": "Active effect in L3",
       "vscp-class": 1040,
       "vscp-type": 13,
@@ -234,7 +234,7 @@
       "store": "active_effect_in_l3"
     },
     {
-      "token": "1-0:23.7.0 ",
+      "token": "1-0:23.7.0",
       "description": "Reactive effect out L1",
       "vscp-class": 1040,
       "vscp-type": 64,
@@ -249,7 +249,7 @@
       "store": "reactive_effect_out_l1"
     },
     {
-      "token": "1-0:43.7.0 ",
+      "token": "1-0:43.7.0",
       "description": "Reactive effect out L2",
       "vscp-class": 1040,
       "vscp-type": 64,
@@ -264,7 +264,7 @@
       "store": "reactive_effect_out_l2"
     },
     {
-      "token": "1-0:63.7.0 ",
+      "token": "1-0:63.7.0",
       "description": "Reactive effect out L3",
       "vscp-class": 1040,
       "vscp-type": 64,
@@ -279,7 +279,7 @@
       "store": "reactive_effect_out_l3"
     },
     {
-      "token": "1-0:24.7.0 ",
+      "token": "1-0:24.7.0",
       "description": "Reactive effect in L1",
       "vscp-class": 1040,
       "vscp-type": 64,
@@ -294,7 +294,7 @@
       "store": "reactive_effect_in_l1"
     },
     {
-      "token": "1-0:44.7.0 ",
+      "token": "1-0:44.7.0",
       "description": "Reactive effect in L2",
       "vscp-class": 1040,
       "vscp-type": 64,
@@ -309,7 +309,7 @@
       "store": "reactive_effect_in_l2"
     },
     {
-      "token": "1-0:64.7.0 ",
+      "token": "1-0:64.7.0",
       "description": "Reactive effect in L3",
       "vscp-class": 1040,
       "vscp-type": 64,
