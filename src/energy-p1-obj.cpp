@@ -1925,16 +1925,19 @@ workerThread(void *pData)
 		goto dowork;
 	  }
         }
-      }
+      } // while
+      
       continue; // No CR
     }
     else {
       // If no data we sleep for a second  - no rush here...
-      sleep(1);
+      printf("Sleeping\n");
+      sleep(5);      
       continue;
     }
 
 dowork:
+    continue;
 
     buf[pos] = 0;  // Add terminating zero 
     strbuf = buf;  // Add to the string buffer
