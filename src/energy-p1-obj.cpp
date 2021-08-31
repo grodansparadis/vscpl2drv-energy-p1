@@ -1953,7 +1953,7 @@ dowork:
       continue;
     }
 
-    spdlog::trace("exstr={0} valstr={1} strbuf={2}", exstr, valstr, strbuf);
+    spdlog::debug("exstr={0} valstr={1} strbuf={2}", exstr, valstr, strbuf);
 
     for (auto const &pItem : pObj->m_listItems) {
 
@@ -1966,7 +1966,8 @@ dowork:
       	vscp_setEventExDateTimeBlockToNow(&ex);
       	ex.vscp_class = pItem->getVscpClass();
       	ex.vscp_type  = pItem->getVscpType();
-      	memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+      	//memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+        pObj->m_guid.writeGUID(ex.GUID);
       	ex.GUID[15]  = pItem->getGuidLsb();
       	double value = pItem->getValue(strbuf);
 
@@ -2123,7 +2124,8 @@ dowork:
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
               ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
-              memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              //memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              pObj->m_guid.writeGUID(ex.GUID);
               ex.GUID[15]       = pItem->getGuidLsb();
               ex.sizeData       = 3;
               ex.data[0]        = pAlarm->getAlarmByte();
@@ -2156,7 +2158,8 @@ dowork:
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
               ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
-              memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              //memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              pObj->m_guid.writeGUID(ex.GUID);
               ex.GUID[15]       = pItem->getGuidLsb();
               ex.sizeData       = 3;
               ex.data[0]        = pAlarm->getAlarmByte();
@@ -2195,7 +2198,8 @@ dowork:
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
               ex.vscp_type  = VSCP_TYPE_ALARM_RESET;
-              memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              //memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              pObj->m_guid.writeGUID(ex.GUID);
               ex.GUID[15]       = pItem->getGuidLsb();
               ex.sizeData       = 3;
               ex.data[0]        = pAlarm->getAlarmByte();
@@ -2228,7 +2232,8 @@ dowork:
               vscp_setEventExDateTimeBlockToNow(&ex);
               ex.vscp_class = VSCP_CLASS1_ALARM;
               ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
-              memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              //memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+              pObj->m_guid.writeGUID(ex.GUID);
               ex.GUID[15]       = pItem->getGuidLsb();
               ex.sizeData       = 3;
               ex.data[0]        = pAlarm->getAlarmByte();
