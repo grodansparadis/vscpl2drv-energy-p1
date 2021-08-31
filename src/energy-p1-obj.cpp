@@ -2058,6 +2058,7 @@ dowork:
                                                         pItem->getSensorIndex(),
                                                         pItem->getZone(),
                                                         pItem->getSubZone())) {
+              pObj->m_guid.writeGUID(ex.GUID);                                            
               spdlog::debug("GUID[0] = {0}", ex.GUID[0]);                                              
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
@@ -2068,9 +2069,8 @@ dowork:
                   spdlog::error("Failed to add event to receive queue.");
                 }
                 else {
-		  spdlog::debug("Event added to i receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
-		}
-
+		              spdlog::debug("Event added to i receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
+		            }
               }
               else {
                 spdlog::error("Failed to allocate memory for event.");
@@ -2089,6 +2089,8 @@ dowork:
                                                         pItem->getSensorIndex(),
                                                         pItem->getZone(),
                                                         pItem->getSubZone())) {
+              pObj->m_guid.writeGUID(ex.GUID);                                            
+              spdlog::debug("GUID[0] = {0}", ex.GUID[0]);
               vscpEvent *pEvent = new vscpEvent;
               if (nullptr != pEvent) {
                 pEvent->pdata    = nullptr;
