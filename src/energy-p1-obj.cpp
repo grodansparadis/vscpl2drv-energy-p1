@@ -143,7 +143,6 @@ CEnergyP1::CEnergyP1()
   m_path_to_log_file = "/var/log/vscp/vscpl2drv-energy-p1.log";
   m_max_log_size     = 5242880;
   m_max_log_files    = 7;
-
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -1727,6 +1726,357 @@ CEnergyP1::restart(void)
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// doWork
+//
+
+bool
+CEnergyP1::doWork(std::string &strbuf)
+{
+  // Check for a full line of input
+  size_t pos_find;
+  std::string exstr;
+  std::string valstr;
+
+  if (std::string::npos != (pos_find = strbuf.find("("))) {
+    // spdlog::debug("Working thread: Line {}", strbuf);
+    exstr  = strbuf.substr(0, pos_find);
+    valstr = strbuf.substr(pos_find + 2);
+    // spdlog::debug("exstr={0} valstr={1}", exstr, valstr);
+  }
+  else {
+    return false;
+  }
+
+  spdlog::debug("exstr={0} valstr={1} strbuf={2}", exstr, valstr, strbuf);
+
+  for (auto const &pItem : m_listItems) {
+
+    if (exstr.rfind(pItem->getToken(), 0) == 0) {
+
+      // Initialize new event
+      vscpEventEx ex;
+      ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+      double value = pItem->getValue(strbuf);
+
+      spdlog::debug("MATCH! - Found token={0} value={1} unit={2}",
+                    pItem->getToken(),
+                    pItem->getValue(strbuf),
+                    pItem->getUnit(strbuf));
+
+      if (m_bDebug) {
+        ;
+      }
+
+      // Save measurement value
+      m_lastValue[pItem->getStorageName()] = value;
+
+      switch (pItem->getVscpClass()) {
+
+        case VSCP_CLASS1_MEASUREMENT: {
+
+          switch (pItem->getLevel1Coding()) {
+
+            case VSCP_DATACODING_STRING: {
+              if (!vscp_makeStringMeasurementEventEx(&ex,
+                                                     (float) value,
+                                                     pItem->getSensorIndex(),
+                                                     pItem->getUnit(strbuf))) {
+                break;
+              }
+            } break;
+
+            case VSCP_DATACODING_INTEGER: {
+              uint64_t val64 = value;
+              if (!vscp_convertIntegerToNormalizedEventData(ex.data,
+                                                            &ex.sizeData,
+                                                            val64,
+                                                            pItem->getUnit(strbuf),
+                                                            pItem->getSensorIndex())) {
+                break;
+              }
+            } break;
+
+            case VSCP_DATACODING_NORMALIZED: {
+              uint64_t val64 = value;
+              if (!vscp_convertIntegerToNormalizedEventData(ex.data,
+                                                            &ex.sizeData,
+                                                            val64,
+                                                            pItem->getUnit(strbuf),
+                                                            pItem->getSensorIndex())) {
+                break;
+              }
+            } break;
+
+            case VSCP_DATACODING_SINGLE:
+              if (!vscp_makeFloatMeasurementEventEx(&ex,
+                                                    (float) value,
+                                                    pItem->getSensorIndex(),
+                                                    pItem->getUnit(strbuf))) {
+                break;
+              }
+              break;
+
+            case VSCP_DATACODING_DOUBLE:
+              break;
+          }
+
+        } break;
+
+        case VSCP_CLASS1_MEASUREMENT64: {
+          if (!vscp_makeFloatMeasurementEventEx(&ex, (float) value, pItem->getSensorIndex(), pItem->getUnit(strbuf))) {
+            break;
+          }
+        } break;
+
+        case VSCP_CLASS1_MEASUREZONE: {
+        } break;
+
+        case VSCP_CLASS1_MEASUREMENT32: {
+        } break;
+
+        case VSCP_CLASS1_SETVALUEZONE: {
+        } break;
+
+        case VSCP_CLASS2_MEASUREMENT_STR: {
+          if (vscp_makeLevel2StringMeasurementEventEx(&ex,
+                                                      pItem->getVscpType(),
+                                                      value,
+                                                      pItem->getUnit(strbuf),
+                                                      pItem->getSensorIndex(),
+                                                      pItem->getZone(),
+                                                      pItem->getSubZone())) {
+
+            ex.timestamp = vscp_makeTimeStamp();
+            vscp_setEventExDateTimeBlockToNow(&ex);
+            ex.vscp_class = pItem->getVscpClass();
+            ex.vscp_type  = pItem->getVscpType();
+            m_guid.writeGUID(ex.GUID);
+            ex.GUID[15] = pItem->getGuidLsb();
+
+            vscpEvent *pEvent = new vscpEvent;
+            if (nullptr != pEvent) {
+              pEvent->pdata    = nullptr;
+              pEvent->sizeData = 0;
+              vscp_convertEventExToEvent(pEvent, &ex);
+              if (!addEvent2ReceiveQueue(pEvent)) {
+                spdlog::error("Failed to add event to receive queue.");
+              }
+              else {
+                spdlog::debug("Event added to i receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);
+              }
+            }
+            else {
+              spdlog::error("Failed to allocate memory for event.");
+            }
+          }
+          else {
+            spdlog::error("Failed to build level II string measurement event.");
+          }
+        } break;
+
+        case VSCP_CLASS2_MEASUREMENT_FLOAT: {
+
+          if (!vscp_makeLevel2FloatMeasurementEventEx(&ex,
+                                                      pItem->getVscpType(),
+                                                      value,
+                                                      pItem->getUnit(strbuf),
+                                                      pItem->getSensorIndex(),
+                                                      pItem->getZone(),
+                                                      pItem->getSubZone())) {
+
+            ex.timestamp = vscp_makeTimeStamp();
+            vscp_setEventExDateTimeBlockToNow(&ex);
+            ex.vscp_class = pItem->getVscpClass();
+            ex.vscp_type  = pItem->getVscpType();
+            m_guid.writeGUID(ex.GUID);
+            ex.GUID[15] = pItem->getGuidLsb();
+
+            vscpEvent *pEvent = new vscpEvent;
+            if (nullptr != pEvent) {
+              pEvent->pdata    = nullptr;
+              pEvent->sizeData = 0;
+              vscp_convertEventExToEvent(pEvent, &ex);
+              if (!addEvent2ReceiveQueue(pEvent)) {
+                spdlog::error("Failed to add event to receive queue.");
+              }
+              else {
+                spdlog::debug("Event added to receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);
+              }
+            }
+            else {
+              spdlog::error("Failed to allocate memory for event.");
+            }
+          }
+          else {
+            spdlog::error("Failed to build level II string measurement event.");
+          }
+        } break;
+      }
+
+      // Check Alarm ON
+      CAlarm *pAlarm;
+      if (nullptr != (pAlarm = m_mapAlarmOn[pItem->getStorageName()])) {
+
+        if (alarm_op::gt == pAlarm->getOp()) {
+          if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
+
+            // Send alarm
+            vscpEventEx ex;
+            ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+            ex.timestamp = vscp_makeTimeStamp();
+            vscp_setEventExDateTimeBlockToNow(&ex);
+            ex.vscp_class = VSCP_CLASS1_ALARM;
+            ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
+            m_guid.writeGUID(ex.GUID);
+            ex.GUID[15] = pItem->getGuidLsb();
+            ex.sizeData = 3;
+            ex.data[0]  = pAlarm->getAlarmByte();
+            ex.data[1]  = pAlarm->getZone();
+            ex.data[2]  = pAlarm->getSubZone();
+
+            vscpEvent *pEvent = new vscpEvent;
+            if (nullptr != pEvent) {
+              pEvent->pdata    = nullptr;
+              pEvent->sizeData = 0;
+              vscp_convertEventExToEvent(pEvent, &ex);
+              if (!addEvent2ReceiveQueue(pEvent)) {
+                spdlog::error("AlarmOn: Failed to add event to receive queue.");
+              }
+              else {
+                spdlog::debug("Sent ON alarm [{}]", pAlarm->getVariable());
+                pAlarm->setSentFlag();
+              }
+            }
+            else {
+              spdlog::error("AlarmOn: Failed to allocate memory for event.");
+            }
+          }
+        }
+        else if (alarm_op::lt == pAlarm->getOp()) {
+          
+          if (pAlarm->getValue() < value) {
+            
+            // send alarm
+            vscpEventEx ex;
+            ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+            ex.timestamp = vscp_makeTimeStamp();
+            vscp_setEventExDateTimeBlockToNow(&ex);
+            ex.vscp_class = VSCP_CLASS1_ALARM;
+            ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
+            m_guid.writeGUID(ex.GUID);
+            ex.GUID[15]       = pItem->getGuidLsb();
+            ex.sizeData       = 3;
+            ex.data[0]        = pAlarm->getAlarmByte();
+            ex.data[1]        = pAlarm->getZone();
+            ex.data[2]        = pAlarm->getSubZone();
+
+            vscpEvent *pEvent = new vscpEvent;
+            if (nullptr != pEvent) {
+              pEvent->pdata    = nullptr;
+              pEvent->sizeData = 0;
+              vscp_convertEventExToEvent(pEvent, &ex);
+              if (!addEvent2ReceiveQueue(pEvent)) {
+                spdlog::error("AlarmOff: Failed to add event to receive queue.");
+              }
+              else {
+                spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
+                pAlarm->setSentFlag();
+                // Reset Possible OFF flag
+              }
+            }
+            else {
+              spdlog::error("AlarmOn: Failed to allocate memory for event.");
+            }
+          }
+        }
+      }
+
+      // Check Alarm OFF
+      if (nullptr != (pAlarm = m_mapAlarmOff[pItem->getStorageName()])) {
+
+        if (alarm_op::gt == pAlarm->getOp()) {
+
+          if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
+          
+            // Send alarm
+            vscpEventEx ex;
+            ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+            ex.timestamp = vscp_makeTimeStamp();
+            vscp_setEventExDateTimeBlockToNow(&ex);
+            ex.vscp_class = VSCP_CLASS1_ALARM;
+            ex.vscp_type  = VSCP_TYPE_ALARM_RESET;
+            // memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+            m_guid.writeGUID(ex.GUID);
+            ex.GUID[15]       = pItem->getGuidLsb();
+            ex.sizeData       = 3;
+            ex.data[0]        = pAlarm->getAlarmByte();
+            ex.data[1]        = pAlarm->getZone();
+            ex.data[2]        = pAlarm->getSubZone();
+          
+            vscpEvent *pEvent = new vscpEvent;
+            if (nullptr != pEvent) {
+              pEvent->pdata    = nullptr;
+              pEvent->sizeData = 0;
+              vscp_convertEventExToEvent(pEvent, &ex);
+              if (!addEvent2ReceiveQueue(pEvent)) {
+                spdlog::error("AlarmOn: Failed to add event to receive queue.");
+              }
+              else {
+                spdlog::debug("Sent ON alarm [{}]", pAlarm->getVariable());
+                pAlarm->setSentFlag();
+              }
+            }
+            else {
+              spdlog::error("AlarmOn: Failed to allocate memory for event.");
+            }
+          }
+        }
+        else if (alarm_op::lt == pAlarm->getOp()) {
+          
+          if (pAlarm->getValue() < value) {
+          
+            // send alarm
+            vscpEventEx ex;
+            ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+            ex.timestamp = vscp_makeTimeStamp();
+            vscp_setEventExDateTimeBlockToNow(&ex);
+            ex.vscp_class = VSCP_CLASS1_ALARM;
+            ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
+            // memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+            m_guid.writeGUID(ex.GUID);
+            ex.GUID[15]       = pItem->getGuidLsb();
+            ex.sizeData       = 3;
+            ex.data[0]        = pAlarm->getAlarmByte();
+            ex.data[1]        = pAlarm->getZone();
+            ex.data[2]        = pAlarm->getSubZone();
+          
+            vscpEvent *pEvent = new vscpEvent;
+            if (nullptr != pEvent) {
+              pEvent->pdata    = nullptr;
+              pEvent->sizeData = 0;
+              vscp_convertEventExToEvent(pEvent, &ex);
+              if (!addEvent2ReceiveQueue(pEvent)) {
+                spdlog::error("AlarmOff: Failed to add event to receive queue.");
+              }
+              else {
+                spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
+                pAlarm->setSentFlag();
+                // Reset Possible ON flag
+              }
+            }
+            else {
+              spdlog::error("AlarmOn: Failed to allocate memory for event.");
+            }
+          }
+        }
+      }
+    } // if match
+  }   // Iterate
+
+  return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // eventExToReceiveQueue
 //
 
@@ -1854,15 +2204,7 @@ CEnergyP1::readEncryptionKey(const std::string &path)
   return true;
 }
 
-
-
-
-
 // ----------------------------------------------------------------------------
-
-
-
-
 
 /////////////////////////////////////////////////////////////////////////////
 // workerThread
@@ -1877,7 +2219,7 @@ workerThread(void *pData)
 
   // Linux serial port
   Comm com;
-  
+
   CEnergyP1 *pObj = (CEnergyP1 *) pData;
   if (nullptr == pData) {
     return NULL;
@@ -1907,8 +2249,8 @@ workerThread(void *pData)
   // Work on
   while (!pObj->m_bQuit) {
 
-    pos = 0;	  
-    *buf = 0;	  
+    pos  = 0;
+    *buf = 0;
 
     if (com.isCharReady()) {
       int read;
@@ -1916,363 +2258,363 @@ workerThread(void *pData)
         char c = com.readChar(&read);
         if (read) {
           buf[pos++] = c;
-	  if (pos > sizeof(buf)-1) {
-		  spdlog::debug("Working thread: Serial Buffer overlow");  
-		pos = 0;
-	  }
-	  //printf("%c", c);
-	  if (0x0a == c) {
-		  goto dowork;
-	  }
+          if (pos > sizeof(buf) - 1) {
+            spdlog::debug("Working thread: Serial Buffer overlow");
+            pos = 0;
+          }
+          // printf("%c", c);
+          if (0x0a == c) {
+            buf[pos] = 0;           // Add terminating zero
+            strbuf   = buf;         // Add to the string buffer
+            pObj->doWork(strbuf);   // Do work
+          }
         }
       } // while
-      
-      continue; // No CR
     }
     else {
       // If no data we sleep for a second  - no rush here...
-      printf("Sleeping\n");
-      sleep(5);      
+      sleep(1);
       continue;
     }
 
-dowork:
-    continue;
+  // dowork:
 
-    buf[pos] = 0;  // Add terminating zero 
-    strbuf = buf;  // Add to the string buffer
+  //   buf[pos] = 0;   // Add terminating zero
+  //   strbuf   = buf; // Add to the string buffer
 
-    // Check for a full line of input
-    size_t pos_find;
-    std::string exstr;
-    std::string valstr;
-    if (std::string::npos != (pos_find = strbuf.find("("))) {
-      //spdlog::debug("Working thread: Line {}", strbuf);
-      exstr  = strbuf.substr(0, pos_find);
-      valstr = strbuf.substr(pos_find + 2);
-      //spdlog::debug("exstr={0} valstr={1}", exstr, valstr);
-    }
-    else {
-      continue;
-    }
+  //   // Check for a full line of input
+  //   size_t pos_find;
+  //   std::string exstr;
+  //   std::string valstr;
+  //   if (std::string::npos != (pos_find = strbuf.find("("))) {
+  //     // spdlog::debug("Working thread: Line {}", strbuf);
+  //     exstr  = strbuf.substr(0, pos_find);
+  //     valstr = strbuf.substr(pos_find + 2);
+  //     // spdlog::debug("exstr={0} valstr={1}", exstr, valstr);
+  //   }
+  //   else {
+  //     continue;
+  //   }
 
-    spdlog::debug("exstr={0} valstr={1} strbuf={2}", exstr, valstr, strbuf);
+  //   spdlog::debug("exstr={0} valstr={1} strbuf={2}", exstr, valstr, strbuf);
 
-    for (auto const &pItem : pObj->m_listItems) {
+  //   for (auto const &pItem : pObj->m_listItems) {
 
-      if (exstr.rfind(pItem->getToken(), 0) == 0) {
+  //     if (exstr.rfind(pItem->getToken(), 0) == 0) {
 
-	      // Initialize new event
-      	vscpEventEx ex;
-      	ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;      	
-      	double value = pItem->getValue(strbuf);
+  //       // Initialize new event
+  //       vscpEventEx ex;
+  //       ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+  //       double value = pItem->getValue(strbuf);
 
-        spdlog::debug("MATCH! - Found token={0} value={1} unit={2}",
-                      pItem->getToken(),
-                      pItem->getValue(strbuf),
-                      pItem->getUnit(strbuf));
+  //       spdlog::debug("MATCH! - Found token={0} value={1} unit={2}",
+  //                     pItem->getToken(),
+  //                     pItem->getValue(strbuf),
+  //                     pItem->getUnit(strbuf));
 
-        if (pObj->m_bDebug) {
-          ;
-        }
+  //       if (pObj->m_bDebug) {
+  //         ;
+  //       }
 
-        // Save measurement value
-        pObj->m_lastValue[pItem->getStorageName()] = value;
+  //       // Save measurement value
+  //       pObj->m_lastValue[pItem->getStorageName()] = value;
 
-        switch (pItem->getVscpClass()) {
-        
-	        case VSCP_CLASS1_MEASUREMENT: {
+  //       switch (pItem->getVscpClass()) {
 
-            switch (pItem->getLevel1Coding()) {
+  //         case VSCP_CLASS1_MEASUREMENT: {
 
-              case VSCP_DATACODING_STRING: {
-                if (!vscp_makeStringMeasurementEventEx(&ex,
-                                                       (float) value,
-                                                       pItem->getSensorIndex(),
-                                                       pItem->getUnit(strbuf))) {
-                  break;
-                }
-              } break;
+  //           switch (pItem->getLevel1Coding()) {
 
-              case VSCP_DATACODING_INTEGER: {
-                uint64_t val64 = value;
-                if (!vscp_convertIntegerToNormalizedEventData(ex.data,
-                                                              &ex.sizeData,
-                                                              val64,
-                                                              pItem->getUnit(strbuf),
-                                                              pItem->getSensorIndex())) {
-                  break;
-                }
-              } break;
+  //             case VSCP_DATACODING_STRING: {
+  //               if (!vscp_makeStringMeasurementEventEx(&ex,
+  //                                                      (float) value,
+  //                                                      pItem->getSensorIndex(),
+  //                                                      pItem->getUnit(strbuf))) {
+  //                 break;
+  //               }
+  //             } break;
 
-              case VSCP_DATACODING_NORMALIZED: {
-                uint64_t val64 = value;
-                if (!vscp_convertIntegerToNormalizedEventData(ex.data,
-                                                              &ex.sizeData,
-                                                              val64,
-                                                              pItem->getUnit(strbuf),
-                                                              pItem->getSensorIndex())) {
-                  break;
-                }
-              } break;
+  //             case VSCP_DATACODING_INTEGER: {
+  //               uint64_t val64 = value;
+  //               if (!vscp_convertIntegerToNormalizedEventData(ex.data,
+  //                                                             &ex.sizeData,
+  //                                                             val64,
+  //                                                             pItem->getUnit(strbuf),
+  //                                                             pItem->getSensorIndex())) {
+  //                 break;
+  //               }
+  //             } break;
 
-              case VSCP_DATACODING_SINGLE:
-                if (!vscp_makeFloatMeasurementEventEx(&ex,
-                                                      (float) value,
-                                                      pItem->getSensorIndex(),
-                                                      pItem->getUnit(strbuf))) {
-                  break;
-                }
-                break;
+  //             case VSCP_DATACODING_NORMALIZED: {
+  //               uint64_t val64 = value;
+  //               if (!vscp_convertIntegerToNormalizedEventData(ex.data,
+  //                                                             &ex.sizeData,
+  //                                                             val64,
+  //                                                             pItem->getUnit(strbuf),
+  //                                                             pItem->getSensorIndex())) {
+  //                 break;
+  //               }
+  //             } break;
 
-              case VSCP_DATACODING_DOUBLE:
-                break;
-            }
+  //             case VSCP_DATACODING_SINGLE:
+  //               if (!vscp_makeFloatMeasurementEventEx(&ex,
+  //                                                     (float) value,
+  //                                                     pItem->getSensorIndex(),
+  //                                                     pItem->getUnit(strbuf))) {
+  //                 break;
+  //               }
+  //               break;
 
-          } break;
+  //             case VSCP_DATACODING_DOUBLE:
+  //               break;
+  //           }
 
-          case VSCP_CLASS1_MEASUREMENT64: {
-            if (!vscp_makeFloatMeasurementEventEx(&ex, (float) value, pItem->getSensorIndex(), pItem->getUnit(strbuf))) {
-              break;
-            }
-          } break;
+  //         } break;
 
-          case VSCP_CLASS1_MEASUREZONE: {
-          } break;
+  //         case VSCP_CLASS1_MEASUREMENT64: {
+  //           if (!vscp_makeFloatMeasurementEventEx(&ex,
+  //                                                 (float) value,
+  //                                                 pItem->getSensorIndex(),
+  //                                                 pItem->getUnit(strbuf))) {
+  //             break;
+  //           }
+  //         } break;
 
-          case VSCP_CLASS1_MEASUREMENT32: {
-          } break;
+  //         case VSCP_CLASS1_MEASUREZONE: {
+  //         } break;
 
-          case VSCP_CLASS1_SETVALUEZONE: {
-          } break;
+  //         case VSCP_CLASS1_MEASUREMENT32: {
+  //         } break;
 
-          case VSCP_CLASS2_MEASUREMENT_STR: {
-            if (vscp_makeLevel2StringMeasurementEventEx(&ex,
-                                                        pItem->getVscpType(),
-                                                        value,
-                                                        pItem->getUnit(strbuf),
-                                                        pItem->getSensorIndex(),
-                                                        pItem->getZone(),
-                                                        pItem->getSubZone())) {
-              
-           
-              ex.timestamp = vscp_makeTimeStamp();
-      	      vscp_setEventExDateTimeBlockToNow(&ex);
-      	      ex.vscp_class = pItem->getVscpClass();
-      	      ex.vscp_type  = pItem->getVscpType();
-              pObj->m_guid.writeGUID(ex.GUID);        
-      	      ex.GUID[15]  = pItem->getGuidLsb();           
+  //         case VSCP_CLASS1_SETVALUEZONE: {
+  //         } break;
 
-              vscpEvent *pEvent = new vscpEvent;
-              if (nullptr != pEvent) {
-                pEvent->pdata    = nullptr;
-                pEvent->sizeData = 0;
-                vscp_convertEventExToEvent(pEvent, &ex);
-                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
-                  spdlog::error("Failed to add event to receive queue.");
-                }
-                else {
-		              spdlog::debug("Event added to i receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
-		            }
-              }
-              else {
-                spdlog::error("Failed to allocate memory for event.");
-              }
-            }
-            else {
-              spdlog::error("Failed to build level II string measurement event.");
-            }
-          } break;
+  //         case VSCP_CLASS2_MEASUREMENT_STR: {
+  //           if (vscp_makeLevel2StringMeasurementEventEx(&ex,
+  //                                                       pItem->getVscpType(),
+  //                                                       value,
+  //                                                       pItem->getUnit(strbuf),
+  //                                                       pItem->getSensorIndex(),
+  //                                                       pItem->getZone(),
+  //                                                       pItem->getSubZone())) {
 
-          case VSCP_CLASS2_MEASUREMENT_FLOAT: {
+  //             ex.timestamp = vscp_makeTimeStamp();
+  //             vscp_setEventExDateTimeBlockToNow(&ex);
+  //             ex.vscp_class = pItem->getVscpClass();
+  //             ex.vscp_type  = pItem->getVscpType();
+  //             pObj->m_guid.writeGUID(ex.GUID);
+  //             ex.GUID[15] = pItem->getGuidLsb();
 
-            if (!vscp_makeLevel2FloatMeasurementEventEx(&ex,
-                                                        pItem->getVscpType(),
-                                                        value,
-                                                        pItem->getUnit(strbuf),
-                                                        pItem->getSensorIndex(),
-                                                        pItem->getZone(),
-                                                        pItem->getSubZone())) {
-         
-              ex.timestamp = vscp_makeTimeStamp();
-      	      vscp_setEventExDateTimeBlockToNow(&ex);
-      	      ex.vscp_class = pItem->getVscpClass();
-      	      ex.vscp_type  = pItem->getVscpType();
-              pObj->m_guid.writeGUID(ex.GUID);        
-      	      ex.GUID[15]  = pItem->getGuidLsb();    
+  //             vscpEvent *pEvent = new vscpEvent;
+  //             if (nullptr != pEvent) {
+  //               pEvent->pdata    = nullptr;
+  //               pEvent->sizeData = 0;
+  //               vscp_convertEventExToEvent(pEvent, &ex);
+  //               if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+  //                 spdlog::error("Failed to add event to receive queue.");
+  //               }
+  //               else {
+  //                 spdlog::debug("Event added to i receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);
+  //               }
+  //             }
+  //             else {
+  //               spdlog::error("Failed to allocate memory for event.");
+  //             }
+  //           }
+  //           else {
+  //             spdlog::error("Failed to build level II string measurement event.");
+  //           }
+  //         } break;
 
-              vscpEvent *pEvent = new vscpEvent;
-              if (nullptr != pEvent) {
-                pEvent->pdata    = nullptr;
-                pEvent->sizeData = 0;
-                vscp_convertEventExToEvent(pEvent, &ex);
-                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
-                  spdlog::error("Failed to add event to receive queue.");
-                }
-		            else {
-		              spdlog::debug("Event added to receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);	
-		            }
-              }
-              else {
-                spdlog::error("Failed to allocate memory for event.");
-              }
-            }
-            else {
-              spdlog::error("Failed to build level II string measurement event.");
-            }
-          } break;
-        }
+  //         case VSCP_CLASS2_MEASUREMENT_FLOAT: {
 
-        // Check Alarm ON
-        CAlarm *pAlarm;
-        if (nullptr != (pAlarm = pObj->m_mapAlarmOn[pItem->getStorageName()])) {
+  //           if (!vscp_makeLevel2FloatMeasurementEventEx(&ex,
+  //                                                       pItem->getVscpType(),
+  //                                                       value,
+  //                                                       pItem->getUnit(strbuf),
+  //                                                       pItem->getSensorIndex(),
+  //                                                       pItem->getZone(),
+  //                                                       pItem->getSubZone())) {
 
-          if (alarm_op::gt == pAlarm->getOp()) {
-            if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
-              
-              // Send alarm
-              vscpEventEx ex;
-              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
-              ex.timestamp = vscp_makeTimeStamp();
-              vscp_setEventExDateTimeBlockToNow(&ex);
-              ex.vscp_class = VSCP_CLASS1_ALARM;
-              ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
-              pObj->m_guid.writeGUID(ex.GUID);
-              ex.GUID[15]       = pItem->getGuidLsb();
-              ex.sizeData       = 3;
-              ex.data[0]        = pAlarm->getAlarmByte();
-              ex.data[1]        = pAlarm->getZone();
-              ex.data[2]        = pAlarm->getSubZone();
+  //             ex.timestamp = vscp_makeTimeStamp();
+  //             vscp_setEventExDateTimeBlockToNow(&ex);
+  //             ex.vscp_class = pItem->getVscpClass();
+  //             ex.vscp_type  = pItem->getVscpType();
+  //             pObj->m_guid.writeGUID(ex.GUID);
+  //             ex.GUID[15] = pItem->getGuidLsb();
 
-              vscpEvent *pEvent = new vscpEvent;
-              if (nullptr != pEvent) {
-                pEvent->pdata    = nullptr;
-                pEvent->sizeData = 0;
-                vscp_convertEventExToEvent(pEvent, &ex);
-                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
-                  spdlog::error("AlarmOn: Failed to add event to receive queue.");
-                }
-                else {
-                  spdlog::debug("Sent ON alarm [{}]", pAlarm->getVariable());
-                  pAlarm->setSentFlag();
-                }
-              }
-              else {
-                spdlog::error("AlarmOn: Failed to allocate memory for event.");
-              }
-            }
-          }
-          else if (alarm_op::lt == pAlarm->getOp()) {
-            if (pAlarm->getValue() < value) {
-              // send alarm
-              vscpEventEx ex;
-              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
-              ex.timestamp = vscp_makeTimeStamp();
-              vscp_setEventExDateTimeBlockToNow(&ex);
-              ex.vscp_class = VSCP_CLASS1_ALARM;
-              ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
-              pObj->m_guid.writeGUID(ex.GUID);
-              ex.GUID[15]       = pItem->getGuidLsb();
-              ex.sizeData       = 3;
-              ex.data[0]        = pAlarm->getAlarmByte();
-              ex.data[1]        = pAlarm->getZone();
-              ex.data[2]        = pAlarm->getSubZone();
-              vscpEvent *pEvent = new vscpEvent;
-              if (nullptr != pEvent) {
-                pEvent->pdata    = nullptr;
-                pEvent->sizeData = 0;
-                vscp_convertEventExToEvent(pEvent, &ex);
-                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
-                  spdlog::error("AlarmOff: Failed to add event to receive queue.");
-                }
-		else {
-                  spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
-                  pAlarm->setSentFlag();
-                  // Reset Possible OFF flag
-                }
-              }
-              else {
-                spdlog::error("AlarmOn: Failed to allocate memory for event.");
-              }
-            }
-          }
-        }
+  //             vscpEvent *pEvent = new vscpEvent;
+  //             if (nullptr != pEvent) {
+  //               pEvent->pdata    = nullptr;
+  //               pEvent->sizeData = 0;
+  //               vscp_convertEventExToEvent(pEvent, &ex);
+  //               if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+  //                 spdlog::error("Failed to add event to receive queue.");
+  //               }
+  //               else {
+  //                 spdlog::debug("Event added to receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);
+  //               }
+  //             }
+  //             else {
+  //               spdlog::error("Failed to allocate memory for event.");
+  //             }
+  //           }
+  //           else {
+  //             spdlog::error("Failed to build level II string measurement event.");
+  //           }
+  //         } break;
+  //       }
 
-        // Check Alarm OFF
-        if (nullptr != (pAlarm = pObj->m_mapAlarmOff[pItem->getStorageName()])) {
+  //       // Check Alarm ON
+  //       CAlarm *pAlarm;
+  //       if (nullptr != (pAlarm = pObj->m_mapAlarmOn[pItem->getStorageName()])) {
 
-          if (alarm_op::gt == pAlarm->getOp()) {
-            if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
-              // Send alarm
-              vscpEventEx ex;
-              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
-              ex.timestamp = vscp_makeTimeStamp();
-              vscp_setEventExDateTimeBlockToNow(&ex);
-              ex.vscp_class = VSCP_CLASS1_ALARM;
-              ex.vscp_type  = VSCP_TYPE_ALARM_RESET;
-              //memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-              pObj->m_guid.writeGUID(ex.GUID);
-              ex.GUID[15]       = pItem->getGuidLsb();
-              ex.sizeData       = 3;
-              ex.data[0]        = pAlarm->getAlarmByte();
-              ex.data[1]        = pAlarm->getZone();
-              ex.data[2]        = pAlarm->getSubZone();
-              vscpEvent *pEvent = new vscpEvent;
-              if (nullptr != pEvent) {
-                pEvent->pdata    = nullptr;
-                pEvent->sizeData = 0;
-                vscp_convertEventExToEvent(pEvent, &ex);
-                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
-                  spdlog::error("AlarmOn: Failed to add event to receive queue.");
-                }
-                else {
-                  spdlog::debug("Sent ON alarm [{}]", pAlarm->getVariable());
-                  pAlarm->setSentFlag();
-                }
-              }
-              else {
-                spdlog::error("AlarmOn: Failed to allocate memory for event.");
-              }
-            }
-          }
-          else if (alarm_op::lt == pAlarm->getOp()) {
-            if (pAlarm->getValue() < value) {
-              // send alarm
-              vscpEventEx ex;
-              ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
-              ex.timestamp = vscp_makeTimeStamp();
-              vscp_setEventExDateTimeBlockToNow(&ex);
-              ex.vscp_class = VSCP_CLASS1_ALARM;
-              ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
-              //memcpy(ex.GUID, pObj->m_guid.m_id, 16);
-              pObj->m_guid.writeGUID(ex.GUID);
-              ex.GUID[15]       = pItem->getGuidLsb();
-              ex.sizeData       = 3;
-              ex.data[0]        = pAlarm->getAlarmByte();
-              ex.data[1]        = pAlarm->getZone();
-              ex.data[2]        = pAlarm->getSubZone();
-              vscpEvent *pEvent = new vscpEvent;
-              if (nullptr != pEvent) {
-                pEvent->pdata    = nullptr;
-                pEvent->sizeData = 0;
-                vscp_convertEventExToEvent(pEvent, &ex);
-                if (!pObj->addEvent2ReceiveQueue(pEvent)) {
-                  spdlog::error("AlarmOff: Failed to add event to receive queue.");
-                }
-                else {
-                  spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
-                  pAlarm->setSentFlag();
-                  // Reset Possible ON flag
-                }
-              }
-              else {
-                spdlog::error("AlarmOn: Failed to allocate memory for event.");
-              }
-            }
-          }
-        } 
-      } // if match
-    } // Iterate
+  //         if (alarm_op::gt == pAlarm->getOp()) {
+  //           if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
+
+  //             // Send alarm
+  //             vscpEventEx ex;
+  //             ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+  //             ex.timestamp = vscp_makeTimeStamp();
+  //             vscp_setEventExDateTimeBlockToNow(&ex);
+  //             ex.vscp_class = VSCP_CLASS1_ALARM;
+  //             ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
+  //             pObj->m_guid.writeGUID(ex.GUID);
+  //             ex.GUID[15] = pItem->getGuidLsb();
+  //             ex.sizeData = 3;
+  //             ex.data[0]  = pAlarm->getAlarmByte();
+  //             ex.data[1]  = pAlarm->getZone();
+  //             ex.data[2]  = pAlarm->getSubZone();
+
+  //             vscpEvent *pEvent = new vscpEvent;
+  //             if (nullptr != pEvent) {
+  //               pEvent->pdata    = nullptr;
+  //               pEvent->sizeData = 0;
+  //               vscp_convertEventExToEvent(pEvent, &ex);
+  //               if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+  //                 spdlog::error("AlarmOn: Failed to add event to receive queue.");
+  //               }
+  //               else {
+  //                 spdlog::debug("Sent ON alarm [{}]", pAlarm->getVariable());
+  //                 pAlarm->setSentFlag();
+  //               }
+  //             }
+  //             else {
+  //               spdlog::error("AlarmOn: Failed to allocate memory for event.");
+  //             }
+  //           }
+  //         }
+  //         else if (alarm_op::lt == pAlarm->getOp()) {
+  //           if (pAlarm->getValue() < value) {
+  //             // send alarm
+  //             vscpEventEx ex;
+  //             ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+  //             ex.timestamp = vscp_makeTimeStamp();
+  //             vscp_setEventExDateTimeBlockToNow(&ex);
+  //             ex.vscp_class = VSCP_CLASS1_ALARM;
+  //             ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
+  //             pObj->m_guid.writeGUID(ex.GUID);
+  //             ex.GUID[15]       = pItem->getGuidLsb();
+  //             ex.sizeData       = 3;
+  //             ex.data[0]        = pAlarm->getAlarmByte();
+  //             ex.data[1]        = pAlarm->getZone();
+  //             ex.data[2]        = pAlarm->getSubZone();
+  //             vscpEvent *pEvent = new vscpEvent;
+  //             if (nullptr != pEvent) {
+  //               pEvent->pdata    = nullptr;
+  //               pEvent->sizeData = 0;
+  //               vscp_convertEventExToEvent(pEvent, &ex);
+  //               if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+  //                 spdlog::error("AlarmOff: Failed to add event to receive queue.");
+  //               }
+  //               else {
+  //                 spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
+  //                 pAlarm->setSentFlag();
+  //                 // Reset Possible OFF flag
+  //               }
+  //             }
+  //             else {
+  //               spdlog::error("AlarmOn: Failed to allocate memory for event.");
+  //             }
+  //           }
+  //         }
+  //       }
+
+  //       // Check Alarm OFF
+  //       if (nullptr != (pAlarm = pObj->m_mapAlarmOff[pItem->getStorageName()])) {
+
+  //         if (alarm_op::gt == pAlarm->getOp()) {
+  //           if ((pAlarm->getValue() > value) && !(pAlarm->isSent() && pAlarm->isOneShot())) {
+  //             // Send alarm
+  //             vscpEventEx ex;
+  //             ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+  //             ex.timestamp = vscp_makeTimeStamp();
+  //             vscp_setEventExDateTimeBlockToNow(&ex);
+  //             ex.vscp_class = VSCP_CLASS1_ALARM;
+  //             ex.vscp_type  = VSCP_TYPE_ALARM_RESET;
+  //             // memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+  //             pObj->m_guid.writeGUID(ex.GUID);
+  //             ex.GUID[15]       = pItem->getGuidLsb();
+  //             ex.sizeData       = 3;
+  //             ex.data[0]        = pAlarm->getAlarmByte();
+  //             ex.data[1]        = pAlarm->getZone();
+  //             ex.data[2]        = pAlarm->getSubZone();
+  //             vscpEvent *pEvent = new vscpEvent;
+  //             if (nullptr != pEvent) {
+  //               pEvent->pdata    = nullptr;
+  //               pEvent->sizeData = 0;
+  //               vscp_convertEventExToEvent(pEvent, &ex);
+  //               if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+  //                 spdlog::error("AlarmOn: Failed to add event to receive queue.");
+  //               }
+  //               else {
+  //                 spdlog::debug("Sent ON alarm [{}]", pAlarm->getVariable());
+  //                 pAlarm->setSentFlag();
+  //               }
+  //             }
+  //             else {
+  //               spdlog::error("AlarmOn: Failed to allocate memory for event.");
+  //             }
+  //           }
+  //         }
+  //         else if (alarm_op::lt == pAlarm->getOp()) {
+  //           if (pAlarm->getValue() < value) {
+  //             // send alarm
+  //             vscpEventEx ex;
+  //             ex.head      = VSCP_HEADER16_GUID_TYPE_STANDARD | VSCP_PRIORITY_NORMAL | VSCP_HEADER16_DUMB;
+  //             ex.timestamp = vscp_makeTimeStamp();
+  //             vscp_setEventExDateTimeBlockToNow(&ex);
+  //             ex.vscp_class = VSCP_CLASS1_ALARM;
+  //             ex.vscp_type  = VSCP_TYPE_ALARM_ALARM;
+  //             // memcpy(ex.GUID, pObj->m_guid.m_id, 16);
+  //             pObj->m_guid.writeGUID(ex.GUID);
+  //             ex.GUID[15]       = pItem->getGuidLsb();
+  //             ex.sizeData       = 3;
+  //             ex.data[0]        = pAlarm->getAlarmByte();
+  //             ex.data[1]        = pAlarm->getZone();
+  //             ex.data[2]        = pAlarm->getSubZone();
+  //             vscpEvent *pEvent = new vscpEvent;
+  //             if (nullptr != pEvent) {
+  //               pEvent->pdata    = nullptr;
+  //               pEvent->sizeData = 0;
+  //               vscp_convertEventExToEvent(pEvent, &ex);
+  //               if (!pObj->addEvent2ReceiveQueue(pEvent)) {
+  //                 spdlog::error("AlarmOff: Failed to add event to receive queue.");
+  //               }
+  //               else {
+  //                 spdlog::debug("Sent OFF alarm [{}]", pAlarm->getVariable());
+  //                 pAlarm->setSentFlag();
+  //                 // Reset Possible ON flag
+  //               }
+  //             }
+  //             else {
+  //               spdlog::error("AlarmOn: Failed to allocate memory for event.");
+  //             }
+  //           }
+  //         }
+  //       }
+  //     } // if match
+  //   }   // Iterate
 
   } // Main loop
 

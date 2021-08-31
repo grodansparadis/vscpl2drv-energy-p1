@@ -166,6 +166,13 @@ class CEnergyP1
     */
     bool readEncryptionKey(const std::string& path);
 
+    /*!
+      Parse and send measurement events
+      @param strbuf String row to handel
+      @return true on success, false on frailure
+    */
+    bool doWork(std::string& strbuf);
+
   public:
 
     /// Parsed Config file
