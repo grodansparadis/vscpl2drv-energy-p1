@@ -1738,10 +1738,9 @@ CEnergyP1::doWork(std::string &strbuf)
   std::string valstr;
 
   if (std::string::npos != (pos_find = strbuf.find("("))) {
-    // spdlog::debug("Working thread: Line {}", strbuf);
+    spdlog::debug("Working thread: Line {}", strbuf);
     exstr  = strbuf.substr(0, pos_find);
     valstr = strbuf.substr(pos_find + 2);
-    // spdlog::debug("exstr={0} valstr={1}", exstr, valstr);
   }
   else {
     return false;
@@ -2260,7 +2259,7 @@ workerThread(void *pData)
           buf[pos++] = c;
           if (pos > sizeof(buf) - 1) {
             spdlog::debug("Working thread: Serial Buffer overlow");
-            pos = 0;
+            continue;
           }
           // printf("%c", c);
           if (0x0a == c) {
