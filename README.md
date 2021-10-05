@@ -6,7 +6,9 @@
     Driver Linux: vscpl2drv-energy-p1.so
     Driver Windows: vscpl2drv-energy-p1.dll
 
-A driver that read data from a P1 energy meter and send relevant VSCP events.
+A driver that read data from a [DSMR V5.0.2 P1](https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_a727fce1f1.pdf) energy meter and translate metering to relevant VSCP events.
+
+[Live data from this driver](https://grodansparadis.com/wordpress/wp-admin/post.php?post=5276&action=edit) using an Ellevio electric meter.
 
 ## Install the driver on Linux
 You can install the driver using the debian package with
@@ -19,9 +21,9 @@ After installing the driver you need to add it to the vscpd.conf file (/etc/vscp
 
 You also need to set up a configuration file for the driver. If you don't need to dynamically edit the content of this file a good and safe location for this is in the */etc/vscp/* folder alongside the VSCP daemon configuration file.
 
-If you need to do dynamic configuration we recommend that you create the file in the */var/vscp/vscpl2drv-tcpipsrv.so*
+If you need to do dynamic configuration we recommend that you create the file in the */var/vscp/vscpl2drv-energy-p1.so*
 
-A sample configuration file is make available in */usr/share/vscpl2drv-tcpipsrv.so* after installation.
+A sample configuration file is make available in */usr/share/vscpl2drv-energy-p1.so* after installation.
 
 ## Install the driver on Windows
 tbd
@@ -47,12 +49,9 @@ tbd
 
 Install of pandoc is only needed if man pages needs to be rebuilt. This is normally already done and available in the repository.
 
-
-
-
 ```
-git clone --recurse-submodules -j8 https://github.com/grodansparadis/vscpl2drv-tcpipsrv.so.git
-cd vscpl2drv-tcpipsrv
+git clone --recurse-submodules -j8 https://github.com/grodansparadis/vscpl2drv-energy-p1.git
+cd vscpl2drv-energy-p1
 ./configure
 make
 make install
@@ -115,10 +114,10 @@ You need to checkout the VSCP main repository code in addition to the driver rep
   git checkout development
 ``` 
 
-and the vscpl2drv-tcpipsrv code
+and the vscpl2drv-energy-p1 code
 
 ```bash
-git clone https://github.com/grodansparadis/vscpl2drv-tcpipsrv.git
+git clone https://github.com/grodansparadis/vscpl2drv-energy-p1.git
 ```
 
 If you check out both at the same directory level the *-DVSCP_PATH=path-vscp-repository* in next step is not needed.
@@ -128,7 +127,7 @@ If you check out both at the same directory level the *-DVSCP_PATH=path-vscp-rep
 Build as usual but use
 
 ```bash
-cd vscpl2drv-tcpipsrv
+cd vscpl2drv-energy-p1
 mkdir build
 cd build
 cmake .. -CMAKE_BUILD_TYPE=Release|Debug -DCMAKE_TOOLCHAIN_FILE=E:\src\vcpkg\scripts\buildsystems\vcpkg.cmake -DVSCP_PATH=path-vscp-repository
@@ -178,7 +177,7 @@ in the build folder.
 
 #### VSCP daemon driver config
 
-The VSCP daemon configuration is (normally) located at */etc/vscp/vscpd.conf*. To use the vscpl2drv-tcpipsrv.so driver there must be an entry in the
+The VSCP daemon configuration is (normally) located at */etc/vscp/vscpd.conf*. To use the vscpl2drv-energy-p1.so driver there must be an entry in the
 
 ```
 > <level2driver enable="true">
@@ -190,8 +189,8 @@ section on the following format
 <!-- Level II TCP/IP Server -->
 <driver enable="true"
     name="vscp-tcpip-srv"
-    path-driver="/usr/lib/vscp/drivers/level2/vscpl2drv-tcpipsrv.so"
-    path-config="/etc/vscp/vscpl2drv-tcpipsrv.conf"
+    path-driver="/usr/lib/vscp/drivers/level2/vscpl2drv-energy-p1.so"
+    path-config="/etc/vscp/vscpl2drv-energy-p1.conf"
     guid="FF:FF:FF:FF:FF:FF:FF:FC:88:99:AA:BB:CC:DD:EE:FF"
 </driver>
 ```
@@ -203,252 +202,567 @@ Set enable to "true" if the driver should be loaded.
 This is the name of the driver. Used when referring to it in different interfaces.
 
 ##### path
-This is the path to the driver. If you install from a Debian package this will be */usr/bin/vscpl2drv-tcpipsrv.so* and if you build and install the driver yourself it will be */usr/local/bin/vscpl2drv-tcpipsrv.so* or a custom location if you configured that.
+This is the path to the driver. If you install from a Debian package this will be */usr/bin/vscpl2drv-energy-p1.so* and if you build and install the driver yourself it will be */usr/local/bin/vscpl2drv-energy-p1.so* or a custom location if you configured that.
 
 ##### guid
 All level II drivers must have a unique GUID. There is many ways to obtain this GUID, Read more [here](https://grodansparadis.gitbooks.io/the-vscp-specification/vscp_globally_unique_identifiers.html).
 
-#### vscpl2drv-tcpipsrv driver config
+#### vscpl2drv-energy-p1 driver config
 
 On start up the configuration is read from the path set in the driver configuration of the VSCP daemon, usually */etc/vscp/conf-file-name* and values are set from this location. If the **write** parameter is set to "true" the above location is a bad choice as the VSCP daemon will not be able to write to it. A better location is */var/lib/vscp/drivername/configure.xml* or some other writable location.
 
-The configuration file have the following format
+The default configuration file available in the [resources folder](https://github.com/grodansparadis/vscpl2drv-energy-p1/blob/main/resources/linux/energyp1.json) is made for the [Ellevio electrical meters](https://grodansparadis.com/wordpress/wp-admin/post.php?post=5039&action=edit) and have the following format. You can easily adopt this file to your meters format. Live data is [here](https://grodansparadis.com/wordpress/wp-admin/post.php?post=5276&action=edit).
 
 ```json
 {
-    "write" : false,
-    "interface": "[s]tcp://ip-address:port",
-    "logging": { 
-        "file-log-level": "off|critical|error|warn|info|debug|trace",
-        "file-log-path" : "path to log file",
-        "file-log-pattern": "Pattern for log file",
-        "file-log-max-size": 50000,
-        "file-log-max-files": 7,
-    },    
-    "auth-domain": "mydomain.com",
-    "key-file": "/var/vscp/.vscp.key"
-    "path-users" : "/etc/vscp/tcpip_srv_users.json",
-    "response-timeout" : 0,
-    "filter" : {
-        "in-filter" : "incoming filter on string form",
-        "in-mask" : "incoming mask on string form",
-        "out-filter" : "outgoing filter on string form",
-        "out-mask" : "outgoing mask on string form",
+  "write" : false,
+  "debug" : true,       
+  "serial": {
+    "port": "/dev/electric_meter",
+    "baudrate": 115200,
+    "bits": 8,
+    "parity": "N",
+    "stopbits": 1,
+    "hwflowctrl": false,
+    "swflowctrl": false,
+    "dtr-on-start": true
+  },
+  "logging": { 
+    "console-enable": true,
+    "console-level": "trace",    
+    "console-pattern": "[vcpl2drv-energyp1 %c] [%^%l%$] %v",
+    "file-log-enable": true,
+    "file-log-level": "trace",
+    "file-log-path" : "/var/log/vscp/vscpl2drv-energyp1.log",
+    "file-log-pattern": "[vscpl2drv-energyp1: %c] [%^%l%$] %v", 
+    "file-log-max-size": 50000,
+    "file-log-max-files": 7
+  }, 
+  "items": [
+    {
+      "token": "1-0:1.8.0",
+      "description": "Energy out",
+      "vscp-class": 1040,
+      "vscp-type": 13,
+      "sensorindex": 0,
+      "guid-lsb": 0,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+        "kWh": 1
+      },
+      "store": "energy_out"
     },
-    "tls": {
-        "certificate" : "/srv/vscp/certs/tcpip_server.pem",
-        "certificate_chain" : "",
-        "verify_peer" : false,
-        "ca-path" : "",
-        "ca-file" : "",
-        "verify_depth" : 9,
-        "default-verify-paths" : true,
-        "cipher-list" : "DES-CBC3-SHA:AES128-SHA:AES128-GCM-SHA256",
-        "protocol-version" : 3,
-        "short-trust" : false
+    {
+      "token": "1-0:2.8.0",
+      "description": "Energy in",
+      "vscp-class": 1040,
+      "vscp-type": 13,
+      "sensorindex": 1,
+      "guid-lsb": 1,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+        "kWh": 1
+      },
+      "store": "energy_in"
+    },
+    {
+      "token": "1-0:3.8.0",
+      "description": "Reactive energy out",
+      "vscp-class": 1040,
+      "vscp-type": 65,
+      "sensorindex": 2,
+      "guid-lsb": 2,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+        "kvarh": 0
+      },
+      "store": "reactive_energy_out"
+    },
+    {
+      "token": "1-0:4.8.0",
+      "description": "Reactive energy in",
+      "vscp-class": 1040,
+      "vscp-type": 65,
+      "sensorindex": 3,
+      "guid-lsb": 3,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+        "kvarh": 0
+      },
+      "store": "reactive_energy_in"
+    },
+    {
+      "token": "1-0:1.7.0",
+      "description": "Active effect out",
+      "vscp-class": 1040,
+      "vscp-type": 14,
+      "sensorindex": 4,
+      "guid-lsb": 4,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kW": 0
+      },
+      "store": "active_effect_out"
+    },
+    {
+      "token": "1-0:2.7.0",
+      "description": "Active effect in",
+      "vscp-class": 1040,
+      "vscp-type": 14,
+      "sensorindex": 5,
+      "guid-lsb": 5,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kW": 0
+      },
+      "store": "active_effect_in"
+    },
+    {
+      "token": "1-0:3.7.0",
+      "description": "Reactive effect out",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 6,
+      "guid-lsb": 6,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kvar": 0
+      },
+      "store": "reactive_effect_out"
+    },
+    {
+      "token": "1-0:4.7.0",
+      "description": "Reactive effect in",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 7,
+      "guid-lsb": 7,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kvar": 0
+      },
+      "store": "reactive_effect_in"
+    },
+    {
+      "token": "1-0:21.7.0",
+      "description": "Active effect out L1",
+      "vscp-class": 1040,
+      "vscp-type": 14,
+      "sensorindex": 8,
+      "guid-lsb": 8,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kW": 0
+      },
+      "store": "active_effect_out_l1"
+    },
+    {
+      "token": "1-0:41.7.0",
+      "description": "Active effect out L2",
+      "vscp-class": 1040,
+      "vscp-type": 14,
+      "sensorindex": 9,
+      "guid-lsb": 9,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kW": 0
+      },
+      "store": "active_effect_out_l2"
+    },
+    {
+      "token": "1-0:61.7.0",
+      "description": "Active effect out L3",
+      "vscp-class": 1040,
+      "vscp-type": 14,
+      "sensorindex": 10,
+      "guid-lsb": 10,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kW": 0
+      },
+      "store": "active_effect_out_l3"
+    },
+    {
+      "token": "1-0:22.7.0",
+      "description": "Active effect in L1",
+      "vscp-class": 1040,
+      "vscp-type": 14,
+      "sensorindex": 11,
+      "guid-lsb": 11,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kW": 0
+      },
+      "store": "active_effect_in_l1"
+    },
+    {
+      "token": "1-0:42.7.0",
+      "description": "Active effect in L2",
+      "vscp-class": 1040,
+      "vscp-type": 14,
+      "sensorindex": 12,
+      "guid-lsb": 12,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kW": 0
+      },
+      "store": "active_effect_in_l1"
+    },
+    {
+      "token": "1-0:62.7.0",
+      "description": "Active effect in L3",
+      "vscp-class": 1040,
+      "vscp-type": 14,
+      "sensorindex": 13,
+      "guid-lsb": 13,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kW": 0
+      },
+      "store": "active_effect_in_l3"
+    },
+    {
+      "token": "1-0:23.7.0",
+      "description": "Reactive effect out L1",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 14,
+      "guid-lsb": 14,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kvar": 0
+      },
+      "store": "reactive_effect_out_l1"
+    },
+    {
+      "token": "1-0:43.7.0",
+      "description": "Reactive effect out L2",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 15,
+      "guid-lsb": 15,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kvar": 0
+      },
+      "store": "reactive_effect_out_l2"
+    },
+    {
+      "token": "1-0:63.7.0",
+      "description": "Reactive effect out L3",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 16,
+      "guid-lsb": 16,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kvar": 0
+      },
+      "store": "reactive_effect_out_l3"
+    },
+    {
+      "token": "1-0:24.7.0",
+      "description": "Reactive effect in L1",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 17,
+      "guid-lsb": 17,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kvar": 0
+      },
+      "store": "reactive_effect_in_l1"
+    },
+    {
+      "token": "1-0:44.7.0",
+      "description": "Reactive effect in L2",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 18,
+      "guid-lsb": 18,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kvar": 0
+      },
+      "store": "reactive_effect_in_l2"
+    },
+    {
+      "token": "1-0:64.7.0",
+      "description": "Reactive effect in L3",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 19,
+      "guid-lsb": 19,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1000,
+      "units": {
+        "kvar": 0
+      },
+      "store": "reactive_effect_in_l3"
+    },
+    {
+      "token": "1-0:32.7.0",
+      "description": "Voltage L1",
+      "vscp-class": 1040,
+      "vscp-type": 16,
+      "sensorindex": 20,
+      "guid-lsb": 20,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+          "V": 0 
+      },
+      "store": "voltage_l1"
+    },
+    {
+      "token": "1-0:52.7.0",
+      "description": "Voltage L2",
+      "vscp-class": 1040,
+      "vscp-type": 16,
+      "sensorindex": 21,
+      "guid-lsb": 21,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+          "V": 0 
+      },
+      "store": "voltage_l2"
+    },
+    {
+      "token": "1-0:72.7.0",
+      "description": "Voltage L3",
+      "vscp-class": 1040,
+      "vscp-type": 16,
+      "sensorindex": 22,
+      "guid-lsb": 22,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+          "V": 0 
+      },
+      "store": "voltage_l3"
+    },
+    {
+      "token": "1-0:31.7.0",
+      "description": "Current L1",
+      "vscp-class": 1040,
+      "vscp-type": 5,
+      "sensorindex": 23,
+      "guid-lsb": 23,
+      "zone": 0,
+      "subzone": 5,
+      "factor": 1,
+      "units": {
+          "A": 0
+      },
+      "store": "current_l1"
+    },
+    {
+      "token": "1-0:51.7.0",
+      "description": "Current L2",
+      "vscp-class": 1040,
+      "vscp-type": 5,
+      "sensorindex": 24,
+      "guid-lsb": 24,
+      "izone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+          "A": 0
+      },
+      "store": "current_l2"
+    },
+    {
+      "token": "1-0:71.7.0",
+      "description": "Current L3",
+      "vscp-class": 1040,
+      "vscp-type": 5,
+      "sensorindex": 25,
+      "guid-lsb": 25,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+          "A": 0
+      },
+      "store": "current_l3"
     }
+  ],
+  "alarms": [
+    {
+      "type":"on",
+      "variable": "current_l3",
+      "op": ">",
+      "value": 1234,
+      "one-shoot": false,
+      "alarm-byte":1234,
+      "zone": 1234,
+      "subzone": 1234
+    },
+    {
+      "type":"off",
+      "variable": "current_l3",
+      "op": "<",
+      "value": 1234,
+      "one-shoot": false,
+      "alarm-byte":1234,
+      "zone": 1234,
+      "subzone": 1234
+    }
+  ],
+  "alarms": [
+    {
+      "type":"on",
+      "variable": "current_l1",
+      "op": ">",
+      "value": 5.0,
+      "one-shot": false,
+      "alarm-byte":99,
+      "zone": 1,
+      "subzone": 2
+    },
+    {
+      "type":"off",
+      "variable": "current_l1",
+      "op": "<",
+      "value": 4.9,
+      "one-shot": false,
+      "alarm-byte":88,
+      "zone": 1,
+      "subzone": 2
+    }
+  ]
 }
+
 ```
 
-##### file-log-level
-Set to one of "off|critical|error|warn|info|debug|trace" for log level.
+Actual output data from the meter is like this
 
-##### file-log-path" : "path to log file",
-Set a writable path to a file that will get log information written to that file. This can be a valuable help if things does not behave as expected.
-
-##### file-log-pattern
-Pattern for log file rows.
-
-##### file-log-max-size
-Max size for log file before it will rotate and a new file is created. Default is 5 Mb.
-
-##### file-log-max-files
-Max number of log files to keep. Default is 7
+![](https://i2.wp.com/www.akehedman.se/wordpress/wp-content/uploads/2021/04/Screenshot-from-2021-04-21-21-25-34.png?w=580&ssl=1)
 
 ##### write
 If write is true dynamic changes to the configuration file will be possible to save dynamically to disk. That is, settings you do at runtime can be saved and be persistent. The safest place for a configuration file is in the VSCP configuration folder */etc/vscp/* but for dynamic saves are not allowed if you don't run the VSCP daemon as root (which you should not). Next best place is to use the folder */var/lib/vscp/drivername/configure.xml*. This folder is created and a default configuration is written here when the driver is installed.
 
 If you never intend to change driver parameters during runtime consider moving the configuration file to the VSCP daemon configuration folder.
 
-##### interface
-Set the interface to listen on. Default is: *tcp://localhost:9598*. The interface is either secure (TLS) or insecure. It is not possible to define interfaces that accept connections of both types.
+##### debug
+If debug is true the driver will output extra debug information. Normally just used during development.
 
-if "tcp:// part is omitted the content is treated as it was present.
+##### Serial
 
-If port is omitted, default 9598 is used.
+The serial block specify the serial port to use. 
 
-For TLS/SSL use prefix "stcp://"
+- **port**: The serial port to use. Best is to use an udev rule to create a virtual serial port here to prevent the driver from having to open the port every time it is started. But _/dev/ttyUSB0_ and similar is OK to.
+- **baudrate**: The baud rate to use.
+- **bits**: The number of bits per byte (7/8).
+- **parity**: The parity to use (N=none, E=even, O=odd).
+- **stopbits**: The stopbits to use (1/2).  
+- **hwflowctrl**: Set to true to use  hardware flow control.
+- **swflowctrl**: Set to true to use  software flow control.
+- **dtr-on-start**: Set to true to turn on DTR on start.
+##### file-log-level
+Set to one of "off|critical|error|warn|info|debug|trace" for log level.
 
-##### auth-domain
-The authentication domain. In reality this is an arbitrary string that is used when calulating md5 checksums. In this case the checksum is calulated over "user:auth-domain-password"
+##### Logging
 
-##### path-users
-The user database is separated from the configuration file for security reasons and should be stored in a folder that is only readable by the user of the host, usually the VSCP daemon.
+It is possible to log to a console or a log file or to both at the same time. Console logs will only be visible when the driver is run by a non-daemon host.
+##### file-log-path" : "path to log file",
+Set a writable path to a file that will get log information written to that file. This can be a valuable help if things does not behave as expected.
 
-The format for the user file is specified below.
+- "console-enable": true|false - Enable console logging.
+- "console-log-level": "off|critical|error|warn|info|debug|trace" - Set log level for console logging.
+- "console-pattern": "pattern" - Set log pattern for console logging.
 
-##### response-timeout
-Response timeout in milliseconds. Connection will be restarted if this expires.
+- "file-log-enable": true|false - Enable file logging.
+- "file-log-level": "off|critical|error|warn|info|debug|trace" - Set log level for file logging.
+- "file-log-path": "path to log file" - Set a writable path to a file that will get log information written to that file. This can be a valuable help if things does not behave as expected.
+- "file-log-pattern": "pattern" - Set log pattern for file logging.
+- "file-log-max-size": "size" - Set max size for log file.
+- "file-log-max-files": "number" - Set max number of log files.
 
-##### encryption
-Response and commands from/to the tcp/ip link server can be encrypted using AES-128, AES-192 or AES-256. Set here as
+##### items
 
-"none|aes128|aes192|aes256"
+Items is an array of elements. They specify the translation from the P1 protocol to the VSCP event data format.
 
-**Default**: is no encryption.
+Each element is a dictionary with the following keys:
 
-##### filter
-Filter and mask is a way to select which events is received by the driver. A filter have the following format
+- **token**: The token to look for in the P1 protocol.
+- **description**: The description of the measurement.
+- **vscp-class**: The VSCP class to use for the event that will be sent.
+- **vscp-type**: The VSCP type to use for the event taht will be sent.
+- **sensorindex**: The sensor index to use. This is used to identify the sensor in the VSCP event. One can use one common GUID for all measurements and then use the sensor index to identify the sensor in the VSCP event. Or change the lsb byte of the GUID for each measurement value or both.
+- **guid-lsb**: The GUID LSB to use. See sensorindex above.
+- **izone**: The zone to use.
+- **subzone**: The subzone to use.
+- **factor**: The factor to use. This is used to convert the value from the P1 protocol to the VSCP event data format.
+- **units**: The units to use. This is used to convert the value from the P1 protocol to the VSCP event data format. For example a power measurement is in Watts in VSCP but often given in kilowatts. In that case the factor would be 1000.
+- **units**: The units to use.
+- **store**: The is a name of a variable to store the value in. This is used to store the value in a variable for later use (alarms).
 
-> priority,vscpclass,vscptype,guid
+##### alarms
+Alarms is specified as an array of elements. They define the alarms that will be triggered when the value of the measurement changes and a condition is true. The alarm that will be sent for an active alarm  is [CLASS1.ALARM, VSCP_TYPE_ALARM_ALARM](https://grodansparadis.github.io/vscp-doc-spec/#/./class1.alarm?id=type2) and [CLASS1.ALARM,VSCP_TYPE_ALARM_RESET](https://grodansparadis.github.io/vscp-doc-spec/#/./class1.alarm?id=type13) is sent when the alarm condition no longer is valid.
 
-All values can be give in decimal or hexadecimal (preceded number with '0x'). GUID is always given i hexadecimal (without preceded '0x').
+- **type**: The type of alarm. Can be _on_ or _off_.
+- **variable**: The variable to use (from store in items above).
+- **op**: The operator to use. Can be >, <, >=, <=, ==, !=.
+- **value**: The value to use for the compare.
+- **one-shot**: Set to true to make the alarm one-shot. Default is to send the alarm on every report from the p1 device.
+- **alarm-byte**: The alarm byte (byte 0) to use for the alarm event.
+- **zone**: The zone to use for the alarm event.
+- **subzone**: The subzone to use for the alarm event.
 
-**Default**: setting is
+## Using the vscpl2drv-energy-p1 driver
 
-> 0,0,0,00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
+A video is here for metering in Belgium https://www.youtube.com/watch?v=6omi6Kms-ns that will give a good overview that is valid for other countries also. You can even use Tasmota for this https://tasmota.github.io/docs/P1-Smart-Meter/. However note there are some differences between meters.
 
-Read the [vscpd manual](http://grodansparadis.github.io/vscp/#/) for more information about how filter/masks work.
+I have a write up [here](https://grodansparadis.com/wordpress/wp-admin/post.php?post=5039&action=edit) about our setup. 
 
-The default filter/mask pair means that all events are received by the driver.
+Below is a node-red flow that shows gauges and a diagrams for the active effect for the three phases L1,L2 and L3.
 
-##### mask
-Filter and mask is a way to select which events is received by the driver. A mask have the following format
-
-> priority,vscpclass,vscptype,guid
-
-All values can be give in decimal or hexadecimal (preceded number with '0x'). GUID is always given i hexadecimal (without preceded '0x').
-
-The mask have a binary one ('1') in the but position of the filter that should have a specific value and zero ('0') for a don't care bit.
-
-Default setting is
-
-> 0,0,0,00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
-
-Read the vscpd manual for more information about how filter/masks work.
-
-The default filter/mask pair means that all events are received by the driver.
-
-##### ssl_certificate
-Path to SSL certificate file. This option is only required when at least one of the listening_ports is SSL The file must be in PEM format, and it must have both private key and certificate, see for example ssl_cert.pem. If this option is set, then the webserver serves SSL connections on the port set up to listen on.
-
-**Default**: /srv/vscp/certs/server.pem
-
-##### ssl_certificate_chain
-T.B.D.
-
-##### ssl_verify_peer
-Enable client's certificate verification by the server.
-
-**Default**: false
-
-##### ssl_ca_path
-Name of a directory containing trusted CA certificates for peers. Each file in the directory must contain only a single CA certificate. The files must be named by the subject name’s hash and an extension of “.0”. If there is more than one certificate with the same subject name they should have extensions ".0", ".1", ".2" and so on respectively.
-
-##### ssl_ca_file"
-Path to a .pem file containing trusted certificates for peers. The file may contain more than one certificate.
-
-##### ssl_verify_depth
-Sets maximum depth of certificate chain. If client's certificate chain is longer than the depth set here connection is refused.
-
-**Default**: 9
-
-##### ssl_default_verify_paths
-Loads default trusted certificates locations set at openssl compile time.
-
-**Default**: true
-
-##### ssl_cipher_list
-List of ciphers to present to the client. Entries should be separated by colons, commas or spaces.
-
-| Selection	| Description |
-| ========= | =========== |
-| ALL |	All available ciphers |
-| ALL:!eNULL | All ciphers excluding NULL ciphers |
-| AES128:!MD5 | AES 128 with digests other than MD5 |
-
-See [this entry in OpenSSL documentation](https://www.openssl.org/docs/manmaster/apps/ciphers.html) for full list of options and additional examples.
-
-**Default**: "DES-CBC3-SHA:AES128-SHA:AES128-GCM-SHA256",
-
-##### ssl_protocol_version
-Sets the minimal accepted version of SSL/TLS protocol according to the table:
-
-| Selected protocols | setting |
-| ================== | ======= |
-| SSL2+SSL3+TLS1.0+TLS1.1+TLS1.2 | 0 |
-| SSL3+TLS1.0+TLS1.1+TLS1.2 | 1 |
-| TLS1.0+TLS1.1+TLS1.2 | 2 |
-| TLS1.1+TLS1.2	| 3 |
-| TLS1.2 | 4 |
-
-**Default**: 4.
-
-##### ssl_short_trust
-Enables the use of short lived certificates. This will allow for the certificates and keys specified in ssl_certificate, ssl_ca_file and ssl_ca_path to be exchanged and reloaded while the server is running.
-
-In an automated environment it is advised to first write the new pem file to a different filename and then to rename it to the configured pem file name to increase performance while swapping the certificate.
-
-Disk IO performance can be improved when keeping the certificates and keys stored on a tmpfs (linux) on a system with very high throughput.
-
-**Default**: false
-
- #### Format for user database
-
- ```json
- {
-	"users" : [
-		{
-			"user" : "admin",
-            "fullname" : "Full name",
-            "note" : "note about user-item",
-			"credentials"  : "fastpbkdf2 over 'user:password' using 256 bit system key (stored: item:iv)",
-            "filter" : "outgoing filter",
-			"rights" : "comma separated list of rights",
-            "remotes" : "comma separated list of hosts First char: +=allow -deny",
-			"events" : "comma separated list of events "TX|RX|BOTH;vscp-class;vscp.type;priority"
-		}
-	]
-}
+```
+[{"id":"292e3baf010b82a6","type":"mqtt in","z":"38061fa379e39e86","name":"Active effect out L1","topic":"vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:08/1040/14/8/8","qos":"2","datatype":"json","broker":"5438645a.6577cc","nl":false,"rap":true,"rh":0,"x":170,"y":400,"wires":[["37063deaf5482572","d3e6b0d664bcc542","3d525d7c9397cf8d"]]},{"id":"0b886f663d86c6f2","type":"ui_gauge","z":"38061fa379e39e86","name":"Active effect out  L1","group":"b34740c6.f1cb58","order":9,"width":"6","height":"5","gtype":"gage","title":"Active effect out  L1","label":"kW","format":"{{value}}","min":0,"max":"6","colors":["#00b500","#e6e600","#ca3838"],"seg1":"3","seg2":"5","x":570,"y":360,"wires":[]},{"id":"37063deaf5482572","type":"function","z":"38061fa379e39e86","name":"","func":"msg.value =  parseFloat(msg.payload.measurement.value/1000).toFixed(3);\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":360,"y":360,"wires":[["0b886f663d86c6f2"]]},{"id":"328bfc97ab4e3d72","type":"mqtt in","z":"38061fa379e39e86","name":"Active effect out  L2","topic":"vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:09/1040/14/9/9","qos":"2","datatype":"json","broker":"5438645a.6577cc","nl":false,"rap":true,"rh":0,"x":170,"y":520,"wires":[["dc7e9186723fd52a","c3c14d12c8080ee6","3ad6ce749f939126"]]},{"id":"1128ef7e42860be3","type":"ui_gauge","z":"38061fa379e39e86","name":"Active effect out  L2","group":"b34740c6.f1cb58","order":10,"width":"6","height":"5","gtype":"gage","title":"Active effect out  L2","label":"kW","format":"{{value}}","min":0,"max":"6","colors":["#00b500","#e6e600","#ca3838"],"seg1":"3","seg2":"5","x":570,"y":480,"wires":[]},{"id":"dc7e9186723fd52a","type":"function","z":"38061fa379e39e86","name":"","func":"msg.value =  parseFloat(msg.payload.measurement.value/1000).toFixed(3);\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":360,"y":480,"wires":[["1128ef7e42860be3"]]},{"id":"b1d492e24341b1eb","type":"mqtt in","z":"38061fa379e39e86","name":"Active effect out  L3","topic":"vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:0A/1040/14/10/10","qos":"2","datatype":"json","broker":"5438645a.6577cc","nl":false,"rap":true,"rh":0,"x":170,"y":640,"wires":[["7980eecebf80feba","52b0bca3cdf4d636","59240d1a05ef7918"]]},{"id":"ddb538fd44202e42","type":"ui_gauge","z":"38061fa379e39e86","name":"Active effect out  L3","group":"b34740c6.f1cb58","order":11,"width":"6","height":"5","gtype":"gage","title":"Active effect out  L3","label":"kW","format":"{{value}}","min":0,"max":"6","colors":["#00b500","#e6e600","#ca3838"],"seg1":"3","seg2":"5","x":570,"y":680,"wires":[]},{"id":"7980eecebf80feba","type":"function","z":"38061fa379e39e86","name":"","func":"msg.value =  parseFloat(msg.payload.measurement.value/1000).toFixed(3);\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":340,"y":680,"wires":[["ddb538fd44202e42"]]},{"id":"06c98721a4cf06f9","type":"comment","z":"38061fa379e39e86","name":"Active effect phases","info":"","x":170,"y":340,"wires":[]},{"id":"ab50bc763ae94086","type":"ui_chart","z":"38061fa379e39e86","name":"Active effect out","group":"b34740c6.f1cb58","order":27,"width":0,"height":0,"label":"Active effect out","chartType":"line","legend":"true","xformat":"HH:mm","interpolate":"linear","nodata":"No data","dot":true,"ymin":"0","ymax":"10","removeOlder":"4","removeOlderPoints":"","removeOlderUnit":"3600","cutout":0,"useOneColor":false,"useUTC":false,"colors":["#2ca02c","#1f77b4","#ec1334","#ff7f0e","#98df8a","#68c9f3","#ff9896","#9467bd","#c5b0d5"],"outputs":1,"useDifferentColor":false,"x":560,"y":580,"wires":[[]]},{"id":"d3e6b0d664bcc542","type":"function","z":"38061fa379e39e86","name":"","func":"msg.payload =  msg.payload.measurement.value/1000;\nmsg.topic = \"Active effect out L1\";\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":360,"y":440,"wires":[["ab50bc763ae94086"]]},{"id":"c3c14d12c8080ee6","type":"function","z":"38061fa379e39e86","name":"","func":"msg.payload =  msg.payload.measurement.value/1000;\nmsg.topic = \"Active effect out L2\";\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":360,"y":560,"wires":[["ab50bc763ae94086"]]},{"id":"52b0bca3cdf4d636","type":"function","z":"38061fa379e39e86","name":"","func":"msg.payload =  msg.payload.measurement.value/1000;\nmsg.topic = \"Active effect out L3\";\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":340,"y":720,"wires":[["ab50bc763ae94086"]]},{"id":"69236a372fd34c50","type":"link in","z":"38061fa379e39e86","name":"Active effect out total","links":["8cf9f8cf50e0f63a"],"x":395,"y":600,"wires":[["ab50bc763ae94086"]]},{"id":"5438645a.6577cc","type":"mqtt-broker","name":"Local","broker":"localhost","port":"1883","clientid":"lynx","usetls":false,"compatmode":false,"protocolVersion":"4","keepalive":"60","cleansession":true,"birthTopic":"","birthQos":"0","birthPayload":"","birthMsg":{},"closeTopic":"","closeQos":"0","closePayload":"","closeMsg":{},"willTopic":"","willQos":"0","willPayload":"","willMsg":{},"sessionExpiry":""},{"id":"b34740c6.f1cb58","type":"ui_group","name":"Power Brattberg house","tab":"c70db629dd6e0ec2","order":1,"disp":true,"width":"18","collapse":false},{"id":"c70db629dd6e0ec2","type":"ui_tab","name":"Power","icon":"dashboard","disabled":false,"hidden":false}]
 ```
 
-Any number of users can be specified
-
-##### user
-The login user name
-
-##### credentials
-fastpbkdf2 over "user:auth-domain:password" stored as 'pw:salt'
-
-credentials = encrypted_pw:iv where the encrypted_pw
-is calculated over md5(user:password)
-encrypted_pw = aes256(user,password,iv) encrypted with key 
-key = 256 bit, 32 byte number.
-user send "password" (no :) or encrypted_pw:iv (: present)
-
-##### rights
-Rights for this user as a 32-bit rights number.
-
-##### name
-Full name for user.
-
- ##### events
- This is a list with events the user is allowed to send and/or receive. If empty all events can be sent and received by the users.
-
- ###### class
- VSCP class. Can be set to -1 to allow all classes.
-
- ###### type
- VSCP type. Can be set to -1 to allow all types. 
-
- ###### dir
- The direction the user is allowed to handle. Set to "rx" to allow only receive. Set to "tx" to allow only transmit. Set to "both" or empty to allow sending and receiving.
-
-###### max-priority
-Max priority (0-7) this user can use for send events. Trying to send an event with a higher priority will replace the event value with the value set here. Note that 0 is the hightst priority.
-
-### Windows
-See information from Linux. The only difference is the disk location from where configuration data is fetched.
-
-## Using the vscpl2drv-tcpipsrv driver
-
+A live demo of data from our office is [here](https://demo.vscp.org/mqtt/power.html).
