@@ -2,7 +2,7 @@
   "write" : false,
   "debug" : true,       
   "serial": {
-    "port": "/dev/ttyUSB0",
+    "port": "/dev/electric_meter",
     "baudrate": 115200,
     "bits": 8,
     "parity": "N",
@@ -169,7 +169,7 @@
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
       "store": "active_effect_out_l2"
     },
@@ -184,7 +184,7 @@
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
       "store": "active_effect_out_l3"
     },
@@ -192,14 +192,14 @@
       "token": "1-0:22.7.0",
       "description": "Active effect in L1",
       "vscp-class": 1040,
-      "vscp-type": 14,
+      "vscp-type": 13,
       "sensorindex": 11,
       "guid-lsb": 11,
       "zone": 0,
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
       "store": "active_effect_in_l1"
     },
@@ -207,14 +207,14 @@
       "token": "1-0:42.7.0",
       "description": "Active effect in L2",
       "vscp-class": 1040,
-      "vscp-type": 14,
+      "vscp-type": 13,
       "sensorindex": 12,
       "guid-lsb": 12,
       "zone": 0,
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
       "store": "active_effect_in_l1"
     },
@@ -222,14 +222,14 @@
       "token": "1-0:62.7.0",
       "description": "Active effect in L3",
       "vscp-class": 1040,
-      "vscp-type": 14,
+      "vscp-type": 13,
       "sensorindex": 13,
       "guid-lsb": 13,
       "zone": 0,
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
       "store": "active_effect_in_l3"
     },
@@ -242,9 +242,9 @@
       "guid-lsb": 14,
       "zone": 0,
       "subzone": 0,
-      "factor": 1,
+      "factor": 1000,
       "units": {
-        "kVAr": 0
+        "VAr": 0
       },
       "store": "reactive_effect_out_l1"
     },
@@ -257,9 +257,9 @@
       "guid-lsb": 15,
       "zone": 0,
       "subzone": 0,
-      "factor": 1,
+      "factor": 1000,
       "units": {
-        "kVAr": 0
+        "VAr": 0
       },
       "store": "reactive_effect_out_l2"
     },
@@ -272,9 +272,9 @@
       "guid-lsb": 16,
       "zone": 0,
       "subzone": 0,
-      "factor": 1,
+      "factor": 1000,
       "units": {
-        "kVAr": 0
+        "VAr": 0
       },
       "store": "reactive_effect_out_l3"
     },
@@ -287,9 +287,9 @@
       "guid-lsb": 17,
       "zone": 0,
       "subzone": 0,
-      "factor": 1,
+      "factor": 1000,
       "units": {
-        "kVAr": 0
+        "VAr": 0
       },
       "store": "reactive_effect_in_l1"
     },
@@ -302,9 +302,9 @@
       "guid-lsb": 18,
       "zone": 0,
       "subzone": 0,
-      "factor": 1,
+      "factor": 1000,
       "units": {
-        "kVAr": 0
+        "VAr": 0
       },
       "store": "reactive_effect_in_l2"
     },
@@ -317,9 +317,9 @@
       "guid-lsb": 19,
       "zone": 0,
       "subzone": 0,
-      "factor": 1,
+      "factor": 1000,
       "units": {
-        "kVAr": 0
+        "VAr": 0
       },
       "store": "reactive_effect_in_l3"
     },

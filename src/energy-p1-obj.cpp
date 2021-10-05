@@ -1764,7 +1764,7 @@ CEnergyP1::doWork(std::string &strbuf)
                     pItem->getToken(),
                     pItem->getValue(strbuf),
                     pItem->getUnit(strbuf),
-		    strbuf);
+		                strbuf);
 
       if (m_bDebug) {
         ;
