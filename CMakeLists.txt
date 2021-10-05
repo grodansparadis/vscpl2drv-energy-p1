@@ -30,9 +30,6 @@ cmake_minimum_required(VERSION 3.5)
 project(vscpl2drv-energy-p1 LANGUAGES CXX C)
 set(PACKAGE_AUTHOR "Ake Hedman, the VSCP Project")
 
-# Load packaging facilities.
-INCLUDE(CPack)
-
 # Version settings
 if(NOT DEFINED MAJOR_VERSION)
     SET(MAJOR_VERSION "15")
@@ -125,52 +122,55 @@ endif()
 
 #   ===========================  cpack  ===========================
 IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
-INCLUDE(InstallRequiredSystemLibraries)
+  INCLUDE(InstallRequiredSystemLibraries)
 
-IF(WIN32)
-SET(CPACK_SET_DESTDIR OFF)
-ELSE()
-SET(CPACK_SET_DESTDIR ON)
-SET(CPACK_PACKAGING_INSTALL_PREFIX "/var/lib/vscp/drivers")
-ENDIF()
+  IF(WIN32)
+  SET(CPACK_SET_DESTDIR OFF)
+  ELSE()
+  SET(CPACK_SET_DESTDIR ON)
+  SET(CPACK_PACKAGING_INSTALL_PREFIX "/var/lib/vscp/drivers")
+  ENDIF()
 
-IF(WIN32)
-SET(CPACK_GENERATOR "NSIS" "ZIP")
-ELSE()
-SET(CPACK_GENERATOR "DEB" "RPM" "TGZ" "ZIP")
-ENDIF()
+  IF(WIN32)
+  SET(CPACK_GENERATOR "NSIS" "ZIP")
+  ELSE()
+  SET(CPACK_GENERATOR "DEB" "RPM" "TGZ" "ZIP")
+  ENDIF()
+  
+  set(CPACK_PACKAGE_NAME ${APP_LOW_NAME})
+  set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY ${APP_NAME})
+
+
+  SET(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
+  SET(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
+  SET(CPACK_PACKAGE_VERSION_PATCH "${PATCH_VERSION}")
+  SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
+  SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
+  SET(CPACK_IGNORE_FILES "\\.psd$;/CVS/;/\\.svn/;/\\.git/;\\.swp$;/CMakeLists.txt.user;\\.#;/#;\\.tar.gz$;/CMakeFiles/;CMakeCache.txt;\\.qm$;/build/;\\.diff$;.DS_Store'")
+  SET(CPACK_SOURCE_IGNORE_FILES ${CPACK_IGNORE_FILES})
+
+  SET(CPACK_NSIS_INSTALLED_ICON_NAME "${APP_LOW_NAME}.ico")
+  SET(CPACK_NSIS_HELP_LINK ${APP_URL})
+  SET(CPACK_NSIS_URL_INFO_ABOUT ${APP_URL})
+
+  IF(NOT DEFINED WIN32)
+  SET(CPACK_DEBIAN_PACKAGE_DEPENDS " libexpat-dev, libssl-dev ")
+  SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+  SET(CPACK_DEBIAN_PACKAGE_SECTION "network")
+  SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
+  ENDIF()
+
+  SET(CPACK_COMPONENTS_ALL Libraries ApplicationData)
+
+  # Configure file with custom definitions for NSIS.
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/resources/nsis/NSIS.definitions.nsh.in
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/nsis/NSIS.definitions.nsh
+  )
  
-set(CPACK_PACKAGE_NAME ${APP_LOW_NAME})
-set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY ${APP_NAME})
+    # Load packaging facilities.
+    INCLUDE(CPack)
 
-
-SET(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
-SET(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
-SET(CPACK_PACKAGE_VERSION_PATCH "${PATCH_VERSION}")
-SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
-SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
-SET(CPACK_IGNORE_FILES "\\.psd$;/CVS/;/\\.svn/;/\\.git/;\\.swp$;/CMakeLists.txt.user;\\.#;/#;\\.tar.gz$;/CMakeFiles/;CMakeCache.txt;\\.qm$;/build/;\\.diff$;.DS_Store'")
-set(CPACK_SOURCE_IGNORE_FILES ${CPACK_IGNORE_FILES})
-
-SET(CPACK_NSIS_INSTALLED_ICON_NAME "${APP_LOW_NAME}.ico")
-SET(CPACK_NSIS_HELP_LINK ${APP_URL})
-SET(CPACK_NSIS_URL_INFO_ABOUT ${APP_URL})
-
-IF(NOT DEFINED WIN32)
-SET(CPACK_DEBIAN_PACKAGE_DEPENDS " libexpat-dev, libssl-dev ")
-SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-SET(CPACK_DEBIAN_PACKAGE_SECTION "network")
-SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-ENDIF()
-
-SET(CPACK_COMPONENTS_ALL Libraries ApplicationData)
-
-# Configure file with custom definitions for NSIS.
-configure_file(
-  ${PROJECT_SOURCE_DIR}/resources/nsis/NSIS.definitions.nsh.in
-  ${CMAKE_CURRENT_BINARY_DIR}/resources/nsis/NSIS.definitions.nsh
-)
- 
 ENDIF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 
 
@@ -248,8 +248,7 @@ add_library(vscpl2drv-energy-p1
     ${VSCP_PATH}/src/common/com_linux.cpp
   ) 
 
-if (WIN32)
-    
+if (WIN32)    
     find_package(pthreads REQUIRED)
     find_path(PTHREAD_INCLUDE_DIR pthread.h)
 
