@@ -28,6 +28,6 @@ if (${PANDOCCOMMAND_FOUND})
 endif()
 
 install(
-  FILES ${CMAKE_CURRENT_SOURCE_DIR}/vscpl2drv-energy-p1.1
+  FILES ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
   DESTINATION share/man/man1
 )

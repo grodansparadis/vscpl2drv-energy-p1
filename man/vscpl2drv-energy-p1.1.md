@@ -1,80 +1,54 @@
-% vscpl2drv-tcpipsrv(1) VSCP Level II tcp/ip server Driver
+% vscpl2drv-energy-p1(1) VSCP Level II energy p1 Driver
 % Åke Hedmann, the VSCP Project
 % April 07, 2021
 
 # NAME
 
-vscpl2drv-tcpipsrv - VSCP Level II tcp/ip server driver
+vscpl2drv-energy-p1 - VSCP Level II energy p1 driver
 
 # SYNOPSIS
 
-vscpl2drv-tcpipsrv
+vscpl2drv-energy-p1
 
 # DESCRIPTION
 
-This driver interface SocketCAN, the official CAN API of the Linux kernel, has been included in the kernel for a long time now. Meanwhile, the official Linux repository has device drivers for all major CAN chipsets used in various architectures and bus types. SocketCAN offers the user a multiuser capable as well as hardware independent socket-based API for CAN based communication and configuration. Socketcan nowadays give access to the major CAN adapters that is available on the market. Note that as CAN only can handle Level I events only events up to class < 1024 can be sent to this device. Other events will be filtered out.
+A driver that read data from a [DSMR V5.0.2 P1](https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_a727fce1f1.pdf) energy meter and translate metering to relevant VSCP events.
 
-## Configuration
+# CONFIGURATION
 
-The *configuration string* is the first configuration data that is read by the driver. The driver will, after it is read and parsed, ask the server for driver specific configuration data. This data is fetched with the same pattern for all drivers. Variables are formed by the driver name + some driver specific remote variable name. If this variable exist and contains data it will be used as configuration for the driver regardless of the content of the configuration string.
+The VSCP daemon configuration is (normally) located at */etc/vscp/vscpd.conf*. To use the vscpl2drv-energy-p1.so driver there must be an entry in the
 
-### Adding the driver to the VSCP daemon.
+```
+> <level2driver enable="true">
+```
 
-Add the driver to the vscpd configuration file (default location */etc/vscp/vscpd.conf*). THis entry looks the same for all level II drivers.
+section on the following format
 
 ```xml
-<driver enable="true" >
-    <name>socketcan1</name>
-    <path>/usr/lib/vscpl2drv_tcpiplink.so</path>
-    <config>can</config>
-    <guid>FF:FF:FF:FF:FF:FF:FF:FE:B8:27:EB:0A:11:02:00:00</guid>
+<!-- Level II TCP/IP Server -->
+<driver enable="true"
+    name="vscp-tcpip-srv"
+    path-driver="/usr/lib/vscp/drivers/level2/vscpl2drv-energy-p1.so"
+    path-config="/etc/vscp/vscpl2drv-energy-p1.conf"
+    guid="FF:FF:FF:FF:FF:FF:FF:FC:88:99:AA:BB:CC:DD:EE:FF"
 </driver>
 ```
 
-* **name** is the name of the driver. Set a name that has some meaning for you.
-* **path** points to the location where the driver is installed.
-* **config** is the configuration string. This string contains configuration  entries separated by semicolon.
-* **guid** is the GUID that should be used to referee to this driver and devices handled by it. If you set a GUID (and you should) the two least significant digits should be set to zero. If absent or not set the VSCP daemon will set a GUID for you.
+##### enable
+Set enable to "true" if the driver should be loaded.
 
-In the configuration example above the driver will fetch configuration data from the server from variables *socketcan1_interface*, *socketcan1_filter* and  *socketcan1_mask*
+##### name
+This is the name of the driver. Used when referring to it in different interfaces.
 
-### Configuration string
+##### path
+This is the path to the driver. If you install from a Debian package this will be */usr/bin/vscpl2drv-energy-p1.so* and if you build and install the driver yourself it will be */usr/local/bin/vscpl2drv-energy-p1.so* or a custom location if you configured that.
 
-```bash
-interface
-```
+##### guid
+All level II drivers must have a unique GUID. There is many ways to obtain this GUID, Read more [here](https://grodansparadis.gitbooks.io/the-vscp-specification/vscp_globally_unique_identifiers.html).
 
-#### Interface
+#### vscpl2drv-energy-p1 driver config
 
-The parameter interface is the socketcan interface to use. Typically this is can0, can0, can1... Defaults is vcan0, the first virtual interface. If the remote variable **prefix**_interface is available it will be used instead of the configuration value. "**prefix**" is the name given to the driver in *vscpd.conf*
-
-### Remote variables
-
-The following configuration remote variables are defined
-
-| Remote variable name | Type   | Description |
- | ------------- | ----   | -----------   |
- | **_interface**    | string | The socketcan interface to use. Typically this is “can0, can0, can1...” Defaults is vcan0 the first virtual interface. |
- | **_filter**       | string | Standard VSCP filter on string form. Used to filter what events that is received from the socketcan interface. If not give all events are received. |
- | **_mask**         | string | Standard VSCP mask in string form.  Used to filter what events that is received from the socketcan interface. If not give all events are received.   |
- | **config** | json | All of the above as a JSON object. |
-
-#### Filter string form
-1,0x0000,0x0006,ff:ff:ff:ff:ff:ff:ff:01:00:00:00:00:00:00:00:00 as priority,class,type,GUID
-
-#### Mask string form
-1,0x0000,0x0006,ff:ff:ff:ff:ff:ff:ff:01:00:00:00:00:00:00:00:00 as priority,class,type,GUID
-
----
-
-There are many Level I/II/III drivers available in VSCP & Friends framework that can be used with both VSCP Works and the VSCP Daemon and added to that Level II and Level III drivers that can be used with the VSCP Daemon.
-
-Level I drivers is documented [here](https://grodansparadis.gitbooks.io/the-vscp-daemon/level_i_drivers.html).
-
-Level II drivers is documented [here](https://grodansparadis.gitbooks.io/the-vscp-daemon/level_ii_drivers.html)
-
-Level III drivers is documented [here](https://grodansparadis.gitbooks.io/the-vscp-daemon/level_iii_drivers.html)
-
+See _/usr/local/share/vscpl2drv-energy-p1_ for a sample configuration file. Also available on github at https://github.com/grodansparadis/vscpl2drv-energy-p1/blob/main/resources/linux/energyp1.json
 # SEE ALSO
 
 `vscpd` (8).
@@ -91,7 +65,7 @@ The [manual](https://grodansparadis.gitbooks.io/the-vscp-daemon) for vscpd conta
 The vscpd source code may be downloaded from <https://github.com/grodansparadis/vscp>. Source code for other system components of VSCP & Friends are here <https://github.com/grodansparadis>
 
 # COPYRIGHT
-Copyright 2000-2019 Åke Hedman, the VSCP Project - MIT license.
+Copyright 2000-2021 Åke Hedman, the VSCP Project - MIT license.
 
 
 

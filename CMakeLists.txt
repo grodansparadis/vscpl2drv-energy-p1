@@ -109,7 +109,7 @@ set (VSCP_PATH "${PROJECT_SOURCE_DIR}/../vscp")
 endif()
 
 if(WIN32)
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-DWIN32_LEAN_AND_MEANS)
     add_definitions(-DOPENSSL_API_1_1)
     add_definitions(-D_POSIX_C_SOURCE)    
@@ -139,7 +139,6 @@ IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
   
   set(CPACK_PACKAGE_NAME ${APP_LOW_NAME})
   set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY ${APP_NAME})
-
 
   SET(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
   SET(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
