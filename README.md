@@ -29,14 +29,14 @@ tbd
 ## How to build the driver on Linux
 
 - sudo git clone https://github.com/grodansparadis/vscp.git
-- sudo https://github.com/grodansparadis/vscpl2drv-tcpipsrv.git development
+- sudo https://github.com/grodansparadis/vscpl2drv-energy-p1.git development
 - sudo apt install pandoc           (comment: optional)
 - sudo apt install build-essential
 - sudo apt install cmake
 - sudo apt install libexpat-dev
 - sudo apt install libssl-dev
 - sudo apt install rpm              (comment: only if you want to create install packages)
-- cd vscpl2drv-tcpipsrv
+- cd vscpl2drv-energy-p1
 - mkdir build
 - cd build
 - cmake ..
