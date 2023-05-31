@@ -37,6 +37,7 @@ tbd
 - sudo apt install cmake
 - sudo apt install libexpat-dev
 - sudo apt install libssl-dev
+- sudo apt install libcurl4-openssl-dev
 - sudo apt install rpm              (comment: only if you want to create install packages)
 - cd vscpl2drv-energy-p1
 - mkdir build
