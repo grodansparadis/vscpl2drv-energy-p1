@@ -130,18 +130,18 @@ CEnergyP1::CEnergyP1()
 
   auto console = spdlog::stdout_color_mt("console");
   // Start out with level=info. Config may change this
-  spdlog::set_level(spdlog::level::debug);
+  spdlog::set_level(spdlog::level::info);
   spdlog::set_pattern("[vscpl2drv-energy-p1] [%^%l%$] %v");
   spdlog::set_default_logger(console);
 
   spdlog::debug("Starting the vscpl2drv-energy-p1 driver...");
 
   m_bConsoleLogEnable = true;
-  m_consoleLogLevel   = spdlog::level::debug;
+  m_consoleLogLevel   = spdlog::level::info;
   m_consoleLogPattern = "[vscpl2drv-energy.p1 %c] [%^%l%$] %v";
 
   m_bFileLogEnable   = true;
-  m_fileLogLevel     = spdlog::level::debug;
+  m_fileLogLevel     = spdlog::level::info;
   m_fileLogPattern   = "[vscpl2drv-energy-p1 %c] [%^%l%$] %v";
   m_path_to_log_file = "/var/log/vscp/vscpl2drv-energy-p1.log";
   m_max_log_size     = 5242880;
@@ -1349,7 +1349,7 @@ CEnergyP1::readVariable(vscpEventEx &ex, const json &json_req)
       goto abort;
     }
 
-    j["arg"]["type"]  = VSCP_REMOTE_VARIABLE_CODE_JSON;
+    j["arg"]["type"]  = 99 /*VSCP_REMOTE_VARIABLE_CODE_JSON  TODO*/;
     j["arg"]["value"] = m_j_config["users"][index].dump();
   }
   else {
@@ -1620,7 +1620,7 @@ CEnergyP1::writeVariable(vscpEventEx &ex, const json &json_req)
 
     m_j_config["users"][index] = j["args"];
 
-    j["arg"]["type"]  = VSCP_REMOTE_VARIABLE_CODE_JSON;
+    j["arg"]["type"]  = 99/*VSCP_REMOTE_VARIABLE_CODE_JSON TODO*/;
     j["arg"]["value"] = m_j_config["users"][index].dump();
   }
   else {
