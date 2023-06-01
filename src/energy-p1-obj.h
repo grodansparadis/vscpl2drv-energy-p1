@@ -52,7 +52,7 @@
 #include "alarm.h"
 #include "p1item.h"
 
-#include <json.hpp>  // Needs C++11  -std=c++11
+#include <nlohmann/json.hpp>  // Needs C++11  -std=c++11
 
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/rotating_file_sink.h"

@@ -216,7 +216,7 @@ add_library(vscpl2drv-energy-p1
     ${CMAKE_SOURCE_DIR}/src/alarm.h 
     ${CMAKE_SOURCE_DIR}/src/alarm.cpp
     ${VSCP_PATH}/src/common/third_party/mustache.hpp
-    ${VSCP_PATH}/src/common/third_party/spdlog-1.11.0/include    
+    third_party/spdlog/include    
     ${VSCP_PATH}/src/vscp/common/vscp.h
     ${VSCP_PATH}/src/vscp/common/vscpremotetcpif.h
     ${VSCP_PATH}/src/vscp/common/vscpremotetcpif.cpp
@@ -255,8 +255,8 @@ if (WIN32)
         ${VSCP_PATH}/src/vscp/common/  
         ${VSCP_PATH}/src/common
         ${VSCP_PATH}/src/common/third_party
-        ${VSCP_PATH}/src/common/third_party/nlohmann
-        ${VSCP_PATH}/src/common/third_party/spdlog-1.11.0/include
+        ${VSCP_PATH}/third_party/nlohmann/include
+        ${VSCP_PATH}/third_party/spdlog/include
         ${PThreads4W_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${OPENSSL_INCLUDE_DIR}
@@ -267,8 +267,8 @@ else()
         ${VSCP_PATH}/src/vscp/common/
         ${VSCP_PATH}/src/common
         ${VSCP_PATH}/src/common/third_party
-        ${VSCP_PATH}/src/common/third_party/nlohmann
-        ${VSCP_PATH}/src/common/third_party/spdlog-1.11.0/include
+        ${VSCP_PATH}/third_party/nlohmann/include
+        ${VSCP_PATH}/third_party/spdlog/include
         ${CMAKE_BINARY_DIR}
         ${OPENSSL_INCLUDE_DIR}
         ${LOCAL_SYSLOG_INCLUDE} )
