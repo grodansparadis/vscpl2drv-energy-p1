@@ -216,7 +216,7 @@ add_library(vscpl2drv-energy-p1
     ${CMAKE_SOURCE_DIR}/src/alarm.h 
     ${CMAKE_SOURCE_DIR}/src/alarm.cpp
     ${VSCP_PATH}/src/common/third_party/mustache.hpp
-    third_party/spdlog/include    
+    ${VSCP_PATH}/third_party/spdlog/include    
     ${VSCP_PATH}/src/vscp/common/vscp.h
     ${VSCP_PATH}/src/vscp/common/vscpremotetcpif.h
     ${VSCP_PATH}/src/vscp/common/vscpremotetcpif.cpp
