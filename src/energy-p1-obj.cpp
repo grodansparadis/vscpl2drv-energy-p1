@@ -137,7 +137,7 @@ CEnergyP1::CEnergyP1()
   spdlog::debug("Starting the vscpl2drv-energy-p1 driver...");
 
   m_bConsoleLogEnable = true;
-  m_consoleLogLevel   = spdlog::level::info;
+  m_consoleLogLevel   = spdlog::level::trace;
   m_consoleLogPattern = "[vscpl2drv-energy.p1 %c] [%^%l%$] %v";
 
   m_bFileLogEnable   = true;
