@@ -62,7 +62,7 @@ using json = nlohmann::json;
 
 const uint16_t MAX_ITEMS_IN_QUEUE = 32000;
 
-#define DRIVER_COPYRIGHT "Copyright © 2000-2021 Ake Hedman, the VSCP Project, https://www.vscp.org"
+#define DRIVER_COPYRIGHT "Copyright © 2000-2023 Ake Hedman, the VSCP Project, https://www.vscp.org"
 
 // Seconds before trying to reconnect to a broken connection
 #define VSCP_ENERGYP1_DEFAULT_RECONNECT_TIME 30
