@@ -38,7 +38,7 @@ if(NOT DEFINED MINOR_VERSION)
     SET(MINOR_VERSION "0")
 endif()
 if(NOT DEFINED PATCH_VERSION)
-    SET(PATCH_VERSION "0")
+    SET(PATCH_VERSION "1")
 endif()
 
 # Prevent abi warnings in nlohmann
@@ -75,7 +75,7 @@ endif()
 option(USE_SSL "Use SSL" TRUE)
 
 ## --- C++11 build flags ---
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
@@ -179,7 +179,8 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set (THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-find_package(spdlog REQUIRED)
+# spdlog
+#find_package(spdlog REQUIRED)
 
 #openssl
 find_package(OpenSSL REQUIRED)
@@ -279,7 +280,7 @@ else()
 if (WIN32)
     target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
         PThreads4W::PThreads4W_CXXEXC
-        spdlog::spdlog_header_only
+        #spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
         OpenSSL::SSL OpenSSL::Crypto
@@ -291,7 +292,7 @@ else()
         m
         dl
         Threads::Threads
-        spdlog::spdlog_header_only
+        #spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
         ${EXPAT_LIBRARIES}
