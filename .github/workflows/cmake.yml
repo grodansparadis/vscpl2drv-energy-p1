@@ -22,13 +22,17 @@ jobs:
     - name: Checkout vscp repo
       uses: actions/checkout@v3
       with:
-        repository: grodansparadis/vscp
-        path: vscp
-        ref: development
+        repository: 'grodansparadis/vscp'
+        path: 'vscp'
+        ref: 'development'
         submodules: 'recursive'
  
-    - name: Checkout google test repo
-      run: sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo mkdir build && cd build && sudo cmake .. && sudo make DESTDIR=/usr/lib
+    # https://github.com/marketplace/actions/googletest-installer      
+    - name: Install gtest
+      uses: MarkusJx/googletest-installer@v1.1    
+
+    #- name: Checkout google test repo
+    #  run: sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo mkdir build && cd build && sudo cmake .. && sudo make DESTDIR=/usr/lib
 
     - name: Update before installing packages
       run: sudo apt-get update
