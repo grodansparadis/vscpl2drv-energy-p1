@@ -16,6 +16,9 @@ jobs:
     steps:
     # https://github.com/actions/checkout  
     - uses: actions/checkout@v3
+      with:
+        ref: master
+        submodules: 'recursive'
      
     - name: Checkout vscp repo
       uses: actions/checkout@v3
