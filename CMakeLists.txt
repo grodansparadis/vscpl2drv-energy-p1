@@ -181,7 +181,7 @@ set (THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # spdlog
-#find_package(spdlog REQUIRED)
+find_package(spdlog REQUIRED PATHS ./third_party/spdlog)
 
 #openssl
 find_package(OpenSSL REQUIRED)
@@ -281,6 +281,7 @@ else()
 if (WIN32)
     target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
         PThreads4W::PThreads4W_CXXEXC
+        spdlog::spdlog
         #spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
@@ -293,6 +294,7 @@ else()
         m
         dl
         Threads::Threads
+        spdlog::spdlog
         #spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
