@@ -46,6 +46,9 @@ jobs:
     - name: Install libssl-dev manually
       run: sudo apt-get install libssl-dev
 
+      - name: Install libcurl and cpp wrapper for it
+      run: sudo apt-get install libcurl4-openssl-dev libcurlpp-dev  
+
     - name: Create Build Environment
       # Some projects don't allow in-source building, so create a separate build directory
       # We'll use this as our working directory for all subsequent commands
