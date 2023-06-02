@@ -30,6 +30,8 @@ cmake_minimum_required(VERSION 3.5)
 project(vscpl2drv-energy-p1 LANGUAGES CXX C)
 set(PACKAGE_AUTHOR "Ake Hedman, the VSCP Project")
 
+add_subdirectory(./third_party/spdlog/)
+
 # Version settings
 if(NOT DEFINED MAJOR_VERSION)
     SET(MAJOR_VERSION "15")
@@ -219,8 +221,8 @@ add_library(vscpl2drv-energy-p1
     ${CMAKE_SOURCE_DIR}/src/energy-p1-obj.cpp
     ${CMAKE_SOURCE_DIR}/src/alarm.h 
     ${CMAKE_SOURCE_DIR}/src/alarm.cpp
-    ${VSCP_PATH}/src/common/third_party/mustache.hpp
-    third_party/spdlog/include    
+    .//third_party/mustache.hpp
+    ./third_party/spdlog/include    
     ${VSCP_PATH}/src/vscp/common/vscp.h
     ${VSCP_PATH}/src/vscp/common/vscpremotetcpif.h
     ${VSCP_PATH}/src/vscp/common/vscpremotetcpif.cpp
