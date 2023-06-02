@@ -44,7 +44,7 @@ if(NOT DEFINED PATCH_VERSION)
 endif()
 
 # Prevent abi warnings in nlohmann
-SET(GCC_VSCP_COMPILE_FLAGS "-Wno-psabi")
+SET(GCC_VSCP_COMPILE_FLAGS "-Wno-psabi -fPIC")
 # Profiling
 #SET(GCC_VSCP_LINK_FLAGS    "-lgcov")
 
@@ -247,8 +247,8 @@ add_library(vscpl2drv-energy-p1
     ${VSCP_PATH}/src/common/crc8.c
     ${VSCP_PATH}/src/common/vscpmd5.h
     ${VSCP_PATH}/src/common/vscpmd5.c
-    ${VSCP_PATH}/src/common/fastpbkdf2.h
-    ${VSCP_PATH}/src/common/fastpbkdf2.c
+    ./third_party/fastpbkdf2/fastpbkdf2.h
+    ./third_party/fastpbkdf2/fastpbkdf2.c
     ${VSCP_PATH}/src/common/com_linux.h
     ${VSCP_PATH}/src/common/com_linux.cpp
   ) 
@@ -260,9 +260,12 @@ if (WIN32)
     include_directories( PUBLIC src/
         ${VSCP_PATH}/src/vscp/common/  
         ${VSCP_PATH}/src/common
-        ${VSCP_PATH}/src/common/third_party
-        third_party/nlohmann/include
-        third_party/spdlog/include
+        ${VSCP_PATH}/src/common/third_party/
+        ./third_party/nlohmann/include/
+        ./third_party/spdlog/include/
+        ./third_party/fastpbkdf2/
+        ./third_party/mustache/
+        ./third_party/maddy/include/
         ${PThreads4W_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${OPENSSL_INCLUDE_DIR}
@@ -272,9 +275,12 @@ else()
     include_directories( PUBLIC src/
         ${VSCP_PATH}/src/vscp/common/
         ${VSCP_PATH}/src/common
-        ${VSCP_PATH}/src/common/third_party
-        third_party/nlohmann/include
-        third_party/spdlog/include
+        ${VSCP_PATH}/src/common/third_party/
+        ./third_party/nlohmann/include/
+        ./third_party/spdlog/include/
+        ./third_party/fastpbkdf2/
+        ./third_party/mustache/
+        ./third_party/maddy/include/
         ${CMAKE_BINARY_DIR}
         ${OPENSSL_INCLUDE_DIR}
         ${LOCAL_SYSLOG_INCLUDE} )
