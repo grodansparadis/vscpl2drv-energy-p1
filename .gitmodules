@@ -7,3 +7,6 @@
 [submodule "third_party/mustache"]
 	path = third_party/mustache
 	url = https://github.com/kainjow/Mustache.git
+[submodule "third_party/fastpbkdf2"]
+	path = third_party/fastpbkdf2
+	url = https://github.com/ctz/fastpbkdf2.git
