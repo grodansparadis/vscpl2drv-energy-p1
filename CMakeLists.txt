@@ -43,8 +43,7 @@ if(NOT DEFINED PATCH_VERSION)
     SET(PATCH_VERSION "1")
 endif()
 
-# Prevent abi warnings in nlohmann
-SET(GCC_VSCP_COMPILE_FLAGS "-Wno-psabi -fPIC")
+
 # Profiling
 #SET(GCC_VSCP_LINK_FLAGS    "-lgcov")
 
@@ -81,8 +80,6 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
-
-
 # Build locations
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
@@ -93,7 +90,7 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 # Default location for VSCP level II drivers
 set(VSCP_LEVEL2_DRV_DIR /var/lib/vscp/drivers/level2/)
 
-SET(GCC_COVERAGE_COMPILE_FLAGS "-Wno-psabi")
+SET(GCC_COVERAGE_COMPILE_FLAGS "-Wno-psabi -fPIC")
 #SET(GCC_COVERAGE_LINK_FLAGS    "-lgcov")
 
 # Generate position-independent code (-fPIC on UNIX)
