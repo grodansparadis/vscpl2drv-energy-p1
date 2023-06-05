@@ -283,8 +283,8 @@ else()
 if (WIN32)
     target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
         PThreads4W::PThreads4W_CXXEXC
-        spdlog::spdlog
-        #spdlog::spdlog_header_only
+        #spdlog::spdlog
+        spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
         OpenSSL::SSL OpenSSL::Crypto
@@ -296,8 +296,8 @@ else()
         m
         dl
         Threads::Threads
-        spdlog::spdlog
-        #spdlog::spdlog_header_only
+        #spdlog::spdlog
+        spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
         ${EXPAT_LIBRARIES}
