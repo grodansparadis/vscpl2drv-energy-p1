@@ -44,9 +44,6 @@ if(NOT DEFINED PATCH_VERSION)
 endif()
 
 
-# Profiling
-#SET(GCC_VSCP_LINK_FLAGS    "-lgcov")
-
 SET(CPACK_PACKAGE_DESCRIPTION "VSCP driver for p1 energy meter")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "VSCP level II Driver for VSCP that read p1 energy meter protocol and publish relevant events")
 SET(CPACK_PACKAGE_VENDOR "the VSCP Project")
@@ -218,34 +215,34 @@ add_library(vscpl2drv-energy-p1
     ${CMAKE_SOURCE_DIR}/src/energy-p1-obj.cpp
     ${CMAKE_SOURCE_DIR}/src/alarm.h 
     ${CMAKE_SOURCE_DIR}/src/alarm.cpp
-    .//third_party/mustache/mustache.hpp
+    #./third_party/mustache/mustache.hpp
     ./third_party/spdlog/include    
     ${VSCP_PATH}/src/vscp/common/vscp.h
-    ${VSCP_PATH}/src/vscp/common/vscpremotetcpif.h
-    ${VSCP_PATH}/src/vscp/common/vscpremotetcpif.cpp
-    ${VSCP_PATH}/src/vscp/common/vscpdatetime.h
-    ${VSCP_PATH}/src/vscp/common/vscpdatetime.cpp
+    #${VSCP_PATH}/src/vscp/common/vscpremotetcpif.h
+    #${VSCP_PATH}/src/vscp/common/vscpremotetcpif.cpp
+    #${VSCP_PATH}/src/vscp/common/vscpdatetime.h
+    #${VSCP_PATH}/src/vscp/common/vscpdatetime.cpp
     ${VSCP_PATH}/src/vscp/common/guid.h
     ${VSCP_PATH}/src/vscp/common/guid.cpp
-    ${VSCP_PATH}/src/vscp/common/mdf.h
-    ${VSCP_PATH}/src/vscp/common/mdf.cpp
+    #${VSCP_PATH}/src/vscp/common/mdf.h
+    #${VSCP_PATH}/src/vscp/common/mdf.cpp
     ${VSCP_PATH}/src/vscp/common/vscphelper.h
     ${VSCP_PATH}/src/vscp/common/vscphelper.cpp
-    ${VSCP_PATH}/src/vscp/common/canal.h
-    ${VSCP_PATH}/src/common/sockettcp.h
-    ${VSCP_PATH}/src/common/sockettcp.c
-    ${VSCP_PATH}/src/common/vscpbase64.h
-    ${VSCP_PATH}/src/common/vscpbase64.c
-    ${VSCP_PATH}/src/common/vscp_aes.h
-    ${VSCP_PATH}/src/common/vscp_aes.c
-    ${VSCP_PATH}/src/common/crc.h
-    ${VSCP_PATH}/src/common/crc.c
-    ${VSCP_PATH}/src/common/crc8.h
-    ${VSCP_PATH}/src/common/crc8.c
-    ${VSCP_PATH}/src/common/vscpmd5.h
-    ${VSCP_PATH}/src/common/vscpmd5.c
-    ./third_party/fastpbkdf2/fastpbkdf2.h
-    ./third_party/fastpbkdf2/fastpbkdf2.c
+    #${VSCP_PATH}/src/vscp/common/canal.h
+    #${VSCP_PATH}/src/common/sockettcp.h
+    #${VSCP_PATH}/src/common/sockettcp.c
+    #${VSCP_PATH}/src/common/vscpbase64.h
+    #${VSCP_PATH}/src/common/vscpbase64.c
+    #${VSCP_PATH}/src/common/vscp_aes.h
+    #${VSCP_PATH}/src/common/vscp_aes.c
+    #${VSCP_PATH}/src/common/crc.h
+    #${VSCP_PATH}/src/common/crc.c
+    #${VSCP_PATH}/src/common/crc8.h
+    #${VSCP_PATH}/src/common/crc8.c
+    #${VSCP_PATH}/src/common/vscpmd5.h
+    #${VSCP_PATH}/src/common/vscpmd5.c
+    #./third_party/fastpbkdf2/fastpbkdf2.h
+    #./third_party/fastpbkdf2/fastpbkdf2.c
     ${VSCP_PATH}/src/common/com_linux.h
     ${VSCP_PATH}/src/common/com_linux.cpp
   ) 
