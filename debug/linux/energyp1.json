@@ -2,7 +2,7 @@
   "write" : false,
   "debug" : true,       
   "serial": {
-    "port": "/dev/ttyUSB0",
+    "port": "/dev/ttyS11",
     "baudrate": 115200,
     "bits": 8,
     "parity": "N",
@@ -13,15 +13,15 @@
   },
 
   "logging" : {
+    "console-enable": true,
+    "console-level": "error",    
+    "console-pattern": "[vcpl2drv-energyp1 %c] [%^%l%$] %v",
     "file-log-enable": true,
-    "file-log-level" : "debug",
-    "file-pattern" : "[vcpl2drv-energy-p1: %c] [%^%l%$] %v",
-    "file-path" : "/var/log/vscp/vscpl2drv-energy-p1.log",
-    "file-max-size" : 5242880,
-    "file-max-files" : 7,
-    "console-enable-log": true,
-    "console-log-level" : "debug",
-    "console-pattern" : "[vcpl2drv-energy-p1: %c] [%^%l%$] %v"
+    "file-log-level": "error",
+    "file-log-path" : "/tmp/vscpl2drv-energyp1.log",
+    "file-log-pattern": "[vscpl2drv-energyp1: %c] [%^%l%$] %v", 
+    "file-log-max-size": 50000,
+    "file-log-max-files": 7
   },
     
   "items": [

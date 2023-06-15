@@ -767,3 +767,15 @@ Below is a node-red flow that shows gauges and a diagrams for the active effect 
 ```
 
 A live demo of data from our office is [here](https://demo.vscp.org/mqtt/power.html).
+
+
+## Debug driver
+
+A convenient way to debug the driver is to  setup a virtual serial channel with **socat**
+
+```
+socat PTY,link=/dev/ttyS10 PTY,link=/dev/ttyS11
+```
+
+now connect the driver to /dev/ttyS10 with some comm parameters and send data on /dev/ttyS11. You can use any baudrate etc as you want.
+

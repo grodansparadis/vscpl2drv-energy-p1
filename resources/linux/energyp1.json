@@ -13,10 +13,10 @@
   },
   "logging": { 
     "console-enable": true,
-    "console-level": "trace",    
+    "console-level": "info",    
     "console-pattern": "[vcpl2drv-energyp1 %c] [%^%l%$] %v",
     "file-log-enable": true,
-    "file-log-level": "trace",
+    "file-log-level": "info",
     "file-log-path" : "/var/log/vscp/vscpl2drv-energyp1.log",
     "file-log-pattern": "[vscpl2drv-energyp1: %c] [%^%l%$] %v", 
     "file-log-max-size": 50000,
