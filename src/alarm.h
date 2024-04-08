@@ -4,7 +4,7 @@
 //
 // The MIT License (MIT)
 //
-// Copyright © 2000-2023 Ake Hedman, the VSCP Project
+// Copyright © 2000-2024 Ake Hedman, the VSCP Project
 // <akhe@vscp.org>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,6 +28,8 @@
 
 #if !defined(VSCP_ALARM_H__INCLUDED_)
 #define VSCP_ALARM_H__INCLUDED_
+
+#include <inttypes.h>
 
 #include <deque>
 #include <iostream>
