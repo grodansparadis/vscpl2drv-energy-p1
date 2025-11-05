@@ -80,5 +80,6 @@
     "cSpell.words": [
       "get",
       "int"
-    ]
+    ],
+    "idf.pythonInstallPath": "/home/akhe/.platformio/penv/bin/python"
 }

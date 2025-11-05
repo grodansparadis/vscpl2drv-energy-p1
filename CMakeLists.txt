@@ -32,6 +32,17 @@ set(PACKAGE_AUTHOR "Ake Hedman, the VSCP Project")
 
 add_subdirectory(./third_party/spdlog/)
 
+# Read version from version.h
+file(READ "${CMAKE_SOURCE_DIR}/src/version.h" VERSION_FILE_CONTENT)
+string(REGEX MATCH "#define MAJOR_VERSION[ \t]+([0-9]+)" _ ${VERSION_FILE_CONTENT})
+set(MAJOR_VERSION ${CMAKE_MATCH_1})
+string(REGEX MATCH "#define MINOR_VERSION[ \t]+([0-9]+)" _ ${VERSION_FILE_CONTENT})
+set(MINOR_VERSION ${CMAKE_MATCH_1})
+string(REGEX MATCH "#define RELEASE_VERSION[ \t]+([0-9]+)" _ ${VERSION_FILE_CONTENT})
+set(RELEASE_VERSION ${CMAKE_MATCH_1})
+string(REGEX MATCH "#define BUILD_VERSION[ \t]+([0-9]+)" _ ${VERSION_FILE_CONTENT})
+set(BUILD_VERSION ${CMAKE_MATCH_1})
+
 # Version settings
 if(NOT DEFINED MAJOR_VERSION)
     SET(MAJOR_VERSION "15")
@@ -40,9 +51,17 @@ if(NOT DEFINED MINOR_VERSION)
     SET(MINOR_VERSION "0")
 endif()
 if(NOT DEFINED PATCH_VERSION)
-    SET(PATCH_VERSION "1")
+    SET(PATCH_VERSION ${RELEASE_VERSION})
 endif()
 
+# Make version available as preprocessor definitions
+add_definitions(-DMAJOR_VERSION=${MAJOR_VERSION})
+add_definitions(-DMINOR_VERSION=${MINOR_VERSION})
+add_definitions(-DRELEASE_VERSION=${RELEASE_VERSION})
+add_definitions(-DBUILD_VERSION=${BUILD_VERSION})
+
+# Display version information
+message(STATUS "Version: ${MAJOR_VERSION}.${MINOR_VERSION}.${RELEASE_VERSION}.${BUILD_VERSION}")
 
 SET(CPACK_PACKAGE_DESCRIPTION "VSCP driver for p1 energy meter")
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "VSCP level II Driver for VSCP that read p1 energy meter protocol and publish relevant events")
