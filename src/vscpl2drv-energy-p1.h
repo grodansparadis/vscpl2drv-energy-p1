@@ -43,7 +43,7 @@
 #include <pthread.h>
 #include <canal.h>
 #include <vscpremotetcpif.h>
-#include <canal_macro.h>
+#include <canal-macro.h>
 #include <vscp.h>
 #include <hlo.h>
 
