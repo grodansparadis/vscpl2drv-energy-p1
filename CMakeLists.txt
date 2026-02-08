@@ -269,9 +269,9 @@ if (WIN32)
     find_path(PTHREAD_INCLUDE_DIR pthread.h)
 
     include_directories( PUBLIC src/
-        ${VSCP_PATH}/src/vscp/common/  
-        ${VSCP_PATH}/src/common
-        ${VSCP_PATH}/src/common/third_party/
+        ./third_party/vscp//src/vscp/common/  
+        ./third_party/vscp//src/common
+        ./third_party/vscp//src/common/third_party/
         ./third_party/nlohmann/include/
         ./third_party/spdlog/include/
         ./third_party/fastpbkdf2/
@@ -284,9 +284,9 @@ if (WIN32)
         ${LOCAL_SYSLOG_INCLUDE} )
 else()
     include_directories( PUBLIC src/
-        ${VSCP_PATH}/src/vscp/common/
-        ${VSCP_PATH}/src/common
-        ${VSCP_PATH}/src/common/third_party/
+        ./third_party/vscp//src/vscp/common/
+        ./third_party/vscp//src/common
+        ./third_party/vscp//src/common/third_party/
         ./third_party/nlohmann/include/
         ./third_party/spdlog/include/
         ./third_party/fastpbkdf2/
