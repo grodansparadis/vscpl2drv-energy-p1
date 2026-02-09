@@ -147,8 +147,8 @@ if (MSVC)
         $ENV{VSCP_ROOT}/src/common/configfile.cpp
         $ENV{VSCP_ROOT}/src/common/vscpbase64.h
         $ENV{VSCP_ROOT}/src/common/vscpbase64.c
-        $ENV{VSCP_ROOT}/src/common/vscp_aes.h
-        $ENV{VSCP_ROOT}/src/common/vscp_aes.c
+        $ENV{VSCP_ROOT}/src/common/vscp-aes.h
+        $ENV{VSCP_ROOT}/src/common/vscp-aes.c
         $ENV{VSCP_ROOT}/src/common/crc.h
         $ENV{VSCP_ROOT}/src/common/crc.c
         $ENV{VSCP_ROOT}/src/common/crc8.h
@@ -184,8 +184,8 @@ else()
         $ENV{VSCP_ROOT}/src/common/configfile.cpp
         $ENV{VSCP_ROOT}/src/common/vscpbase64.h
         $ENV{VSCP_ROOT}/src/common/vscpbase64.c
-        $ENV{VSCP_ROOT}/src/common/vscp_aes.h
-        $ENV{VSCP_ROOT}/src/common/vscp_aes.c
+        $ENV{VSCP_ROOT}/src/common/vscp-aes.h
+        $ENV{VSCP_ROOT}/src/common/vscp-aes.c
         $ENV{VSCP_ROOT}/src/common/crc.h
         $ENV{VSCP_ROOT}/src/common/crc.c
         $ENV{VSCP_ROOT}/src/common/crc8.h

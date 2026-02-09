@@ -46,7 +46,7 @@
 #include <time.h>
 
 #include <canal.h>
-#include <canal_macro.h>
+#include <canal-macro.h>
 #include <dllist.h>
 #include <guid.h>
 #include <vscp.h>
