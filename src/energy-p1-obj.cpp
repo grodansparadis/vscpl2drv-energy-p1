@@ -1752,7 +1752,7 @@ CEnergyP1::doWork(std::string &strbuf)
       // Save measurement value
       m_lastValue[pItem->getStorageName()] = value;
 
-      switch (pItem->getVscpClass()) {
+      switch (pItem->getVscpClass()) {        
 
         case VSCP_CLASS1_MEASUREMENT: {
 
@@ -2255,7 +2255,7 @@ workerThread(void *pData)
           if (0x0a == c) {
             buf[pos] = 0;   // Add terminating zero
             strbuf   = buf; // Add to the string buffer
-            spdlog::trace("strbuf = {0}\n", strbuf.c_str());
+            spdlog::trace("Read buffer (strbuf) = {0}\n", strbuf.c_str());
             pObj->doWork(strbuf); // Do work
             break;
           }
