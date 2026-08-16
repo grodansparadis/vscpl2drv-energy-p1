@@ -63,9 +63,9 @@
 #include <com.h>
 #include <hlo.h>
 #include <remotevariablecodes.h>
-#include <vscp.h>
 #include <vscp-class.h>
 #include <vscp-type.h>
+#include <vscp.h>
 #include <vscpdatetime.h>
 #include <vscphelper.h>
 
@@ -82,6 +82,7 @@
 #include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 // https://github.com/nlohmann/json
 using json = nlohmann::json;
@@ -92,13 +93,17 @@ using namespace kainjow::mustache;
 void *
 workerThread(void *pData);
 
+static std::vector<char *>
+splitBufferIntoLines(char *buf, size_t len);
+
 //////////////////////////////////////////////////////////////////////
 // CEnergyP1
 //
 
 CEnergyP1::CEnergyP1()
 {
-  m_bQuit = false;
+  m_bQuit                  = false;
+  m_bWorkerThreadRunning   = false;
 
   // Init seral data
   m_serialDevice        = "/dev/ttyUSB0";
@@ -155,9 +160,6 @@ CEnergyP1::CEnergyP1()
 CEnergyP1::~CEnergyP1()
 {
   close();
-
-  m_bQuit = true;
-  pthread_join(m_workerThread, NULL);
 
   sem_destroy(&m_semSendQueue);
   sem_destroy(&m_semReceiveQueue);
@@ -232,20 +234,12 @@ CEnergyP1::open(std::string &path, const uint8_t *pguid)
 void
 CEnergyP1::close(void)
 {
-  // Do nothing if already terminated
-  if (m_bQuit) {
+  if (!m_bWorkerThreadRunning) {
     spdlog::drop_all();
     return;
   }
 
-  m_bQuit = true; // terminate the thread
-#ifndef WIN32
-  sleep(1); // Give the thread some time to terminate
-#else
-  Sleep(1000);
-#endif
-
-  pthread_join(m_workerThread, NULL);
+  stopWorkerThread();
 
   spdlog::drop_all();
   spdlog::shutdown();
@@ -256,10 +250,11 @@ CEnergyP1::close(void)
 //
 
 bool
-CEnergyP1::doLoadConfig(std::string &path)
+CEnergyP1::doLoadConfig(std::string &path, bool configureLogging)
 {
+  m_path = path;
   try {
-    std::ifstream in(m_path, std::ifstream::in);
+    std::ifstream in(path, std::ifstream::in);
     in >> m_j_config;
     spdlog::debug("doLoadConfig: JSON loaded.");
   }
@@ -518,7 +513,7 @@ CEnergyP1::doLoadConfig(std::string &path)
   //                          Setup logger
   ///////////////////////////////////////////////////////////////////////////
 
-  if (1) {
+  if (configureLogging) {
     // Console log
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     if (m_bConsoleLogEnable) {
@@ -1752,7 +1747,7 @@ CEnergyP1::doWork(std::string &strbuf)
       // Save measurement value
       m_lastValue[pItem->getStorageName()] = value;
 
-      switch (pItem->getVscpClass()) {        
+      switch (pItem->getVscpClass()) {
 
         case VSCP_CLASS1_MEASUREMENT: {
 
@@ -2054,7 +2049,7 @@ CEnergyP1::doWork(std::string &strbuf)
         }
       }
     } // if match
-  }   // Iterate
+  } // Iterate
 
   return true;
 }
@@ -2129,17 +2124,40 @@ CEnergyP1::addEvent2ReceiveQueue(const vscpEvent *pEvent)
 //
 
 bool
-CEnergyP1::startWorkerThread(void)
+CEnergyP1::startWorkerThread(const std::string &inputPath)
 {
   if (m_bDebug) {
     spdlog::debug("Starting P1 energy meter interface...");
   }
 
+  m_workerInputPath = inputPath;
+  m_bQuit           = false;
   if (pthread_create(&m_workerThread, NULL, workerThread, this)) {
     spdlog::error("Unable to start the workerthread.");
     return false;
   }
 
+  m_bWorkerThreadRunning = true;
+
+  return true;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+// waitWorkerThread
+//
+
+bool
+CEnergyP1::waitWorkerThread(void)
+{
+  if (!m_bWorkerThreadRunning) {
+    return true;
+  }
+
+  if (pthread_join(m_workerThread, NULL)) {
+    return false;
+  }
+
+  m_bWorkerThreadRunning = false;
   return true;
 }
 
@@ -2150,22 +2168,8 @@ CEnergyP1::startWorkerThread(void)
 bool
 CEnergyP1::stopWorkerThread(void)
 {
-  // // Tell the thread it's time to quit
-  // CEnergyP1->m_nStopTcpIpSrv = VSCP_TCPIP_SRV_STOP;
-
-  // if (__VSCP_DEBUG_TCP) {
-  //     spdlog::debug("Terminating TCP thread.");
-  // }
-
-  // pthread_join(m_tcpipListenThread, NULL);
-  // delete CEnergyP1;
-  // CEnergyP1 = NULL;
-
-  // if (__VSCP_DEBUG_TCP) {
-  //     spdlog::debug("Terminated TCP thread.");
-  // }
-
-  return true;
+  m_bQuit = true;
+  return waitWorkerThread();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -2195,19 +2199,60 @@ CEnergyP1::readEncryptionKey(const std::string &path)
 // workerThread
 //
 
+///////////////////////////////////////////////////////////////////////////////
+// splitBufferIntoLines
+//
+// Split a buffer holding one or more text lines terminated with "\r\n" (a
+// lone "\n" is also accepted) into individual, zero-terminated lines. The
+// buffer is modified in place - each line terminator is overwritten with a
+// single '\0' - and the returned vector holds pointers into 'buf' marking
+// the start of every line.
+//
+
+static std::vector<char *>
+splitBufferIntoLines(char *buf, size_t len)
+{
+  std::vector<char *> lines;
+
+  if (nullptr == buf || 0 == len) {
+    return lines;
+  }
+
+  char *pStart = buf;
+  for (size_t i = 0; i < len; i++) {
+    if ('\n' == buf[i]) {
+      size_t end = i;
+      if (end > 0 && '\r' == buf[end - 1]) {
+        end--;
+      }
+      buf[end] = 0;
+      lines.push_back(pStart);
+      pStart = buf + i + 1;
+    }
+  }
+
+  return lines;
+}
+
+static uint16_t
+updateP1Crc(uint16_t crc, uint8_t value)
+{
+  crc ^= value;
+  for (int bit = 0; bit < 8; bit++) {
+    crc = (crc & 1) ? ((crc >> 1) ^ 0xa001) : (crc >> 1);
+  }
+  return crc;
+}
+
 void *
 workerThread(void *pData)
 {
-  char buf[1024];
-  std::string strbuf;
-  uint16_t pos = 0;
+  char buf[4096] = { 0 };
+  size_t pos     = 0;
 
   // Change locale to get the correct decimal point "."
   std::setlocale(LC_NUMERIC, "C");
   // setlocale(LC_NUMERIC, "");
-
-  // Linux serial port
-  Comm com;
 
   CEnergyP1 *pObj = (CEnergyP1 *) pData;
   if (nullptr == pData) {
@@ -2216,57 +2261,115 @@ workerThread(void *pData)
 
   spdlog::debug("Working thread: Starting Worker loop GUID = {}", pObj->m_guid.getAsString());
 
-  // Open the serial port
-  if (!com.open((const char *) pObj->m_serialDevice.c_str())) {
-    spdlog::debug("Working thread: Failed to open serial port");
+  eSerialState state      = eSerialState::SERIAL_STATE_IDLE;
+  uint16_t calculated_crc = 0x0000;
+  // Buffers to isolate expected CRC characters right after '!'
+  char incoming_crc_str[5] = { 0 };
+  int crc_char_count       = 0;
+
+  auto processByte = [&](char c) {
+    switch (state) {
+
+      case eSerialState::SERIAL_STATE_IDLE: {
+        if ('/' == c) {
+          pos            = 0;
+          state          = eSerialState::SERIAL_STATE_DATA;
+          calculated_crc = updateP1Crc(0x0000, static_cast<uint8_t>(c));
+          crc_char_count = 0;
+          memset(incoming_crc_str, 0, sizeof(incoming_crc_str));
+        }
+      } break;
+
+      case eSerialState::SERIAL_STATE_DATA: {
+        calculated_crc = updateP1Crc(calculated_crc, static_cast<uint8_t>(c));
+        if ('!' == c) {
+          state = eSerialState::SERIAL_STATE_CRC;
+          break;
+        }
+
+        if (pos >= sizeof(buf) - 1) {
+          state = eSerialState::SERIAL_STATE_IDLE;
+          spdlog::error("Working thread: Serial buffer overflow");
+          break;
+        }
+        buf[pos++] = c;
+      } break;
+
+      case eSerialState::SERIAL_STATE_CRC: {
+        incoming_crc_str[crc_char_count++] = c;
+        if (crc_char_count >= 4) {
+          unsigned int meter_crc_val = 0;
+          if ((1 == sscanf(incoming_crc_str, "%X", &meter_crc_val)) &&
+              (static_cast<uint16_t>(meter_crc_val) == calculated_crc)) {
+            buf[pos] = 0;
+            std::vector<char *> lines = splitBufferIntoLines(buf, pos);
+            for (auto line : lines) {
+              std::string inputLine(line);
+              pObj->doWork(inputLine);
+            }
+          }
+          else {
+            spdlog::error("Checksum validation FAILED! (Meter sent: {}, Calculated: {:04X})",
+                          incoming_crc_str,
+                          calculated_crc);
+          }
+          state = eSerialState::SERIAL_STATE_IDLE;
+        }
+      } break;
+
+      default:
+        state = eSerialState::SERIAL_STATE_IDLE;
+        break;
+    }
+  };
+
+  if (!pObj->m_workerInputPath.empty()) {
+    std::ifstream input(pObj->m_workerInputPath, std::ios::binary);
+    if (!input) {
+      spdlog::error("Working thread: Failed to open input file {}", pObj->m_workerInputPath);
+      return NULL;
+    }
+
+    char c;
+    char previous = 0;
+    while (!pObj->m_bQuit && input.get(c)) {
+      if (('\n' == c) && ('\r' != previous)) {
+        processByte('\r');
+      }
+      processByte(c);
+      previous = c;
+    }
     return NULL;
   }
 
-  // Set serial parameters
+  Comm com;
+  if (!com.open(pObj->m_serialDevice.c_str())) {
+    spdlog::error("Working thread: Failed to open serial port {}", pObj->m_serialDevice);
+    return NULL;
+  }
+
   com.setParam(pObj->m_serialBaudrate.c_str(),
                pObj->m_serialParity.c_str(),
                pObj->m_serialCountDataBits.c_str(),
                pObj->m_bSerialHwFlowCtrl ? 1 : 0,
                pObj->m_bSerialSwFlowCtrl ? 1 : 0);
 
-  // Set DTR if requested to do so
   if (pObj->m_bDtrOnStart) {
-    spdlog::debug("Working thread: DTR ON");
     com.DtrOn();
   }
 
-  // Work on
   while (!pObj->m_bQuit) {
-
-    pos  = 0;
-    *buf = 0;
-
-    if (com.isCharReady()) {
-      int read;
-      while (com.isCharReady()) {
-        char c = com.readChar(&read);
-        if (read) {
-          buf[pos++] = c;
-          if (pos > sizeof(buf) - 1) {
-            spdlog::debug("Working thread: Serial Buffer overflow");
-            continue;
-          }
-          // Check for EOL
-          if (0x0a == c) {
-            buf[pos] = 0;   // Add terminating zero
-            strbuf   = buf; // Add to the string buffer
-            spdlog::trace("Read buffer (strbuf) = {0}\n", strbuf.c_str());
-            pObj->doWork(strbuf); // Do work
-            break;
-          }
-        }
-      } // while
-    }
-    else {
-      // If no data we sleep for a second  - no rush here...
+    if (!com.isCharReady()) {
       sleep(1);
       continue;
     }
+
+    int count = 0;
+    char c    = com.readChar(&count);
+    if (count) {
+      processByte(c);
+    }
+  }
 
     // dowork:
 
@@ -2405,7 +2508,8 @@ workerThread(void *pData)
     //                 spdlog::error("Failed to add event to receive queue.");
     //               }
     //               else {
-    //                 spdlog::debug("Event added to i receive queue class={0} type={1}", ex.vscp_class, ex.vscp_type);
+    //                 spdlog::debug("Event added to i receive queue class={0} type={1}", ex.vscp_class,
+    //                 ex.vscp_type);
     //               }
     //             }
     //             else {
@@ -2606,8 +2710,6 @@ workerThread(void *pData)
     //       }
     //     } // if match
     //   }   // Iterate
-
-  } // Main loop
 
   // Set DTR if requested to do so
   if (pObj->m_bDtrOnStart) {

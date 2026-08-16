@@ -7,7 +7,7 @@
 //
 // This file is part of the VSCP (http://www.vscp.org)
 //
-// Copyright (C) 2000-2023 Ake Hedman,
+// Copyright (C) 2000-2026 Ake Hedman,
 // the VSCP Project, <akhe@vscp.org>
 //
 // This file is distributed in the hope that it will be useful,
@@ -21,52 +21,55 @@
 // Boston, MA 02111-1307, USA.
 //
 
-#if !defined(VSCPENERGYP1_TEST_H__202105112227__INCLUDED_)
-#define VSCPENERGYP1_TEST_H__202105112227__INCLUDED_
-
-#define _POSIX
-
-#ifdef WIN32
-#include "StdAfx.h"
-#endif
-
-#include <map>
+#include <iostream>
 #include <string>
 
-#include <pthread.h>
-#include <semaphore.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#if WIN32
-#else
-#include <syslog.h>
-#include <unistd.h>
-#endif
-#include <time.h>
-
-#include <canal.h>
-#include <canal-macro.h>
-#include <dllist.h>
-#include <guid.h>
-#include <vscp.h>
-
-#include <nlohmann/json.hpp>  // Needs C++11  -std=c++11
-
 #include "spdlog/spdlog.h"
-#include "spdlog/sinks/rotating_file_sink.h"
+#include <vscphelper.h>
 
-#include "../src/alarm.h"
-#include "../src/p1item.h"
 #include "../src/energy-p1-obj.h"
 
-int main()
-{ 
-  CEnergyP1 p1;
-  
-  
-  return 0;
+static void
+clearReceiveQueue(CEnergyP1 &p1)
+{
+  for (auto *event : p1.m_receiveList) {
+    vscp_deleteEvent(event);
+  }
+  p1.m_receiveList.clear();
 }
 
+int
+main(int argc, char *argv[])
+{
+  if (3 != argc) {
+    std::cerr << "Usage: " << argv[0] << " <config.json> <telegram.data>\n";
+    return 1;
+  }
 
-#endif  // VSCPENERGYP1_TEST_H__202105112227__INCLUDED_
+  std::string configPath = argv[1];
+  CEnergyP1 p1;
+  spdlog::set_level(spdlog::level::off);
+  if (!p1.doLoadConfig(configPath, false)) {
+    std::cerr << "Unable to load driver configuration: " << configPath << '\n';
+    return 1;
+  }
+
+  if (!p1.startWorkerThread(argv[2]) || !p1.waitWorkerThread()) {
+    std::cerr << "Unable to process input file: " << argv[2] << '\n';
+    return 1;
+  }
+
+  size_t count = 0;
+  for (auto *item : p1.m_listItems) {
+    const auto value = p1.m_lastValue.find(item->getStorageName());
+    if (p1.m_lastValue.end() == value) {
+      continue;
+    }
+    std::cout << value->first << '=' << value->second << '\n';
+    count++;
+  }
+
+  clearReceiveQueue(p1);
+  std::cout << count << " measurement(s)\n";
+  return 0;
+}

@@ -2,7 +2,7 @@
   "write" : false,
   "debug" : true,       
   "serial": {
-    "port": "/dev/ttyS11",
+    "port": "/dev/ttyUSB0",
     "baudrate": 115200,
     "bits": 8,
     "parity": "N",
@@ -11,27 +11,25 @@
     "swflowctrl": false,
     "dtr-on-start": true
   },
-
-  "logging" : {
+  "logging": { 
     "console-enable": true,
     "console-level": "error",    
     "console-pattern": "[vcpl2drv-energyp1 %c] [%^%l%$] %v",
     "file-log-enable": true,
     "file-log-level": "error",
-    "file-log-path" : "/tmp/vscpl2drv-energyp1.log",
+    "file-log-path" : "/var/log/vscp/vscpl2drv-energyp1.log",
     "file-log-pattern": "[vscpl2drv-energyp1: %c] [%^%l%$] %v", 
     "file-log-max-size": 50000,
     "file-log-max-files": 7
-  },
-    
+  }, 
   "items": [
     {
       "token": "1-0:1.8.0",
       "description": "Energy out",
       "vscp-class": 1040,
       "vscp-type": 13,
-      "sensorindex": 1,
-      "guid-lsb": 1,
+      "sensorindex": 0,
+      "guid-lsb": 0,
       "zone": 0,
       "subzone": 0,
       "factor": 1,
@@ -60,8 +58,8 @@
       "description": "Reactive energy out",
       "vscp-class": 1040,
       "vscp-type": 65,
-      "sensorindex": 1,
-      "guid-lsb": 1,
+      "sensorindex": 2,
+      "guid-lsb": 2,
       "zone": 0,
       "subzone": 0,
       "factor": 1,
@@ -75,8 +73,8 @@
       "description": "Reactive energy in",
       "vscp-class": 1040,
       "vscp-type": 65,
-      "sensorindex": 2,
-      "guid-lsb": 2,
+      "sensorindex": 3,
+      "guid-lsb": 3,
       "zone": 0,
       "subzone": 0,
       "factor": 1,
@@ -86,12 +84,12 @@
       "store": "reactive_energy_in"
     },
     {
-      "token": "1-0:1.7.0 ",
+      "token": "1-0:1.7.0",
       "description": "Active effect out",
       "vscp-class": 1040,
-      "vscp-type": 13,
-      "sensorindex": 3,
-      "guid-lsb": 3,
+      "vscp-type": 14,
+      "sensorindex": 4,
+      "guid-lsb": 4,
       "zone": 0,
       "subzone": 0,
       "factor": 1000,
@@ -101,12 +99,12 @@
       "store": "active_effect_out"
     },
     {
-      "token": "1-0:2.7.0 ",
+      "token": "1-0:2.7.0",
       "description": "Active effect in",
       "vscp-class": 1040,
       "vscp-type": 13,
-      "sensorindex": 4,
-      "guid-lsb": 4,
+      "sensorindex": 5,
+      "guid-lsb": 5,
       "zone": 0,
       "subzone": 0,
       "factor": 1000,
@@ -116,23 +114,8 @@
       "store": "active_effect_in"
     },
     {
-      "token": "1-0:3.7.0 ",
+      "token": "1-0:3.7.0",
       "description": "Reactive effect out",
-      "vscp-class": 1040,
-      "vscp-type": 64,
-      "sensorindex": 5,
-      "guid-lsb": 5,
-      "zone": 0,
-      "subzone": 0,
-      "factor": 1,
-      "units": {
-        "kVAr": 0
-      },
-      "store": "reactive_effect_out"
-    },
-    {
-      "token": "1-0:4.7.0 ",
-      "description": "Reactive effect in",
       "vscp-class": 1040,
       "vscp-type": 64,
       "sensorindex": 6,
@@ -143,71 +126,71 @@
       "units": {
         "kVAr": 0
       },
-      "store": "reactive_effect_in"
+      "store": "reactive_effect_out"
     },
     {
-      "token": "1-0:21.7.0 ",
-      "description": "Active effect out L1",
+      "token": "1-0:4.7.0",
+      "description": "Reactive effect in",
       "vscp-class": 1040,
-      "vscp-type": 13,
+      "vscp-type": 64,
       "sensorindex": 7,
       "guid-lsb": 7,
       "zone": 0,
       "subzone": 0,
-      "factor": 1000,
+      "factor": 1,
       "units": {
-        "kW": 1
+        "kVAr": 0
       },
-      "store": "active_effect_out_l1"
+      "store": "reactive_effect_in"
     },
     {
-      "token": "1-0:41.7.0 ",
-      "description": "Active effect out L2",
+      "token": "1-0:21.7.0",
+      "description": "Active effect out L1",
       "vscp-class": 1040,
-      "vscp-type": 13,
+      "vscp-type": 14,
       "sensorindex": 8,
       "guid-lsb": 8,
       "zone": 0,
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
-      "store": "active_effect_out_l2"
+      "store": "active_effect_out_l1"
     },
     {
-      "token": "1-0:61.7.0 ",
-      "description": "Active effect out L3",
+      "token": "1-0:41.7.0",
+      "description": "Active effect out L2",
       "vscp-class": 1040,
-      "vscp-type": 13,
+      "vscp-type": 14,
       "sensorindex": 9,
       "guid-lsb": 9,
       "zone": 0,
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
-      "store": "active_effect_out_l3"
+      "store": "active_effect_out_l2"
     },
     {
-      "token": "1-0:22.7.0 ",
-      "description": "Active effect in L1",
+      "token": "1-0:61.7.0",
+      "description": "Active effect out L3",
       "vscp-class": 1040,
-      "vscp-type": 13,
+      "vscp-type": 14,
       "sensorindex": 10,
       "guid-lsb": 10,
       "zone": 0,
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
-      "store": "active_effect_in_l1"
+      "store": "active_effect_out_l3"
     },
     {
-      "token": "1-0:42.7.0 ",
-      "description": "Active effect in L2",
+      "token": "1-0:22.7.0",
+      "description": "Active effect in L1",
       "vscp-class": 1040,
       "vscp-type": 13,
       "sensorindex": 11,
@@ -216,13 +199,13 @@
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
       "store": "active_effect_in_l1"
     },
     {
-      "token": "1-0:62.7.0 ",
-      "description": "Active effect in L3",
+      "token": "1-0:42.7.0",
+      "description": "Active effect in L2",
       "vscp-class": 1040,
       "vscp-type": 13,
       "sensorindex": 12,
@@ -231,28 +214,28 @@
       "subzone": 0,
       "factor": 1000,
       "units": {
-        "kW": 1
+        "W": 0
       },
-      "store": "active_effect_in_l3"
+      "store": "active_effect_in_l1"
     },
     {
-      "token": "1-0:23.7.0 ",
-      "description": "Reactive effect out L1",
+      "token": "1-0:62.7.0",
+      "description": "Active effect in L3",
       "vscp-class": 1040,
-      "vscp-type": 64,
+      "vscp-type": 13,
       "sensorindex": 13,
       "guid-lsb": 13,
       "zone": 0,
       "subzone": 0,
-      "factor": 1,
+      "factor": 1000,
       "units": {
-        "kVAr": 0
+        "W": 0
       },
-      "store": "reactive_effect_out_l1"
+      "store": "active_effect_in_l3"
     },
     {
-      "token": "1-0:43.7.0 ",
-      "description": "Reactive effect out L2",
+      "token": "1-0:23.7.0",
+      "description": "Reactive effect out L1",
       "vscp-class": 1040,
       "vscp-type": 64,
       "sensorindex": 14,
@@ -263,11 +246,11 @@
       "units": {
         "kVAr": 0
       },
-      "store": "reactive_effect_out_l2"
+      "store": "reactive_effect_out_l1"
     },
     {
-      "token": "1-0:63.7.0 ",
-      "description": "Reactive effect out L3",
+      "token": "1-0:43.7.0",
+      "description": "Reactive effect out L2",
       "vscp-class": 1040,
       "vscp-type": 64,
       "sensorindex": 15,
@@ -278,11 +261,11 @@
       "units": {
         "kVAr": 0
       },
-      "store": "reactive_effect_out_l3"
+      "store": "reactive_effect_out_l2"
     },
     {
-      "token": "1-0:24.7.0 ",
-      "description": "Reactive effect in L1",
+      "token": "1-0:63.7.0",
+      "description": "Reactive effect out L3",
       "vscp-class": 1040,
       "vscp-type": 64,
       "sensorindex": 16,
@@ -293,11 +276,11 @@
       "units": {
         "kVAr": 0
       },
-      "store": "reactive_effect_in_l1"
+      "store": "reactive_effect_out_l3"
     },
     {
-      "token": "1-0:44.7.0 ",
-      "description": "Reactive effect in L2",
+      "token": "1-0:24.7.0",
+      "description": "Reactive effect in L1",
       "vscp-class": 1040,
       "vscp-type": 64,
       "sensorindex": 17,
@@ -308,15 +291,30 @@
       "units": {
         "kVAr": 0
       },
-      "store": "reactive_effect_in_l2"
+      "store": "reactive_effect_in_l1"
     },
     {
-      "token": "1-0:64.7.0 ",
-      "description": "Reactive effect in L3",
+      "token": "1-0:44.7.0",
+      "description": "Reactive effect in L2",
       "vscp-class": 1040,
       "vscp-type": 64,
       "sensorindex": 18,
       "guid-lsb": 18,
+      "zone": 0,
+      "subzone": 0,
+      "factor": 1,
+      "units": {
+        "kVAr": 0
+      },
+      "store": "reactive_effect_in_l2"
+    },
+    {
+      "token": "1-0:64.7.0",
+      "description": "Reactive effect in L3",
+      "vscp-class": 1040,
+      "vscp-type": 64,
+      "sensorindex": 19,
+      "guid-lsb": 19,
       "zone": 0,
       "subzone": 0,
       "factor": 1,
@@ -330,8 +328,8 @@
       "description": "Voltage L1",
       "vscp-class": 1040,
       "vscp-type": 16,
-      "sensorindex": 19,
-      "guid-lsb": 19,
+      "sensorindex": 20,
+      "guid-lsb": 20,
       "zone": 0,
       "subzone": 0,
       "factor": 1,
@@ -345,8 +343,8 @@
       "description": "Voltage L2",
       "vscp-class": 1040,
       "vscp-type": 16,
-      "sensorindex": 20,
-      "guid-lsb": 20,
+      "sensorindex": 21,
+      "guid-lsb": 21,
       "zone": 0,
       "subzone": 0,
       "factor": 1,
@@ -360,8 +358,8 @@
       "description": "Voltage L3",
       "vscp-class": 1040,
       "vscp-type": 16,
-      "sensorindex": 21,
-      "guid-lsb": 21,
+      "sensorindex": 22,
+      "guid-lsb": 22,
       "zone": 0,
       "subzone": 0,
       "factor": 1,
@@ -375,8 +373,8 @@
       "description": "Current L1",
       "vscp-class": 1040,
       "vscp-type": 5,
-      "sensorindex": 22,
-      "guid-lsb": 22,
+      "sensorindex": 23,
+      "guid-lsb": 23,
       "zone": 0,
       "subzone": 5,
       "factor": 1,
@@ -390,9 +388,9 @@
       "description": "Current L2",
       "vscp-class": 1040,
       "vscp-type": 5,
-      "sensorindex": 23,
-      "guid-lsb": 23,
-      "zone": 0,
+      "sensorindex": 24,
+      "guid-lsb": 24,
+      "izone": 0,
       "subzone": 0,
       "factor": 1,
       "units": {
@@ -405,9 +403,8 @@
       "description": "Current L3",
       "vscp-class": 1040,
       "vscp-type": 5,
-      "guid-lsb": 24,
-      "sensorindex": 24,
-      "guid-lsb": 24,
+      "sensorindex": 25,
+      "guid-lsb": 25,
       "zone": 0,
       "subzone": 0,
       "factor": 1,
@@ -417,7 +414,28 @@
       "store": "current_l3"
     }
   ],
-
+  "alarms": [
+    {
+      "type":"on",
+      "variable": "current_l3",
+      "op": ">",
+      "value": 1234,
+      "one-shoot": false,
+      "alarm-byte":1234,
+      "zone": 1234,
+      "subzone": 1234
+    },
+    {
+      "type":"off",
+      "variable": "current_l3",
+      "op": "<",
+      "value": 1234,
+      "one-shoot": false,
+      "alarm-byte":1234,
+      "zone": 1234,
+      "subzone": 1234
+    }
+  ],
   "alarms": [
     {
       "type":"on",

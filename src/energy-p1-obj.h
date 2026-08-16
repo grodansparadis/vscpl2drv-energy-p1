@@ -34,6 +34,7 @@
 #include <string>
 
 #include <pthread.h>
+#include <semaphore.h>
 #include <stdio.h>
 #include <string.h>
 #if WIN32
@@ -79,6 +80,15 @@ const uint16_t MAX_ITEMS_IN_QUEUE = 32000;
 // Forward declarations
 class CHLO;
 
+
+typedef enum class eSerialState : uint8_t {
+    SERIAL_STATE_IDLE = 0,
+    SERIAL_STATE_START_MARKER,  // Wait for start marker
+  SERIAL_STATE_DATA,          // Wait for data until end marker
+  SERIAL_STATE_CRC,           // Wait for CRC characters after end marker
+    SERIAL_STATE_END_MARKER,    // Wait for end marker
+    SERIAL_STATE_FRAME_COMPLETE // crc has been received and frame is complete
+} eSerialState;
 class CEnergyP1
 {
   public:
@@ -114,7 +124,7 @@ class CEnergyP1
       @param path Oath to configuration file
       @return True on success, false on failure.
     */
-    bool doLoadConfig(std::string& path);
+    bool doLoadConfig(std::string& path, bool configureLogging = true);
 
     /*!
       Save configuration if allowed to do so
@@ -133,7 +143,9 @@ class CEnergyP1
 
     bool restart(void);  
 
-    bool startWorkerThread(void);
+    bool startWorkerThread(const std::string &inputPath = std::string());
+
+    bool waitWorkerThread(void);
 
     bool stopWorkerThread(void);
 
@@ -255,6 +267,12 @@ class CEnergyP1
 
     /// Run flag
     bool m_bQuit;
+
+    /// True while the serial worker thread can be joined
+    bool m_bWorkerThreadRunning;
+
+    /// Optional captured telegram file used instead of the serial port
+    std::string m_workerInputPath;
 
     /// Our GUID
     cguid m_guid;

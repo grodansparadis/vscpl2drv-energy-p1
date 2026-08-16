@@ -30,7 +30,10 @@ cmake_minimum_required(VERSION 3.5)
 project(vscpl2drv-energy-p1 LANGUAGES CXX C)
 set(PACKAGE_AUTHOR "Ake Hedman, the VSCP Project")
 
-add_subdirectory(./third_party/spdlog/)
+
+# Only spdlog::spdlog_header_only (an INTERFACE target) is used, so exclude
+# the compiled spdlog library from the default build to save build time.
+add_subdirectory(./third_party/spdlog/ EXCLUDE_FROM_ALL)
 
 # Read version from version.h
 file(READ "${CMAKE_SOURCE_DIR}/src/version.h" VERSION_FILE_CONTENT)

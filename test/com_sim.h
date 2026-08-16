@@ -2,21 +2,12 @@
  *	\file com.h
  *  \brief interface for the Linux comm class.
  *
-// Copyright (C) 2000-2023 Ake Hedman, the VSCP project, <info@vscp.org>
+// Copyright (C) 2000-2026 Ake Hedman, the VSCP project, <info@vscp.org>
 //
 // This software is placed into
 // the public domain and may be used for any purpose.  However, this
 // notice must not be changed or removed and no warranty is either
 // expressed or implied by its publication or distribution.
- *
- * This class wraps and extends Minicom.
- * see ftp://ftp.sunsite.unc.edu/pub/Linux/apps/serialcomm/dialout
- *
- * Some changes by akhe@brattberg.com ( www.brattberg.com ) done for the
- * M.U.M.I.N. protocol.
- * 
- * - Sorry no more sysdep. Works only on Linux systems ( maybe on others ).
- *
 */
 
 
