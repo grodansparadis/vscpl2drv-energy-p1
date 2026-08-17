@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Don't cache the page -->
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="-1" />
+  <title>Firefox websockets problem</title>
+</head>
+<body>
+  <h1>Firefox websockets problem</h1>
+  <p>If you have problems on firefox getting the demo page to update, the cause is probably that Firefox use 
+    http2 for the connection to the websockets. You need to disable this setting to make the demo work. You can 
+    verify that this is the problem if you get the following error in the developer console of the browser:
+  </p>
+
+  <p>
+  <img src="images/firefox-error.png" alt="Firefox websocket bug" />
+  </p>
+
+  <p>
+  Fix this in the configuration of Firefox.
+  </p>
+  
+  <p>
+  Got to about:config and set `network.http.http2.enabled` to `false`.
+  </p>
+
+  <p>
+  <img src="images/firefox-change-settings.png" alt="Firefox change settings" />
+  </p>
+
+  Now the demo page should work as expected after reload.
+
+  Read more about the problem here: <a href="https://support.mozilla.org/sv/questions/1324001">https://support.mozilla.org/sv/questions/1324001</a>
+
+</body>
+</html>

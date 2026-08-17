@@ -107,21 +107,11 @@ Full usage is describe [here](https://docs.microsoft.com/en-us/cpp/build/manage-
 
 ### Get the source
 
-You need to checkout the VSCP main repository code in addition to the driver repository. You do this with
+You need to checkout the main repository code 
 
 ```bash
-  git clone https://github.com/grodansparadis/vscp.git
-  cd vscp
-  git checkout development
-``` 
-
-and the vscpl2drv-energy-p1 code
-
-```bash
-git clone https://github.com/grodansparadis/vscpl2drv-energy-p1.git
+git clone --recursive https://github.com/grodansparadis/vscpl2drv-energy-p1.git
 ```
-
-If you check out both at the same directory level the *-DVSCP_PATH=path-vscp-repository* in next step is not needed.
 
 ### Build the driver
 
@@ -189,10 +179,10 @@ section on the following format
 ```xml
 <!-- Level II TCP/IP Server -->
 <driver enable="true"
-    name="vscp-tcpip-srv"
-    path-driver="/usr/lib/vscp/drivers/level2/vscpl2drv-energy-p1.so"
-    path-config="/etc/vscp/vscpl2drv-energy-p1.conf"
-    guid="FF:FF:FF:FF:FF:FF:FF:FC:88:99:AA:BB:CC:DD:EE:FF"
+  name="vscp-tcpip-srv"
+  path-driver="/usr/lib/vscp/drivers/level2/vscpl2drv-energy-p1.so"
+  path-config="/etc/vscp/vscpl2drv-energy-p1.conf"
+  guid="FF:FF:FF:FF:FF:FF:FF:FC:88:99:AA:BB:CC:DD:EE:FF"
 </driver>
 ```
 
@@ -212,7 +202,7 @@ All level II drivers must have a unique GUID. There is many ways to obtain this 
 
 On start up the configuration is read from the path set in the driver configuration of the VSCP daemon, usually */etc/vscp/conf-file-name* and values are set from this location. If the **write** parameter is set to "true" the above location is a bad choice as the VSCP daemon will not be able to write to it. A better location is */var/lib/vscp/drivername/configure.xml* or some other writable location.
 
-The default configuration file available in the [resources folder](https://github.com/grodansparadis/vscpl2drv-energy-p1/blob/main/resources/linux/energyp1.json) is made for the [Ellevio electrical meters](https://grodansparadis.com/wordpress/wp-admin/post.php?post=5039&action=edit) and have the following format. You can easily adopt this file to your meters format. Live data is [here](https://grodansparadis.com/wordpress/wp-admin/post.php?post=5276&action=edit).
+The default configuration file available in the [resources folder](https://github.com/grodansparadis/vscpl2drv-energy-p1/blob/main/resources/linux/energyp1.json) is made for the [Ellevio electrical meters](https://grodansparadis.com/wordpress/wp-admin/post.php?post=5039&action=edit) and have the following format. You can easily adopt this file to your meters format. Live data is [here](https://demo.vscp.org/power.html).
 
 ```json
 {
@@ -762,11 +752,11 @@ I have a write up [here](https://grodansparadis.com/wordpress/wp-admin/post.php?
 
 Below is a node-red flow that shows gauges and a diagrams for the active effect for the three phases L1,L2 and L3.
 
-```
+```json
 [{"id":"292e3baf010b82a6","type":"mqtt in","z":"38061fa379e39e86","name":"Active effect out L1","topic":"vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:08/1040/14/8/8","qos":"2","datatype":"json","broker":"5438645a.6577cc","nl":false,"rap":true,"rh":0,"x":170,"y":400,"wires":[["37063deaf5482572","d3e6b0d664bcc542","3d525d7c9397cf8d"]]},{"id":"0b886f663d86c6f2","type":"ui_gauge","z":"38061fa379e39e86","name":"Active effect out  L1","group":"b34740c6.f1cb58","order":9,"width":"6","height":"5","gtype":"gage","title":"Active effect out  L1","label":"kW","format":"{{value}}","min":0,"max":"6","colors":["#00b500","#e6e600","#ca3838"],"seg1":"3","seg2":"5","x":570,"y":360,"wires":[]},{"id":"37063deaf5482572","type":"function","z":"38061fa379e39e86","name":"","func":"msg.value =  parseFloat(msg.payload.measurement.value/1000).toFixed(3);\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":360,"y":360,"wires":[["0b886f663d86c6f2"]]},{"id":"328bfc97ab4e3d72","type":"mqtt in","z":"38061fa379e39e86","name":"Active effect out  L2","topic":"vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:09/1040/14/9/9","qos":"2","datatype":"json","broker":"5438645a.6577cc","nl":false,"rap":true,"rh":0,"x":170,"y":520,"wires":[["dc7e9186723fd52a","c3c14d12c8080ee6","3ad6ce749f939126"]]},{"id":"1128ef7e42860be3","type":"ui_gauge","z":"38061fa379e39e86","name":"Active effect out  L2","group":"b34740c6.f1cb58","order":10,"width":"6","height":"5","gtype":"gage","title":"Active effect out  L2","label":"kW","format":"{{value}}","min":0,"max":"6","colors":["#00b500","#e6e600","#ca3838"],"seg1":"3","seg2":"5","x":570,"y":480,"wires":[]},{"id":"dc7e9186723fd52a","type":"function","z":"38061fa379e39e86","name":"","func":"msg.value =  parseFloat(msg.payload.measurement.value/1000).toFixed(3);\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":360,"y":480,"wires":[["1128ef7e42860be3"]]},{"id":"b1d492e24341b1eb","type":"mqtt in","z":"38061fa379e39e86","name":"Active effect out  L3","topic":"vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:0A/1040/14/10/10","qos":"2","datatype":"json","broker":"5438645a.6577cc","nl":false,"rap":true,"rh":0,"x":170,"y":640,"wires":[["7980eecebf80feba","52b0bca3cdf4d636","59240d1a05ef7918"]]},{"id":"ddb538fd44202e42","type":"ui_gauge","z":"38061fa379e39e86","name":"Active effect out  L3","group":"b34740c6.f1cb58","order":11,"width":"6","height":"5","gtype":"gage","title":"Active effect out  L3","label":"kW","format":"{{value}}","min":0,"max":"6","colors":["#00b500","#e6e600","#ca3838"],"seg1":"3","seg2":"5","x":570,"y":680,"wires":[]},{"id":"7980eecebf80feba","type":"function","z":"38061fa379e39e86","name":"","func":"msg.value =  parseFloat(msg.payload.measurement.value/1000).toFixed(3);\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":340,"y":680,"wires":[["ddb538fd44202e42"]]},{"id":"06c98721a4cf06f9","type":"comment","z":"38061fa379e39e86","name":"Active effect phases","info":"","x":170,"y":340,"wires":[]},{"id":"ab50bc763ae94086","type":"ui_chart","z":"38061fa379e39e86","name":"Active effect out","group":"b34740c6.f1cb58","order":27,"width":0,"height":0,"label":"Active effect out","chartType":"line","legend":"true","xformat":"HH:mm","interpolate":"linear","nodata":"No data","dot":true,"ymin":"0","ymax":"10","removeOlder":"4","removeOlderPoints":"","removeOlderUnit":"3600","cutout":0,"useOneColor":false,"useUTC":false,"colors":["#2ca02c","#1f77b4","#ec1334","#ff7f0e","#98df8a","#68c9f3","#ff9896","#9467bd","#c5b0d5"],"outputs":1,"useDifferentColor":false,"x":560,"y":580,"wires":[[]]},{"id":"d3e6b0d664bcc542","type":"function","z":"38061fa379e39e86","name":"","func":"msg.payload =  msg.payload.measurement.value/1000;\nmsg.topic = \"Active effect out L1\";\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":360,"y":440,"wires":[["ab50bc763ae94086"]]},{"id":"c3c14d12c8080ee6","type":"function","z":"38061fa379e39e86","name":"","func":"msg.payload =  msg.payload.measurement.value/1000;\nmsg.topic = \"Active effect out L2\";\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":360,"y":560,"wires":[["ab50bc763ae94086"]]},{"id":"52b0bca3cdf4d636","type":"function","z":"38061fa379e39e86","name":"","func":"msg.payload =  msg.payload.measurement.value/1000;\nmsg.topic = \"Active effect out L3\";\nreturn msg;","outputs":1,"noerr":0,"initialize":"","finalize":"","libs":[],"x":340,"y":720,"wires":[["ab50bc763ae94086"]]},{"id":"69236a372fd34c50","type":"link in","z":"38061fa379e39e86","name":"Active effect out total","links":["8cf9f8cf50e0f63a"],"x":395,"y":600,"wires":[["ab50bc763ae94086"]]},{"id":"5438645a.6577cc","type":"mqtt-broker","name":"Local","broker":"localhost","port":"1883","clientid":"lynx","usetls":false,"compatmode":false,"protocolVersion":"4","keepalive":"60","cleansession":true,"birthTopic":"","birthQos":"0","birthPayload":"","birthMsg":{},"closeTopic":"","closeQos":"0","closePayload":"","closeMsg":{},"willTopic":"","willQos":"0","willPayload":"","willMsg":{},"sessionExpiry":""},{"id":"b34740c6.f1cb58","type":"ui_group","name":"Power Brattberg house","tab":"c70db629dd6e0ec2","order":1,"disp":true,"width":"18","collapse":false},{"id":"c70db629dd6e0ec2","type":"ui_tab","name":"Power","icon":"dashboard","disabled":false,"hidden":false}]
 ```
 
-A live demo of data from our office is [here](https://demo.vscp.org/mqtt/power.html).
+A live demo of data from our office is [here](https://demo.vscp.org/power.html).
 
 
 ## Debug driver

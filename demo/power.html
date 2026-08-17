@@ -1,0 +1,488 @@
+<!--
+  This file connects using websockets to the VSCP demo server and show the live temperature in our fridge in 
+  a bernii/gauge.js gauge.  
+  
+  https://github.com/bernii/gauge.js
+  https://bernii.github.io/gauge.js/
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Don't cache the page -->
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="-1" />
+  <title>Websocket Simple MQTT demo</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+  
+  <!-- Favorite icon -->
+  <link rel="icon" href="./images/favicon.ico">
+</head>
+<div id="gauge"></div>
+<body>
+  
+  <a href="https://www.vscp.org"><img src="./images/logo/vscp_logo_text_box.png" alt="VSCP - The Very Simple Control Protocol" height="100"></a>
+  <hr>
+
+  <div class="container-fluid">
+    <h1>VSCP bernii/gauge.js gauge power meter demo</h1>
+    <p>
+        This demo uses the gauge from <a href="https://github.com/bernii/gauge.js" target="new">bernii/gauge.js</a> to display measurements collected 
+        from a smart energy meter from <a href="https://www.ellevio.se">Ellevio</a> mounted in our house/office. The meter and the interface to it is described 
+        <a href="https://grodansparadis.com/wordpress/?p=5039">here</a>. A VSCP level II driver 
+        <a href="https://github.com/grodansparadis/vscpl2drv-energy-p1">vscpl2drv-energy-p1</a> is used to connect to the meter.
+    </p>
+
+    <p>If you have problems to see updates on Firefox in this demo see fix in this <a href="fix-firefox-problem.html">link</a></p>
+
+    <p>
+        It displays readings every second as 
+        <ul>
+          <li>
+            <a href="https://grodansparadis.github.io/vscp-doc-spec/#/./class2.measurement_str?id=type14" target="new">CLASS2.MEASUREMENT_STR, Type=14/VSCP_TYPE_MEASUREMENT_POWER</a> 
+            values that comes from the smart meter as a total and readings for each phase. The meter also report power we send out and reactive effect in/out but these values 
+            are omitted here.
+          </li>
+          <li>
+            <a href="https://grodansparadis.github.io/vscp-doc-spec/#/./class2.measurement_str?id=type5" target="new">CLASS2.MEASUREMENT_STR, Type=5/VSCP_TYPE_MEASUREMENT_ELECTRIC_CURRENT</a> 
+            values that comes from the smart meter as a current readings for each phase. 
+          </li>
+          <li>
+            <a href="https://grodansparadis.github.io/vscp-doc-spec/#/./class2.measurement_str?id=type16" target="new">CLASS2.MEASUREMENT_STR, Type=16/VSCP_TYPE_MEASUREMENT_ELECTRICAL_POTENTIAL</a> 
+            values that comes from the smart meter as a current readings for each phase. 
+          </li>
+        </ul>
+    </p>
+
+    <p>
+      Events you can expect to see related to this demo have GUID's listed [here](https://github.com/grodansparadis/vscp/wiki/pi6) and is described in [this file](https://github.com/grodansparadis/vscpl2drv-energy-p1/blob/main/resources/linux/energyp1.json). 
+    </p>
+
+    <p>
+      Docs for the bernii gauge is <a href="https://github.com/bernii/gauge.js">here</a> and <a href="https://bernii.github.io/gauge.js/">here</a>
+    </p>
+
+    <p>
+      The websocket connection used here is a secure TLS connection to the  <a href="https://github.com/grodansparadis/vscp/wiki/Demo">VSCP MQTT demo server</a>. 
+      You can freely test this server for VSCP related experiments. It gets real time live events published from my (<a href="mailto:akhe@grodansparadis.com">akhe</a>) 
+      office and home. See the link for information of events published. 
+    </p>
+
+    <p>
+      Source for the demo is available <a href="https://github.com/grodansparadis/vscp-demo-mqtt-web">here</a>
+    </p>
+
+    <p>
+      <a href="./index.html">Back to main demo page</a>
+    </p>
+
+    <hr>
+
+    <p>
+      Update frequency is about one second.
+    </p>
+    
+
+    <h2 style="text-align: center;">Smart power meter demo</h2>
+
+    <hr>
+
+    <div class="container">			
+		  <div class="row">					
+			  <div class="col-sm" style="text-align: center;">
+				    <!-- Injecting linear gauge -->          
+					  <canvas id="canvas_gauge_total_power"></canvas>
+            <div id="div_gauge_total_power"></div>
+				</div>
+        <div class="col-sm" style="text-align: center;"></div>
+        <div class="col-sm" style="text-align: center;"></div>
+		  </div>	
+    
+    </div>
+  </div>
+
+  <hr> 
+
+  <div class="container">
+
+    <div class="row align-items-start">
+
+      <h3 style="text-align: center;">Power</h3>
+
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_power1"></canvas>
+          <div id="div_gauge_power1"></div>
+				</div>
+
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_power2"></canvas>
+          <div id="div_gauge_power2"></div>
+				</div>
+
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_power3"></canvas>
+          <div id="div_gauge_power3"></div>
+				</div>
+
+      </div>
+
+    <hr>  
+
+    <div class="row align-items-center">
+
+      <h4 style="text-align: center;">Current</h4>
+
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_current1"></canvas>
+          <div id="div_gauge_current1"></div>
+				</div>
+
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_current2"></canvas>
+          <div id="div_gauge_current2"></div>
+				</div>
+
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_current3"></canvas>
+          <div id="div_gauge_current3"></div>
+				</div>
+
+    </div>
+
+    <hr> 
+
+    <div class="row align-items-end">
+
+      <h3 style="text-align: center;">Voltage</h3>
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_voltage1"></canvas>
+          <div id="div_gauge_voltage1"></div>
+				</div>
+
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_voltage2"></canvas>
+          <div id="div_gauge_voltage2"></div>
+				</div>
+
+        <div class="col-sm" style="text-align: center;">
+				  <!-- Injecting linear gauge -->
+					<canvas class="sw-100 h-100" id="canvas_gauge_voltage3"></canvas>
+          <div id="div_gauge_voltage3"></div>
+				</div>
+
+    </div>
+
+  </div>
+
+<hr />
+Copyright &copy; 2000-2026 <a href="https://www.grodansparadis.com">Ake Hedman, the VSCP Project</a>
+
+
+  <!-- JQuery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+  <!-- Bootstrap -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js"></script>
+
+  <!-- bernii/gauge.js Charts API -->
+  <script type="text/javascript" src="js/gauge.js-1.3.7/dist/gauge.js"></script>
+  <script type="text/javascript">
+
+    (function() {
+
+      var opts_gauge_total_power = {
+        angle: 0.0,              // The span of the gauge arc
+        lineWidth: 0.44,          // The line thickness
+        pointer: {
+          length: 0.9,            // Relative to gauge radius
+          strokeWidth: 0.035      // The thickness
+        },
+        colorStart: '#6FADCF',    // Colors
+        colorStop: '#8FC0DA',     // just experiment with them
+        strokeColor: '#E0E0E0',   // to see which ones work best for you
+        staticLabels: {
+          font: "10px sans-serif",// Specifies font
+          labels: [0, 12, 15, 17],     // Print labels at these values
+          color: "#000000",       // Optional: Label text color
+          fractionDigits: 0       // Optional: Numerical precision. 0=round off.
+        },
+        staticZones: [
+          {strokeStyle: "#F03E3E", min: 15, max: 17},  // Red from 
+          {strokeStyle: "#FFDD00", min: 12, max:  15},  // Yellow
+          {strokeStyle: "#30B32D", min:  0, max: 12},  // Green
+        ],
+      };
+
+      var target_total_power = document.getElementById('canvas_gauge_total_power');               // your canvas element
+      var gauge_total_power = new Gauge(target_total_power).setOptions(opts_gauge_total_power);   // create gauge!
+      gauge_total_power.maxValue = 17;        // set max gauge value
+      gauge_total_power.setMinValue(0);       // set min value
+      gauge_total_power.set(0);               // set actual value
+      gauge_total_power.title = gauge.value;
+
+      var options_effect = {
+        angle: 0,                 // The span of the gauge arc
+        lineWidth: 0.15,          // The line thickness
+        pointer: {
+          length: 0.9,            // Relative to gauge radius
+          strokeWidth: 0.035      // The thickness
+        },
+        colorStart: '#6FADCF',    // Colors
+        colorStop: '#8FC0DA',     // just experiment with them
+        strokeColor: '#E0E0E0',   // to see which ones work best for you
+        staticLabels: {
+          font: "10px sans-serif",  // Specifies font
+          labels: [0, 6, 8, 10],     // Print labels at these values
+          color: "#000000",  // Optional: Label text color
+          fractionDigits: 0  // Optional: Numerical precision. 0=round off.
+        },
+        staticZones: [
+          {strokeStyle: "#F03E3E", min: 8, max: 10},  // Red from -10 to 10
+          {strokeStyle: "#FFDD00", min: 6, max: 8}, // Yellow
+          {strokeStyle: "#30B32D", min: 0, max: 6}, // Green
+        ],
+      };
+
+      // Power
+      var target = document.getElementById('canvas_gauge_power1');     // your canvas element
+      var gauge_power_l1 = new Gauge(target).setOptions(options_effect); // create gauge!
+      gauge_power_l1.maxValue = 10;        // set max gauge value
+      gauge_power_l1.setMinValue(0);      // set min value
+      gauge_power_l1.set(0);              // set actual value
+
+      var target = document.getElementById('canvas_gauge_power2');     // your canvas element
+      var gauge_power_l2 = new Gauge(target).setOptions(options_effect); // create gauge!
+      gauge_power_l2.maxValue = 10;        // set max gauge value
+      gauge_power_l2.setMinValue(0);      // set min value
+      gauge_power_l2.set(0);              // set actual value
+
+      var target = document.getElementById('canvas_gauge_power3');     // your canvas element
+      var gauge_power_l3 = new Gauge(target).setOptions(options_effect); // create gauge!
+      gauge_power_l3.maxValue = 10;        // set max gauge value
+      gauge_power_l3.setMinValue(0);      // set min value
+      gauge_power_l3.set(0);              // set actual value
+
+      var options_current = {
+        angle: 0,              // The span of the gauge arc
+        lineWidth: 0.15,          // The line thickness
+        pointer: {
+          length: 0.9,            // Relative to gauge radius
+          strokeWidth: 0.035      // The thickness
+        },
+        colorStart: '#6FADCF',    // Colors
+        colorStop: '#8FC0DA',     // just experiment with them
+        strokeColor: '#E0E0E0',   // to see which ones work best for you
+        staticLabels: {
+          font: "10px sans-serif",  // Specifies font
+          labels: [0, 10, 21, 25],  // Print labels at these values
+          color: "#000000",  // Optional: Label text color
+          fractionDigits: 0  // Optional: Numerical precision. 0=round off.
+        },
+        staticZones: [
+          {strokeStyle: "#F03E3E", min: 21, max: 25},  // Red 
+          {strokeStyle: "#FFDD00", min: 18, max: 21}, // Yellow
+          {strokeStyle: "#30B32D", min: 0, max: 18}, // Green
+        ],
+      };
+
+
+      //  Current 
+      var target = document.getElementById('canvas_gauge_current1');     // your canvas element
+      var gauge_current_l1 = new Gauge(target).setOptions(options_current); // create gauge!
+      gauge_current_l1.maxValue = 25;        // set max gauge value
+      gauge_current_l1.setMinValue(0);      // set min value
+      gauge_current_l1.set(0);              // set actual value
+
+      var target = document.getElementById('canvas_gauge_current2');     // your canvas element
+      var gauge_current_l2 = new Gauge(target).setOptions(options_current); // create gauge!
+      gauge_current_l2.maxValue = 25;        // set max gauge value
+      gauge_current_l2.setMinValue(0);      // set min value
+      gauge_current_l2.set(0);              // set actual value
+
+      var target = document.getElementById('canvas_gauge_current3');     // your canvas element
+      var gauge_current_l3 = new Gauge(target).setOptions(options_current); // create gauge!
+      gauge_current_l3.maxValue = 25;        // set max gauge value
+      gauge_current_l3.setMinValue(0);      // set min value
+      gauge_current_l3.set(0);              // set actual value
+
+      var options_voltage = {
+        angle: 0,              // The span of the gauge arc
+        lineWidth: 0.15,          // The line thickness
+        pointer: {
+          length: 0.9,            // Relative to gauge radius
+          strokeWidth: 0.035      // The thickness
+        },
+        colorStart: '#6FADCF',    // Colors
+        colorStop: '#8FC0DA',     // just experiment with them
+        strokeColor: '#E0E0E0',   // to see which ones work best for you
+        staticLabels: {
+          font: "10px sans-serif",  // Specifies font
+          labels: [200, 215, 240, 250, 260],  // Print labels at these values
+          color: "#000000",  // Optional: Label text color
+          fractionDigits: 0  // Optional: Numerical precision. 0=round off.
+        },
+        staticZones: [
+          {strokeStyle: "#F03E3E", min: 250, max: 260}, // Red 
+          {strokeStyle: "#FFDD00", min: 240, max: 250}, // Yellow
+          {strokeStyle: "#30B32D", min: 220, max: 240}, // Green
+          {strokeStyle: "#FFDD00", min: 210, max: 220}, // Yellow
+          {strokeStyle: "#F03E3E", min: 200, max: 210}, // Red
+        ],
+      };
+
+
+      //  Voltage 
+      var target = document.getElementById('canvas_gauge_voltage1');     // your canvas element
+      var gauge_voltage_l1 = new Gauge(target).setOptions(options_voltage); // create gauge!
+      gauge_voltage_l1.maxValue = 260;        // set max gauge value
+      gauge_voltage_l1.setMinValue(200);      // set min value
+      gauge_voltage_l1.set(230);              // set actual value
+
+      var target = document.getElementById('canvas_gauge_voltage2');     // your canvas element
+      var gauge_voltage_l2 = new Gauge(target).setOptions(options_voltage); // create gauge!
+      gauge_voltage_l2.maxValue = 260;        // set max gauge value
+      gauge_voltage_l2.setMinValue(200);      // set min value
+      gauge_voltage_l2.set(230);              // set actual value
+
+      var target = document.getElementById('canvas_gauge_voltage3');     // your canvas element
+      var gauge_voltage_l3 = new Gauge(target).setOptions(options_voltage); // create gauge!
+      gauge_voltage_l3.maxValue = 260;        // set max gauge value
+      gauge_voltage_l3.setMinValue(200);      // set min value
+      gauge_voltage_l3.set(230);              // set actual value
+
+      const clientId = 'vscp-mqtt-js-test_' + Math.random().toString(16).substr(2, 8)
+
+      //const host = 'wss://demo.vscp.org:9901'
+      // 8081'  // Works without credentials
+      const host = 'wss://vscp1.vscp.org:9901/mqtt'
+      //const host = 'ws://vscp1.vscp.org:9001'
+      //const host = 'wss://test.mosquitto.org:8081'
+      //const host = 'wss://vscp3.vscp.org:9001'
+      // Wait until the whole website is loaded
+      $( document ).ready( function() {
+        const optionsMQTT = {
+          keepalive: 30,
+          clientId: clientId,
+          username: "vscp",
+          password: "secret",
+          protocol: "wss",
+          protocolId: 'MQTT',
+          protocolVersion: 4,
+          clean: true,
+          reconnectPeriod: 5000,
+          connectTimeout: 30000,
+          clean: true,
+          will: {
+            topic: 'WillMsg',
+            payload: 'Connection Closed abnormally..!',
+            qos: 0,
+            retain: false
+          },
+          
+        }
+
+	// Add for non test.mosqujitto.org host
+	// username: "vscp",
+        // password: "secret"
+
+        console.log('connecting mqtt client to ', host);
+        const client = mqtt.connect(host, optionsMQTT);
+
+        client.on('error', (err) => {
+          console.log('Connection error: ', err);
+          client.end();
+        })
+
+        client.on('reconnect', () => {
+          console.log('Reconnecting...');
+        })
+
+        client.on('connect', () => {
+          console.log('Client connected:' + clientId);
+          client.subscribe('vscp/+/1040/#', { qos: 2 });
+          // client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:04/1040/13/#', { qos: 2 });
+          // client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:08/1040/13/#', { qos: 2 });
+          // client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:09/#', { qos: 2 });
+          // client.subscribe('vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:0A/#', { qos: 2 });
+          //client.publish('testtopic', 'ws connection demo...!', { qos: 0, retain: false })
+        });
+
+        client.on('message', (topic, message, packet) => {
+
+          //console.log('Received Message: ' + message.toString() + '\nOn topic: ' + topic);
+          //paragraph.innerHTML = paragraph.innerHTML + '<br>' + 'Received Message: ' + message.toString() + '<br>On topic: ' + topic;
+        
+          const ev = JSON.parse(message.toString());          
+          //console.log("Event:", ev);
+          if (!(0 == ("measurement" in ev))) {
+          	  console.log("Measurement:", ev.measurement.value);
+          
+		  if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:04/1040/14" == topic.substr(0, 60)) {  
+		    gauge_total_power.set(ev.measurement.value/1000);
+		    div_gauge_total_power.innerHTML = "Total power: <b>" + ev.measurement.value/1000 + " kW</b>";
+		    console.log("Total power: <b>" + ev.measurement.value/1000 + " kW</b>");
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:08/1040/14" == topic.substr(0, 60)) {  
+		    gauge_power_l1.set(ev.measurement.value/1000);
+		    div_gauge_power1.innerHTML = "Power L1: <b>" + ev.measurement.value/1000 + " kW</b>";
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:09/1040/14" == topic.substr(0, 60)) {  
+		    gauge_power_l2.set(ev.measurement.value/1000);
+		    div_gauge_power2.innerHTML = "Power L2: <b>" + ev.measurement.value/1000 + " kW</b>";
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:0A/1040/14" == topic.substr(0, 60)) {  
+		    gauge_power_l3.set(ev.measurement.value/1000);
+		    div_gauge_power3.innerHTML = "Power L3: <b>" + ev.measurement.value/1000 + " kW</b>";
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:17/1040/5" == topic.substr(0, 59)) {  
+		    gauge_current_l1.set(ev.measurement.value);
+		    div_gauge_current1.innerHTML = "Current L1: <b>" + ev.measurement.value + " A</b>";
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:18/1040/5" == topic.substr(0, 59)) {  
+		    gauge_current_l2.set(ev.measurement.value);
+		    div_gauge_current2.innerHTML = "Current L2: <b>" + ev.measurement.value + " A</b>";
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:19/1040/5" == topic.substr(0, 59)) {  
+		    gauge_current_l3.set(ev.measurement.value);
+		    div_gauge_current3.innerHTML = "Current L3: <b>" + ev.measurement.value + " A</b>";
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:14/1040/16" == topic.substr(0, 60)) {  
+		    gauge_voltage_l1.set(ev.measurement.value);
+		    div_gauge_voltage1.innerHTML = "Voltage L1: <b>" + ev.measurement.value + " V</b>";
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:15/1040/16" == topic.substr(0, 60)) {  
+		    gauge_voltage_l2.set(ev.measurement.value);
+		    div_gauge_voltage2.innerHTML = "Voltage L2: <b>" + ev.measurement.value + " V</b>";
+		  }
+		  else if ("vscp/25:00:00:00:00:00:00:00:00:00:00:00:08:0D:00:16/1040/16" == topic.substr(0, 60)) {  
+		    gauge_voltage_l3.set(ev.measurement.value);
+		    div_gauge_voltage3.innerHTML = "Voltage L2: <b>" + ev.measurement.value + " V</b>";
+		  }
+          }
+        });
+
+        client.on('close', () => {
+          console.log(clientId + ' disconnected')
+        })
+
+      }); // Document ready
+
+    })();
+
+  </script>
+</body>
+</html>
+

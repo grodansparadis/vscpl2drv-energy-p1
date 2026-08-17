@@ -104,6 +104,8 @@ CEnergyP1::CEnergyP1()
 {
   m_bQuit                  = false;
   m_bWorkerThreadRunning   = false;
+  m_workerFrameCount       = 0;
+  m_workerCrcErrorCount    = 0;
 
   // Init seral data
   m_serialDevice        = "/dev/ttyUSB0";
@@ -1746,6 +1748,9 @@ CEnergyP1::doWork(std::string &strbuf)
 
       // Save measurement value
       m_lastValue[pItem->getStorageName()] = value;
+      if (!m_workerInputPath.empty()) {
+        m_workerMeasurements.push_back({ m_workerFrameCount, pItem->getStorageName(), value });
+      }
 
       switch (pItem->getVscpClass()) {
 
@@ -2131,6 +2136,10 @@ CEnergyP1::startWorkerThread(const std::string &inputPath)
   }
 
   m_workerInputPath = inputPath;
+  m_workerMeasurements.clear();
+  m_workerCrcFailures.clear();
+  m_workerFrameCount    = 0;
+  m_workerCrcErrorCount = 0;
   m_bQuit           = false;
   if (pthread_create(&m_workerThread, NULL, workerThread, this)) {
     spdlog::error("Unable to start the workerthread.");
@@ -2296,8 +2305,19 @@ workerThread(void *pData)
       } break;
 
       case eSerialState::SERIAL_STATE_CRC: {
+        if (!isxdigit(static_cast<unsigned char>(c))) {
+          pObj->m_workerFrameCount++;
+          pObj->m_workerCrcErrorCount++;
+          pObj->m_workerCrcFailures.emplace_back(
+            "frame " + std::to_string(pObj->m_workerFrameCount) +
+            ": malformed meter CRC '" + std::string(incoming_crc_str) + "'");
+          state = eSerialState::SERIAL_STATE_IDLE;
+          break;
+        }
+
         incoming_crc_str[crc_char_count++] = c;
         if (crc_char_count >= 4) {
+          pObj->m_workerFrameCount++;
           unsigned int meter_crc_val = 0;
           if ((1 == sscanf(incoming_crc_str, "%X", &meter_crc_val)) &&
               (static_cast<uint16_t>(meter_crc_val) == calculated_crc)) {
@@ -2309,6 +2329,15 @@ workerThread(void *pData)
             }
           }
           else {
+            pObj->m_workerCrcErrorCount++;
+            char detail[96];
+            snprintf(detail,
+                     sizeof(detail),
+                     "frame %zu: meter=%s calculated=%04X",
+                     pObj->m_workerFrameCount,
+                     incoming_crc_str,
+                     calculated_crc);
+            pObj->m_workerCrcFailures.emplace_back(detail);
             spdlog::error("Checksum validation FAILED! (Meter sent: {}, Calculated: {:04X})",
                           incoming_crc_str,
                           calculated_crc);
@@ -2338,6 +2367,12 @@ workerThread(void *pData)
       }
       processByte(c);
       previous = c;
+    }
+    if (eSerialState::SERIAL_STATE_IDLE != state) {
+      pObj->m_workerFrameCount++;
+      pObj->m_workerCrcErrorCount++;
+      pObj->m_workerCrcFailures.emplace_back(
+        "frame " + std::to_string(pObj->m_workerFrameCount) + ": incomplete telegram at end of file");
     }
     return NULL;
   }

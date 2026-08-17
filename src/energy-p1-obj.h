@@ -32,6 +32,8 @@
 
 #include <list>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include <pthread.h>
 #include <semaphore.h>
@@ -92,6 +94,12 @@ typedef enum class eSerialState : uint8_t {
 class CEnergyP1
 {
   public:
+    struct WorkerMeasurement {
+      size_t frame;
+      std::string name;
+      double value;
+    };
+
     /// Constructor
     CEnergyP1();
 
@@ -273,6 +281,18 @@ class CEnergyP1
 
     /// Optional captured telegram file used instead of the serial port
     std::string m_workerInputPath;
+
+    /// Measurements parsed by the worker from a captured input file
+    std::vector<WorkerMeasurement> m_workerMeasurements;
+
+    /// Number of complete telegrams seen by the worker
+    size_t m_workerFrameCount;
+
+    /// Number of telegrams rejected because of a CRC error
+    size_t m_workerCrcErrorCount;
+
+    /// Details for each CRC failure encountered in captured input
+    std::vector<std::string> m_workerCrcFailures;
 
     /// Our GUID
     cguid m_guid;

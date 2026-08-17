@@ -21,6 +21,8 @@
 // Boston, MA 02111-1307, USA.
 //
 
+#include <chrono>
+#include <iomanip>
 #include <iostream>
 #include <string>
 
@@ -54,22 +56,35 @@ main(int argc, char *argv[])
     return 1;
   }
 
+  const auto parseStart = std::chrono::steady_clock::now();
   if (!p1.startWorkerThread(argv[2]) || !p1.waitWorkerThread()) {
     std::cerr << "Unable to process input file: " << argv[2] << '\n';
     return 1;
   }
+  const auto parseEnd = std::chrono::steady_clock::now();
+  const std::chrono::duration<double, std::milli> parseTime = parseEnd - parseStart;
 
-  size_t count = 0;
-  for (auto *item : p1.m_listItems) {
-    const auto value = p1.m_lastValue.find(item->getStorageName());
-    if (p1.m_lastValue.end() == value) {
-      continue;
+  size_t currentFrame = 0;
+  for (const auto &measurement : p1.m_workerMeasurements) {
+    if (measurement.frame != currentFrame) {
+      currentFrame = measurement.frame;
+      std::cout << "--- telegram " << currentFrame << " ---\n";
     }
-    std::cout << value->first << '=' << value->second << '\n';
-    count++;
+    std::cout << measurement.name << '=' << measurement.value << '\n';
   }
 
   clearReceiveQueue(p1);
-  std::cout << count << " measurement(s)\n";
+  std::cout << p1.m_workerMeasurements.size() << " measurement(s) in "
+            << p1.m_workerFrameCount << " frame(s)\n";
+  std::cout << "Parsing time: " << std::fixed << std::setprecision(3) << parseTime.count() << " ms\n";
+
+  if (p1.m_workerCrcErrorCount) {
+    for (const auto &failure : p1.m_workerCrcFailures) {
+      std::cerr << "CRC FAILURE: " << failure << '\n';
+    }
+    std::cerr << "CRC FAILURE: " << p1.m_workerCrcErrorCount << " frame(s) rejected\n";
+    return 2;
+  }
+
   return 0;
 }
