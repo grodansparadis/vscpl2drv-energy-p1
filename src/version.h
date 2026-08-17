@@ -2,7 +2,7 @@
 //
 // Build instructions for VSCP Works.
 //
-// Copyright (C) 2000-2023 Åke Hedman, the VSCP Project
+// Copyright (C) 2000-2026 Åke Hedman, the VSCP Project
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,5 +25,5 @@
 
 #define MAJOR_VERSION       15
 #define MINOR_VERSION       0
-#define RELEASE_VERSION     0
+#define RELEASE_VERSION     1
 #define BUILD_VERSION       0
