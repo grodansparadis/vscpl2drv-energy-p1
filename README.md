@@ -1,6 +1,6 @@
 # vscpl2drv-energy-p1
 
-![](https://vscp.org/images/logo_100.png)
+![VSCP Logo](https://github.com/grodansparadis/vscp-logo/blob/master/logo_100.png)
 
     Available for: Linux, Windows
     Driver Linux: vscpl2drv-energy-p1.so
