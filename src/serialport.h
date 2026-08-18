@@ -55,6 +55,18 @@ public:
     }
   }
 
+  void DtrOff()
+  {
+    if (nullptr != m_comm.getHandle()) {
+      EscapeCommFunction(m_comm.getHandle(), CLRDTR);
+    }
+  }
+
+  void close()
+  {
+    m_comm.close();
+  }
+
   int isCharReady()
   {
     COMSTAT status = {};

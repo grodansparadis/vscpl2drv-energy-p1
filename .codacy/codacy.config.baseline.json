@@ -6,10 +6,11 @@
     "organization": "grodansparadis",
     "repositoryId": "847909",
     "repositoryName": "vscpl2drv-energy-p1",
-    "createdAt": "2026-08-17T09:21:20.039Z",
-    "updatedAt": "2026-08-17T09:21:20.039Z",
+    "createdAt": "2026-08-18T07:54:36.418Z",
+    "updatedAt": "2026-08-18T07:54:36.418Z",
     "languages": [
       "C",
+      "CoffeeScript",
       "CPP",
       "CSS",
       "HTML",
@@ -19,6 +20,7 @@
       "Powershell",
       "Python",
       "Shell",
+      "TypeScript",
       "XML",
       "YAML"
     ]
@@ -5532,6 +5534,17 @@
       ]
     },
     {
+      "toolId": "coffeelint",
+      "patterns": [
+        {
+          "patternId": "no_interpolation_in_single_quotes"
+        },
+        {
+          "patternId": "duplicate_key"
+        }
+      ]
+    },
+    {
       "toolId": "cppcheck",
       "patterns": [
         {
@@ -6398,6 +6411,11 @@
     }
   ],
   "exclude": [
+    "demo/js/gauge.js-1.3.7/assets/bootstrap.min.css",
+    "demo/js/gauge.js-1.3.7/dist/gauge.coffee",
+    "demo/js/gauge.js-1.3.7/dist/gauge.js",
+    "demo/js/gauge.js-1.3.7/dist/gauge.min.js",
+    "demo/js/gauge.min.js",
     "python/.venv/lib/python3.11/site-packages/pip/_vendor/cachecontrol/adapter.py",
     "python/.venv/lib/python3.11/site-packages/pip/_vendor/cachecontrol/cache.py",
     "python/.venv/lib/python3.11/site-packages/pip/_vendor/cachecontrol/caches/file_cache.py",

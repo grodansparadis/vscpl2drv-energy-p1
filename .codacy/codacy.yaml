@@ -1,5 +1,2 @@
-runtimes:
-    - java@17.0.10
 tools:
-    - opengrep@1.26.0
     - pmd@6.55.0

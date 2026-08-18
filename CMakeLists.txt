@@ -279,6 +279,7 @@ if (WIN32)
         ${PThreads4W_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${OPENSSL_INCLUDE_DIR}
+        ./third_party/vscp/src/vscp/daemon/
         ${LOCAL_WIN_INCLUDE}
         ${LOCAL_SYSLOG_INCLUDE} )
 else()

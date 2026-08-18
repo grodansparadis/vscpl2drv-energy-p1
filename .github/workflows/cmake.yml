@@ -18,13 +18,10 @@ jobs:
         include:
           - name: Linux
             os: ubuntu-latest
-            artifact: build/libvscpl2drv-energy-p1.so
           - name: macOS
             os: macos-latest
-            artifact: build/libvscpl2drv-energy-p1.dylib
           - name: Windows
             os: windows-latest
-            artifact: build/Release/vscpl2drv-energy-p1.dll
 
     steps:
       - name: Check out source
@@ -43,6 +40,10 @@ jobs:
       - name: Install Windows dependencies
         if: runner.os == 'Windows'
         run: vcpkg install expat:x64-windows openssl:x64-windows pthreads:x64-windows
+
+      - name: Apply macOS serial compatibility patch
+        if: runner.os == 'macOS'
+        run: git -C third_party/vscp apply ../../.github/patches/vscp-macos-serial.patch
 
       - name: Configure Linux build
         if: runner.os == 'Linux'
@@ -64,9 +65,18 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      - name: Upload driver
+      - name: Package
+        run: cpack --config build/CPackConfig.cmake -C Release -B build/packages
+
+      - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
           name: vscpl2drv-energy-p1-${{ runner.os }}
-          path: ${{ matrix.artifact }}
+          path: |
+            build/packages/*.deb
+            build/packages/*.rpm
+            build/packages/*.tar.gz
+            build/packages/*.zip
+            build/packages/*.dmg
+            build/packages/*.exe
           if-no-files-found: error
