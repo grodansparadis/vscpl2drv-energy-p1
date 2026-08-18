@@ -128,6 +128,7 @@ endif()
 if(WIN32)
 	  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     add_definitions(-DWIN32_LEAN_AND_MEANS)
+    add_definitions(-DUNICODE -D_UNICODE)
     add_definitions(-DOPENSSL_API_1_1)
     add_definitions(-D_POSIX_C_SOURCE)    
     add_definitions(-DVCPKG_TARGET_TRIPLET=x64-windows)
@@ -164,7 +165,7 @@ IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
   SET(CPACK_PACKAGE_VERSION_PATCH "${PATCH_VERSION}")
   SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
   SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${MAJOR_VERSION}.${MINOR_VERSION}.${CPACK_PACKAGE_VERSION_PATCH}")
-  SET(CPACK_IGNORE_FILES "\\.psd$;/CVS/;/\\.svn/;/\\.git/;\\.swp$;/CMakeLists.txt.user;\\.#;/#;\\.tar.gz$;/CMakeFiles/;CMakeCache.txt;\\.qm$;/build/;\\.diff$;.DS_Store'")
+    SET(CPACK_IGNORE_FILES "[.]psd$;/CVS/;/[.]svn/;/[.]git/;[.]swp$;/CMakeLists[.]txt[.]user;[.]#;/#;[.]tar[.]gz$;/CMakeFiles/;CMakeCache[.]txt;[.]qm$;/build/;[.]diff$;[.]DS_Store")
   SET(CPACK_SOURCE_IGNORE_FILES ${CPACK_IGNORE_FILES})
 
   SET(CPACK_NSIS_INSTALLED_ICON_NAME "${APP_LOW_NAME}.ico")
@@ -244,6 +245,11 @@ add_library(vscpl2drv-energy-p1
     #third_party/vscp/src/vscp/common/mdf.cpp
     third_party/vscp/src/vscp/common/vscphelper.h
     third_party/vscp/src/vscp/common/vscphelper.cpp
+    third_party/vscp/src/common/crc.c
+    third_party/vscp/src/common/crc8.c
+    third_party/vscp/src/common/vscp-aes.c
+    third_party/vscp/src/common/vscpbase64.c
+    third_party/vscp/src/common/vscpmd5.c
     #third_party/vscp/src/vscp/common/canal.h
     #third_party/vscp/src/common/sockettcp.h
     #third_party/vscp/src/common/sockettcp.c

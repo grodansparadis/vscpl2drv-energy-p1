@@ -16,18 +16,19 @@ endif()
 
 # man pages
 if (${PANDOCCOMMAND_FOUND})
-    ADD_CUSTOM_TARGET(man ALL)
-
     ADD_CUSTOM_COMMAND(
-        TARGET man
-        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/man/vscpl2drv-energy-p1.md
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vscpl2drv-energy-p1.1.md
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         COMMAND pandoc -s -t man vscpl2drv-energy-p1.1.md -o ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
-        OUTPUTS ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
-)
-endif()
+    )
 
-install(
-  FILES ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
-  DESTINATION share/man/man1
-)
+    ADD_CUSTOM_TARGET(man ALL
+      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
+    )
+
+    install(
+      FILES ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
+      DESTINATION share/man/man1
+    )
+endif()
