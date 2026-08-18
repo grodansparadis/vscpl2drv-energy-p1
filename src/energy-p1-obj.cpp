@@ -60,7 +60,6 @@
 #include "alarm.h"
 #include "energy-p1-obj.h"
 
-#include <com.h>
 #include <hlo.h>
 #include <remotevariablecodes.h>
 #include <vscp-class.h>
@@ -82,7 +81,10 @@
 #include <list>
 #include <map>
 #include <string>
+#include <thread>
 #include <vector>
+
+#include "serialport.h"
 
 // https://github.com/nlohmann/json
 using json = nlohmann::json;
@@ -120,8 +122,13 @@ CEnergyP1::CEnergyP1()
   vscp_clearVSCPFilter(&m_rxfilter); // Accept all events
   vscp_clearVSCPFilter(&m_txfilter); // Send all events
 
+#ifdef WIN32
+  m_semSendQueue = CreateSemaphore(NULL, 0, VSCP_ENERGYP1_LIST_MAX_MSG, NULL);
+  m_semReceiveQueue = CreateSemaphore(NULL, 0, VSCP_ENERGYP1_LIST_MAX_MSG, NULL);
+#else
   sem_init(&m_semSendQueue, 0, 0);
   sem_init(&m_semReceiveQueue, 0, 0);
+#endif
 
   pthread_mutex_init(&m_mutexSendQueue, NULL);
   pthread_mutex_init(&m_mutexReceiveQueue, NULL);
@@ -163,8 +170,13 @@ CEnergyP1::~CEnergyP1()
 {
   close();
 
+#ifdef WIN32
+  CloseHandle(m_semSendQueue);
+  CloseHandle(m_semReceiveQueue);
+#else
   sem_destroy(&m_semSendQueue);
   sem_destroy(&m_semReceiveQueue);
+#endif
 
   pthread_mutex_destroy(&m_mutexSendQueue);
   pthread_mutex_destroy(&m_mutexReceiveQueue);
@@ -2080,7 +2092,7 @@ CEnergyP1::eventExToReceiveQueue(vscpEventEx &ex)
       pthread_mutex_lock(&m_mutexReceiveQueue);
       m_receiveList.push_back(pev);
       pthread_mutex_unlock(&m_mutexReceiveQueue);
-      sem_post(&m_semReceiveQueue);
+      vscp_sem_post(&m_semReceiveQueue);
     }
     else {
       vscp_deleteEvent(pev);
@@ -2103,7 +2115,7 @@ CEnergyP1::addEvent2SendQueue(const vscpEvent *pEvent)
 {
   pthread_mutex_lock(&m_mutexSendQueue);
   m_sendList.push_back((vscpEvent *) pEvent);
-  sem_post(&m_semSendQueue);
+  vscp_sem_post(&m_semSendQueue);
   pthread_mutex_unlock(&m_mutexSendQueue);
   return true;
 }
@@ -2120,7 +2132,7 @@ CEnergyP1::addEvent2ReceiveQueue(const vscpEvent *pEvent)
   pthread_mutex_lock(&m_mutexReceiveQueue);
   m_receiveList.push_back((vscpEvent *) pEvent);
   pthread_mutex_unlock(&m_mutexReceiveQueue);
-  sem_post(&m_semReceiveQueue);
+  vscp_sem_post(&m_semReceiveQueue);
   return true;
 }
 
@@ -2377,7 +2389,7 @@ workerThread(void *pData)
     return NULL;
   }
 
-  Comm com;
+  SerialPort com;
   if (!com.open(pObj->m_serialDevice.c_str())) {
     spdlog::error("Working thread: Failed to open serial port {}", pObj->m_serialDevice);
     return NULL;
@@ -2395,7 +2407,7 @@ workerThread(void *pData)
 
   while (!pObj->m_bQuit) {
     if (!com.isCharReady()) {
-      sleep(1);
+      std::this_thread::sleep_for(std::chrono::seconds(1));
       continue;
     }
 

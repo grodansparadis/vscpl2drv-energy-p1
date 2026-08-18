@@ -343,12 +343,20 @@ class CEnergyP1
     /*!
         Event object to indicate that there is an event in the output queue
      */
+  #ifdef WIN32
+    HANDLE m_semSendQueue;
+  #else
     sem_t m_semSendQueue;
+  #endif
 
     /*!
       Event object to indicate that there is an event in the input queue
     */
+  #ifdef WIN32
+    HANDLE m_semReceiveQueue;
+  #else
     sem_t m_semReceiveQueue;
+  #endif
 
     /// Mutex to protect the output queue
     pthread_mutex_t m_mutexSendQueue;

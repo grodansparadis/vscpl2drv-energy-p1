@@ -42,7 +42,6 @@
 #include <vscp.h>
 #include <vscphelper.h>
 #include <hlo.h>
-#include <com-linux.h>
 
 #include "vscpl2drv-energy-p1.h"
 #include "energy-p1-obj.h"

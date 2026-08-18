@@ -1,92 +1,72 @@
 name: CMake
 
-on: [push]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
-env:
-  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
-  BUILD_TYPE: Release
+permissions:
+  contents: read
 
 jobs:
   build:
+    name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-    strategy:  
+    strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-24.04.3, ubuntu-latest]
+        include:
+          - name: Linux
+            os: ubuntu-latest
+            artifact: build/libvscpl2drv-energy-p1.so
+          - name: macOS
+            os: macos-latest
+            artifact: build/libvscpl2drv-energy-p1.dylib
+          - name: Windows
+            os: windows-latest
+            artifact: build/Release/vscpl2drv-energy-p1.dll
 
     steps:
-    # https://github.com/actions/checkout  
-    - uses: actions/checkout@v3
-      with:
-        submodules: 'recursive'
-     
-    - name: Checkout vscp repo
-      uses: actions/checkout@v3
-      with:
-        repository: 'grodansparadis/vscp'
-        path: 'vscp'
-        ref: 'development'
-        submodules: 'recursive'
- 
-    # https://github.com/marketplace/actions/googletest-installer      
-    - name: Install gtest
-      uses: MarkusJx/googletest-installer@v1.1    
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-    #- name: Checkout google test repo
-    #  run: sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo mkdir build && cd build && sudo cmake .. && sudo make DESTDIR=/usr/lib
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes libexpat1-dev libssl-dev
 
-    - name: Update before installing packages
-      run: sudo apt-get update
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install expat openssl@3
 
-    - name: Install pandoc manually
-      run: sudo apt-get install pandoc
-    
-    - name: Install libexpat-dev manually
-      run: sudo apt-get install libexpat-dev
-      
-    - name: Install support libssl
-      run: sudo apt install git libssl-dev libexpat-dev libsystemd-dev libwrap0-dev libz-dev
+      - name: Install Windows dependencies
+        if: runner.os == 'Windows'
+        run: vcpkg install expat:x64-windows openssl:x64-windows pthreads:x64-windows
 
-    - name: Install libmosquitto-dev manually
-      run: sudo apt install libmosquitto-dev
+      - name: Configure Linux build
+        if: runner.os == 'Linux'
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
-    - name: Install libssl-dev manually
-      run: sudo apt-get install libssl-dev
+      - name: Configure macOS build
+        if: runner.os == 'macOS'
+        run: >-
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$(brew --prefix openssl@3);$(brew --prefix expat)"
 
-    - name: Install libcurl and cpp wrapper for it
-      run: sudo apt-get install libcurl4-openssl-dev libcurlpp-dev  
+      - name: Configure Windows build
+        if: runner.os == 'Windows'
+        run: >-
+          cmake -S . -B build -A x64
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows
 
-    - name: Create Build Environment
-      # Some projects don't allow in-source building, so create a separate build directory
-      # We'll use this as our working directory for all subsequent commands
-      run: cmake -E make_directory ${{github.workspace}}/build
+      - name: Build
+        run: cmake --build build --config Release --parallel
 
-    - name: Extract version from version.h
-      id: version
-      run: |
-        MAJOR_VERSION=$(grep "#define MAJOR_VERSION" src/version.h | awk '{print $3}')
-        MINOR_VERSION=$(grep "#define MINOR_VERSION" src/version.h | awk '{print $3}')
-        RELEASE_VERSION=$(grep "#define RELEASE_VERSION" src/version.h | awk '{print $3}')
-        BUILD_VERSION=$(grep "#define BUILD_VERSION" src/version.h | awk '{print $3}')
-        echo "MAJOR_VERSION=$MAJOR_VERSION" >> $GITHUB_ENV
-        echo "MINOR_VERSION=$MINOR_VERSION" >> $GITHUB_ENV
-        echo "RELEASE_VERSION=$RELEASE_VERSION" >> $GITHUB_ENV
-        echo "BUILD_VERSION=$BUILD_VERSION" >> $GITHUB_ENV
-
-    - name: Configure CMake
-      # Use a bash shell so we can use the same syntax for environment variable
-      # access regardless of the host operating system
-      shell: bash
-      working-directory: ${{github.workspace}}/build
-      # Note the current convention is to use the -S and -B options here to specify source 
-      # and build directories, but this is only available with CMake 3.13 and higher.  
-      # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-      #run: cmake .. -DCMAKE_INSTALL_PREFIX=/usr -DVSCP_PATH=vscp/
-      run: cmake .. -DCMAKE_INSTALL_PREFIX=/ -DVSCP_PATH=vscp/ -DMAJOR_VERSION=${{env.MAJOR_VERSION}} -DMINOR_VERSION=${{env.MINOR_VERSION}} -DRELEASE_VERSION=${{env.RELEASE_VERSION}} -DBUILD_VERSION=${{env.BUILD_VERSION}}
-
-    - name: Build
-      working-directory: ${{github.workspace}}/build
-      shell: bash
-      # Execute the build.  You can specify a specific target with "--target <NAME>"
-      run: |
-        make -j$(nproc)
-        sudo make install DESTDIR=AppDir
+      - name: Upload driver
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscpl2drv-energy-p1-${{ runner.os }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error

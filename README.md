@@ -2,8 +2,9 @@
 
 ![VSCP Logo](https://github.com/grodansparadis/vscp-logo/blob/master/logo_100.png)
 
-    Available for: Linux, Windows
+    Available for: Linux, macOS, Windows
     Driver Linux: vscpl2drv-energy-p1.so
+    Driver macOS: vscpl2drv-energy-p1.dylib
     Driver Windows: vscpl2drv-energy-p1.dll
 
 A driver that read data from a [DSMR V5.0.2 P1](https://www.netbeheernederland.nl/_upload/Files/Slimme_meter_15_a727fce1f1.pdf) energy meter and translate metering to relevant VSCP events.
@@ -159,6 +160,24 @@ cpack ...
 ```
  
 in the build folder.
+
+## How to build the driver on macOS
+
+Install the build dependencies with Homebrew and build with CMake:
+
+```bash
+brew install cmake expat openssl@3
+git clone --recurse-submodules https://github.com/grodansparadis/vscpl2drv-energy-p1.git
+cd vscpl2drv-energy-p1
+cmake --preset macos-release
+cmake --build --preset macos-release
+```
+
+## Continuous integration
+
+The `CMake` GitHub Actions workflow builds the driver on Linux, macOS, and
+Windows for every push and pull request. Each job uploads its native driver
+library as a workflow artifact.
 
 
 

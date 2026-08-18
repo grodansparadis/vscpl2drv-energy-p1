@@ -26,7 +26,7 @@
 # -DVSCP_PATH="path"
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 project(vscpl2drv-energy-p1 LANGUAGES CXX C)
 set(PACKAGE_AUTHOR "Ake Hedman, the VSCP Project")
 
@@ -109,18 +109,16 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 # Default location for VSCP level II drivers
 set(VSCP_LEVEL2_DRV_DIR /var/lib/vscp/drivers/level2/)
 
-SET(GCC_COVERAGE_COMPILE_FLAGS "-Wno-psabi -fPIC")
-#SET(GCC_COVERAGE_LINK_FLAGS    "-lgcov")
-
 # Generate position-independent code (-fPIC on UNIX)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # --- System Libraries ---
 include(GNUInstallDirs)
 
-# Disable abi warnings (nlohmann)
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${GCC_COVERAGE_COMPILE_FLAGS}")
-#SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS}")
+# Disable ABI warnings emitted by GCC when compiling nlohmann.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    add_compile_options(-Wno-psabi)
+endif()
 
 # --- Path to vscp --- 
 if (NOT DEFINED VSCP_PATH)
@@ -152,6 +150,8 @@ IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
 
   IF(WIN32)
   SET(CPACK_GENERATOR "NSIS" "ZIP")
+    ELSEIF(APPLE)
+    SET(CPACK_GENERATOR "DragNDrop" "TGZ" "ZIP")
   ELSE()
   SET(CPACK_GENERATOR "DEB" "RPM" "TGZ" "ZIP")
   ENDIF()
@@ -204,15 +204,8 @@ find_package(Threads REQUIRED)
 #openssl
 find_package(OpenSSL REQUIRED)
 
-# Windows Libs
-if (WIN32)
-    #find_package(pthreads REQUIRED)
-
-    # Expat C library
-    find_package(expat CONFIG REQUIRED)
-else()
-
-endif()
+# Expat C library
+find_package(EXPAT REQUIRED)
 
 # Set sockettcp build flags
 add_definitions(-DUSE_IPV6)
@@ -237,6 +230,7 @@ add_library(vscpl2drv-energy-p1
     ${CMAKE_SOURCE_DIR}/src/energy-p1-obj.cpp
     ${CMAKE_SOURCE_DIR}/src/alarm.h 
     ${CMAKE_SOURCE_DIR}/src/alarm.cpp
+    ${CMAKE_SOURCE_DIR}/src/serialport.h
     #./third_party/mustache/mustache.hpp
     #./third_party/spdlog/include    
     third_party/vscp/src/vscp/common/vscp.h
@@ -263,8 +257,10 @@ add_library(vscpl2drv-energy-p1
     #third_party/vscp/src/common/crc8.c
     #third_party/vscp/src/common/vscpmd5.h
     #third_party/vscp/src/common/vscpmd5.c
-    third_party/vscp/src/common/com-linux.h
-    third_party/vscp/src/common/com-linux.cpp
+    $<$<BOOL:${WIN32}>:third_party/vscp/src/common/com-win32.h>
+    $<$<BOOL:${WIN32}>:third_party/vscp/src/common/com-win32.cpp>
+    $<$<NOT:$<BOOL:${WIN32}>>:third_party/vscp/src/common/com-linux.h>
+    $<$<NOT:$<BOOL:${WIN32}>>:third_party/vscp/src/common/com-linux.cpp>
   ) 
 
 if (WIN32)    
@@ -300,17 +296,24 @@ else()
         ${LOCAL_SYSLOG_INCLUDE} )
  endif()   
 
-if (WIN32)
+if(WIN32)
     target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
         PThreads4W::PThreads4W_CXXEXC
         #spdlog::spdlog
         spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
-        OpenSSL::SSL OpenSSL::Crypto
-        expat::expat
+        EXPAT::EXPAT
     )
         
+elseif(APPLE)
+    target_link_libraries(vscpl2drv-energy-p1 PRIVATE
+        Threads::Threads
+        spdlog::spdlog_header_only
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        EXPAT::EXPAT
+    )
 else()
     target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
         m
@@ -320,7 +323,7 @@ else()
         spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
-        ${EXPAT_LIBRARIES}
+        EXPAT::EXPAT
     )
 endif()
 
