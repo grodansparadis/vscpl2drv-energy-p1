@@ -305,6 +305,7 @@ else()
 
 if(WIN32)
     target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
+        ${LIBS_SYSTEM}
         PThreads4W::PThreads4W_CXXEXC
         #spdlog::spdlog
         spdlog::spdlog_header_only
