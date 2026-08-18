@@ -85,3 +85,57 @@ jobs:
             build/packages/*.dmg
             build/packages/*.exe
           if-no-files-found: error
+
+  raspberry-pi:
+    name: Raspberry Pi ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    container: debian:bookworm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            triplet: aarch64-linux-gnu
+            compiler: g++-aarch64-linux-gnu
+          - arch: armhf
+            triplet: arm-linux-gnueabihf
+            compiler: g++-arm-linux-gnueabihf
+
+    steps:
+      - name: Install checkout dependencies
+        run: apt-get update && apt-get install --yes ca-certificates git
+
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install cross-build dependencies
+        run: |
+          dpkg --add-architecture ${{ matrix.arch }}
+          apt-get update
+          apt-get install --yes cmake make ${{ matrix.compiler }} libexpat1-dev:${{ matrix.arch }} libssl-dev:${{ matrix.arch }}
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/linux-${{ matrix.arch }}.cmake
+          -DCPACK_DEBIAN_PACKAGE_ARCHITECTURE=${{ matrix.arch }}
+          -DOPENSSL_INCLUDE_DIR=/usr/include
+          -DOPENSSL_SSL_LIBRARY=/usr/lib/${{ matrix.triplet }}/libssl.so
+          -DOPENSSL_CRYPTO_LIBRARY=/usr/lib/${{ matrix.triplet }}/libcrypto.so
+          -DEXPAT_INCLUDE_DIR=/usr/include
+          -DEXPAT_LIBRARY=/usr/lib/${{ matrix.triplet }}/libexpat.so
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package
+        run: cpack --config build/CPackConfig.cmake -G DEB -C Release -B build/packages
+
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscpl2drv-energy-p1-Raspberry-Pi-${{ matrix.arch }}
+          path: build/packages/*.deb
+          if-no-files-found: error
