@@ -65,7 +65,12 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
-      - name: Package
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        run: cpack --config build/CPackConfig.cmake -G ZIP -C Release -B build/packages
+
+      - name: Package Linux and macOS
+        if: runner.os != 'Windows'
         run: cpack --config build/CPackConfig.cmake -C Release -B build/packages
 
       - name: Upload packages
