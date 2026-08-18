@@ -96,10 +96,16 @@ jobs:
         include:
           - arch: arm64
             triplet: aarch64-linux-gnu
-            compiler: g++-aarch64-linux-gnu
+            processor: aarch64
+            compiler_package: g++-aarch64-linux-gnu
+            c_compiler: aarch64-linux-gnu-gcc
+            cxx_compiler: aarch64-linux-gnu-g++
           - arch: armhf
             triplet: arm-linux-gnueabihf
-            compiler: g++-arm-linux-gnueabihf
+            processor: armv7l
+            compiler_package: g++-arm-linux-gnueabihf
+            c_compiler: arm-linux-gnueabihf-gcc
+            cxx_compiler: arm-linux-gnueabihf-g++
 
     steps:
       - name: Install checkout dependencies
@@ -114,12 +120,15 @@ jobs:
         run: |
           dpkg --add-architecture ${{ matrix.arch }}
           apt-get update
-          apt-get install --yes cmake make ${{ matrix.compiler }} libexpat1-dev:${{ matrix.arch }} libssl-dev:${{ matrix.arch }}
+          apt-get install --yes cmake make ${{ matrix.compiler_package }} libexpat1-dev:${{ matrix.arch }} libssl-dev:${{ matrix.arch }}
 
       - name: Configure
         run: >-
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/linux-${{ matrix.arch }}.cmake
+          -DCMAKE_SYSTEM_NAME=Linux
+          -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.processor }}
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx_compiler }}
           -DCPACK_DEBIAN_PACKAGE_ARCHITECTURE=${{ matrix.arch }}
           -DOPENSSL_INCLUDE_DIR=/usr/include
           -DOPENSSL_SSL_LIBRARY=/usr/lib/${{ matrix.triplet }}/libssl.so
