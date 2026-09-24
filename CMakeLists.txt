@@ -2,7 +2,7 @@
 #
 # Build instructions for VSCP Works.
 #
-# Copyright (C) 2000-2023 Åke Hedman, the VSCP Project
+# Copyright (C) 2000-2026 Åke Hedman and contributors, the VSCP Project
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -176,10 +176,19 @@ IF(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
   SET(CPACK_DEBIAN_PACKAGE_DEPENDS " libexpat-dev, libssl-dev ")
   SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
   SET(CPACK_DEBIAN_PACKAGE_SECTION "network")
-    IF(NOT DEFINED CPACK_DEBIAN_PACKAGE_ARCHITECTURE)
-        SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
-    ENDIF()
-  ENDIF()
+#   IF(NOT DEFINED CPACK_DEBIAN_PACKAGE_ARCHITECTURE)
+#     FIND_PROGRAM(DPKG_CMD dpkg)
+#     IF(DPKG_CMD)
+#       EXECUTE_PROCESS(
+#         COMMAND ${DPKG_CMD} --print-architecture
+#         OUTPUT_VARIABLE CPACK_DEBIAN_PACKAGE_ARCHITECTURE
+#         OUTPUT_STRIP_TRAILING_WHITESPACE
+#       )
+#     ELSE()
+#       SET(CPACK_DEBIAN_PACKAGE_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
+#     ENDIF()
+#   ENDIF()
+ENDIF()
 
   SET(CPACK_COMPONENTS_ALL Libraries ApplicationData)
 
