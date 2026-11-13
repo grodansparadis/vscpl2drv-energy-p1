@@ -93,12 +93,15 @@ private:
 #else
 
 #include <com-linux.h>
+#include <fcntl.h>
+#include <sys/file.h>
 #include <unistd.h>
 
-// Comm marks a closed port with fd 0 and its destructor calls close() again,
-// so closing a port and then destroying the object also closes fd 0 (the
-// host process's stdin, or whatever reused that descriptor). This wrapper
-// uses -1 for "closed" so each descriptor is closed exactly once.
+// Older Comm versions mark a closed port with fd 0 and their destructor calls
+// close() again, so closing a port and then destroying the object also closes
+// fd 0 (the host process's stdin, or whatever reused that descriptor). This
+// wrapper opens and closes the descriptor itself and uses -1 for "closed", so
+// each descriptor is closed exactly once with both old and fixed Comm.
 class SerialPort : public Comm {
 public:
   SerialPort() { m_fd = -1; }
@@ -110,11 +113,15 @@ public:
     if (m_fd >= 0) {
       return false;
     }
-    m_fd = 0; // Comm::open refuses to open unless m_fd is 0
-    if (!Comm::open(device)) {
+    if (nullptr == device) {
+      return false;
+    }
+    m_fd = ::open(device, O_RDWR | O_NONBLOCK);
+    if (m_fd < 0) {
       m_fd = -1;
       return false;
     }
+    flock(m_fd, LOCK_EX);
     return true;
   }
 
