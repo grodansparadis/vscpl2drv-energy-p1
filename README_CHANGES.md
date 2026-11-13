@@ -7,6 +7,7 @@ tagged, rename **Unreleased** to the version and date, and start a new
 
 ## Unreleased
 
+- Add scripts/download-artifacts.sh to download and verify the latest CI packages
 - Add a SHA256SUMS file with package checksums to every CI build artifact
 - Split CI into one workflow per platform (Linux, macOS, Windows, Raspberry Pi arm64 and armhf), each with a build badge in the README
 - Add license and build badges to the README (d8dce68)

@@ -210,6 +210,24 @@ sha256sum -c SHA256SUMS
 
 On macOS use `shasum -a 256 -c SHA256SUMS`.
 
+### Download the latest packages
+
+`scripts/download-artifacts.sh` downloads the packages from the newest
+successful build on `main` and checks them against `SHA256SUMS`. It needs the
+[GitHub CLI](https://cli.github.com), signed in with `gh auth login`, because
+GitHub only serves workflow artifacts to signed-in users. Artifacts are kept
+for 90 days.
+
+```bash
+scripts/download-artifacts.sh                         # all platforms into ./artifacts
+scripts/download-artifacts.sh -o /tmp/p1 linux raspberry-pi-arm64
+scripts/download-artifacts.sh -b development macos    # another branch
+```
+
+Platforms are `linux`, `macos`, `windows`, `raspberry-pi-arm64` and
+`raspberry-pi-armhf`. The script exits with an error if a platform has no
+successful build or a checksum doesn't match.
+
 The workflows share their build steps through
 `.github/workflows/reusable-build-native.yml` and
 `.github/workflows/reusable-build-raspberry-pi.yml`.
