@@ -1,0 +1,20 @@
+name: Raspberry Pi armhf
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-build-raspberry-pi.yml
+    with:
+      arch: armhf
+      triplet: arm-linux-gnueabihf
+      processor: armv7l
+      compiler_package: g++-arm-linux-gnueabihf
+      c_compiler: arm-linux-gnueabihf-gcc
+      cxx_compiler: arm-linux-gnueabihf-g++

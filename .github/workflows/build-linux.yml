@@ -1,0 +1,16 @@
+name: Linux
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/reusable-build-native.yml
+    with:
+      name: Linux
+      os: ubuntu-latest

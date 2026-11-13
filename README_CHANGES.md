@@ -7,6 +7,8 @@ tagged, rename **Unreleased** to the version and date, and start a new
 
 ## Unreleased
 
+- Split CI into one workflow per platform (Linux, macOS, Windows, Raspberry Pi arm64 and armhf), each with a build badge in the README
+- Add license and build badges to the README (d8dce68)
 - Replace third_party submodules with FetchContent (77db80b)
 - Open the serial port directly in the Linux SerialPort wrapper (e0e9981)
 - Recover from serial port failures instead of hanging (c0e5cdf)

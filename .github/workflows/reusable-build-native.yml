@@ -1,0 +1,81 @@
+name: Build (native, reusable)
+
+# Called by build-linux.yml, build-macos.yml and build-windows.yml so that
+# each platform has its own workflow and status badge.
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        description: Platform name used for the job and the artifact
+        required: true
+        type: string
+      os:
+        description: GitHub runner image
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ inputs.name }}
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install --yes libexpat1-dev libssl-dev
+
+      - name: Install macOS dependencies
+        if: runner.os == 'macOS'
+        run: brew install expat openssl@3
+
+      - name: Install Windows dependencies
+        if: runner.os == 'Windows'
+        run: vcpkg install expat:x64-windows openssl:x64-windows pthreads:x64-windows
+
+      - name: Configure Linux build
+        if: runner.os == 'Linux'
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Configure macOS build
+        if: runner.os == 'macOS'
+        run: >-
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$(brew --prefix openssl@3);$(brew --prefix expat)"
+
+      - name: Configure Windows build
+        if: runner.os == 'Windows'
+        run: >-
+          cmake -S . -B build -A x64
+          -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        run: cpack --config build/CPackConfig.cmake -G ZIP -C Release -B build/packages
+
+      - name: Package Linux and macOS
+        if: runner.os != 'Windows'
+        run: cpack --config build/CPackConfig.cmake -C Release -B build/packages
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscpl2drv-energy-p1-${{ runner.os }}
+          path: |
+            build/packages/*.deb
+            build/packages/*.rpm
+            build/packages/*.tar.gz
+            build/packages/*.zip
+            build/packages/*.dmg
+            build/packages/*.exe
+          if-no-files-found: error

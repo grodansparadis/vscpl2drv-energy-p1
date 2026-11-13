@@ -1,7 +1,11 @@
 # vscpl2drv-energy-p1
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Build](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/cmake.yml/badge.svg)](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/cmake.yml)
+[![Linux](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-linux.yml/badge.svg?branch=main)](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-linux.yml?query=branch%3Amain+is%3Asuccess)
+[![macOS](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-macos.yml/badge.svg?branch=main)](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-macos.yml?query=branch%3Amain+is%3Asuccess)
+[![Windows](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-windows.yml/badge.svg?branch=main)](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-windows.yml?query=branch%3Amain+is%3Asuccess)
+[![Raspberry Pi arm64](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-raspberry-pi-arm64.yml/badge.svg?branch=main)](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-raspberry-pi-arm64.yml?query=branch%3Amain+is%3Asuccess)
+[![Raspberry Pi armhf](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-raspberry-pi-armhf.yml/badge.svg?branch=main)](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/build-raspberry-pi-armhf.yml?query=branch%3Amain+is%3Asuccess)
 
 ![VSCP Logo](https://github.com/grodansparadis/vscp-logo/blob/master/logo_100.png)
 
@@ -190,9 +194,15 @@ cmake --build --preset macos-release
 
 ## Continuous integration
 
-The `CMake` GitHub Actions workflow builds the driver on Linux, macOS, and
-Windows for every push and pull request. Each job uploads its native driver
-library as a workflow artifact.
+Each platform has its own GitHub Actions workflow, run on every push and
+pull request: Linux, macOS, Windows, and Raspberry Pi arm64 and armhf (cross
+built). Each run uploads the platform's install package as a workflow
+artifact. The build badges at the top of this file show the status on `main`
+and link to the successful runs, where the packages can be downloaded.
+
+The workflows share their build steps through
+`.github/workflows/reusable-build-native.yml` and
+`.github/workflows/reusable-build-raspberry-pi.yml`.
 
 
 
