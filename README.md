@@ -1,5 +1,8 @@
 # vscpl2drv-energy-p1
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Build](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/cmake.yml/badge.svg)](https://github.com/grodansparadis/vscpl2drv-energy-p1/actions/workflows/cmake.yml)
+
 ![VSCP Logo](https://github.com/grodansparadis/vscp-logo/blob/master/logo_100.png)
 
     Available for: Linux, macOS, Windows
