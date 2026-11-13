@@ -30,6 +30,7 @@
 #include "StdAfx.h"
 #endif
 
+#include <atomic>
 #include <list>
 #include <string>
 #include <utility>
@@ -273,8 +274,8 @@ class CEnergyP1
 
     // ------------------------------------------------------------------------
 
-    /// Run flag
-    bool m_bQuit;
+    /// Run flag (set by close() and read by the worker thread)
+    std::atomic<bool> m_bQuit;
 
     /// True while the serial worker thread can be joined
     bool m_bWorkerThreadRunning;

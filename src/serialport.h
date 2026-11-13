@@ -93,8 +93,39 @@ private:
 #else
 
 #include <com-linux.h>
+#include <unistd.h>
 
-using SerialPort = Comm;
+// Comm marks a closed port with fd 0 and its destructor calls close() again,
+// so closing a port and then destroying the object also closes fd 0 (the
+// host process's stdin, or whatever reused that descriptor). This wrapper
+// uses -1 for "closed" so each descriptor is closed exactly once.
+class SerialPort : public Comm {
+public:
+  SerialPort() { m_fd = -1; }
+
+  ~SerialPort() { close(); }
+
+  bool open(const char *device)
+  {
+    if (m_fd >= 0) {
+      return false;
+    }
+    m_fd = 0; // Comm::open refuses to open unless m_fd is 0
+    if (!Comm::open(device)) {
+      m_fd = -1;
+      return false;
+    }
+    return true;
+  }
+
+  void close()
+  {
+    if (m_fd >= 0) {
+      ::close(m_fd);
+    }
+    m_fd = -1;
+  }
+};
 
 #endif
 

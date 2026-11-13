@@ -81,6 +81,8 @@
 #include <list>
 #include <map>
 #include <string>
+#include <cerrno>
+#include <chrono>
 #include <thread>
 #include <vector>
 
@@ -1731,7 +1733,8 @@ CEnergyP1::doWork(std::string &strbuf)
   if (std::string::npos != (pos_find = strbuf.find("("))) {
     spdlog::trace("Working thread: Line {}", strbuf);
     exstr  = strbuf.substr(0, pos_find);
-    valstr = strbuf.substr(pos_find + 2);
+    // A line can end right after '('
+    valstr = (pos_find + 2 <= strbuf.length()) ? strbuf.substr(pos_find + 2) : std::string();
   }
   else {
     return false;
@@ -2265,6 +2268,21 @@ updateP1Crc(uint16_t crc, uint8_t value)
   return crc;
 }
 
+// Serial port supervision (see the read loop in workerThread)
+static const std::chrono::seconds SERIAL_RETRY_DELAY(5);
+static const std::chrono::seconds SERIAL_SILENCE_REOPEN(60);
+static const std::chrono::milliseconds SERIAL_POLL_INTERVAL(100);
+
+// Sleep for 'duration', returning early when the driver is asked to quit
+static void
+sleepUnlessQuit(CEnergyP1 *pObj, std::chrono::milliseconds duration)
+{
+  const auto end = std::chrono::steady_clock::now() + duration;
+  while (!pObj->m_bQuit && (std::chrono::steady_clock::now() < end)) {
+    std::this_thread::sleep_for(SERIAL_POLL_INTERVAL);
+  }
+}
+
 void *
 workerThread(void *pData)
 {
@@ -2389,32 +2407,94 @@ workerThread(void *pData)
     return NULL;
   }
 
-  SerialPort com;
-  if (!com.open(pObj->m_serialDevice.c_str())) {
-    spdlog::error("Working thread: Failed to open serial port {}", pObj->m_serialDevice);
-    return NULL;
-  }
-
-  com.setParam(pObj->m_serialBaudrate.c_str(),
-               pObj->m_serialParity.c_str(),
-               pObj->m_serialCountDataBits.c_str(),
-               pObj->m_bSerialHwFlowCtrl ? 1 : 0,
-               pObj->m_bSerialSwFlowCtrl ? 1 : 0);
-
-  if (pObj->m_bDtrOnStart) {
-    com.DtrOn();
-  }
-
+  // The serial port is reopened after a read error or hangup, and when no data
+  // has arrived for SERIAL_SILENCE_REOPEN (USB serial adapters can stop
+  // delivering data without reporting an error). Opening is retried until it
+  // succeeds, so a port that is missing at startup or briefly disappears does
+  // not stop the driver.
+  bool bOpenErrorLogged = false;
   while (!pObj->m_bQuit) {
-    if (!com.isCharReady()) {
-      std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    SerialPort com;
+    if (!com.open(pObj->m_serialDevice.c_str())) {
+      if (!bOpenErrorLogged) {
+        spdlog::error("Working thread: Failed to open serial port {}. Retrying every {} s.",
+                      pObj->m_serialDevice,
+                      SERIAL_RETRY_DELAY.count());
+        bOpenErrorLogged = true;
+      }
+      sleepUnlessQuit(pObj, SERIAL_RETRY_DELAY);
       continue;
     }
+    bOpenErrorLogged = false;
 
-    int count = 0;
-    char c    = com.readChar(&count);
-    if (count) {
-      processByte(c);
+    com.setParam(pObj->m_serialBaudrate.c_str(),
+                 pObj->m_serialParity.c_str(),
+                 pObj->m_serialCountDataBits.c_str(),
+                 pObj->m_bSerialHwFlowCtrl ? 1 : 0,
+                 pObj->m_bSerialSwFlowCtrl ? 1 : 0);
+
+    if (pObj->m_bDtrOnStart) {
+      com.DtrOn();
+    }
+
+    spdlog::info("Working thread: Serial port {} open", pObj->m_serialDevice);
+
+    // Start each connection with a clean parser
+    state = eSerialState::SERIAL_STATE_IDLE;
+
+    bool bReopen  = false;
+    auto lastData = std::chrono::steady_clock::now();
+
+    while (!pObj->m_bQuit && !bReopen) {
+
+      int ready = com.isCharReady();
+      if (ready < 0) {
+        spdlog::error("Working thread: Serial port {} error. Reopening.", pObj->m_serialDevice);
+        bReopen = true;
+        break;
+      }
+
+      if (0 == ready) {
+        if ((std::chrono::steady_clock::now() - lastData) > SERIAL_SILENCE_REOPEN) {
+          spdlog::warn("Working thread: No data on {} for {} s. Reopening.",
+                       pObj->m_serialDevice,
+                       SERIAL_SILENCE_REOPEN.count());
+          bReopen = true;
+          break;
+        }
+        std::this_thread::sleep_for(SERIAL_POLL_INTERVAL);
+        continue;
+      }
+
+      while ((ready-- > 0) && !pObj->m_bQuit) {
+        int count = 0;
+        char c    = com.readChar(&count);
+        if (count > 0) {
+          processByte(c);
+          continue;
+        }
+#ifndef WIN32
+        if ((count < 0) && ((EAGAIN == errno) || (EWOULDBLOCK == errno) || (EINTR == errno))) {
+          break;
+        }
+#endif
+        // 0 bytes although data was reported means hangup; < 0 is an I/O error
+        spdlog::error("Working thread: Serial port {} read failed. Reopening.", pObj->m_serialDevice);
+        bReopen = true;
+        break;
+      }
+
+      lastData = std::chrono::steady_clock::now();
+    }
+
+    if (pObj->m_bDtrOnStart) {
+      com.DtrOff();
+    }
+    com.close();
+
+    if (bReopen) {
+      sleepUnlessQuit(pObj, SERIAL_RETRY_DELAY);
     }
   }
 
@@ -2757,16 +2837,6 @@ workerThread(void *pData)
     //       }
     //     } // if match
     //   }   // Iterate
-
-  // Set DTR if requested to do so
-  if (pObj->m_bDtrOnStart) {
-    spdlog::debug("Working thread: DTR OFF");
-    com.DtrOff();
-  }
-
-  // Close the serial port
-  spdlog::debug("Working thread: Closing serial port");
-  com.close();
 
   spdlog::debug("Working thread: Ending Worker loop");
 
