@@ -57,3 +57,8 @@ endif()
 
 # nlohmann/json, spdlog and mustache (and maddy) at VSCP's pinned versions
 include("${VSCP_ROOT}/cmake/VSCPDependencies.cmake")
+
+# The fmt library bundled with spdlog requires UTF-8 source handling on MSVC
+# (VSCP sets the same options).
+add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
