@@ -324,10 +324,10 @@ VSCPRead(long handle, vscpEvent* pEvent, unsigned long timeout)
 extern "C" unsigned long
 VSCPGetVersion(void)
 {
-    unsigned long ver = MAJOR_VERSION << 24 |
-                        MINOR_VERSION << 16 |
-                        RELEASE_VERSION << 8 |
-                        BUILD_VERSION;
+    unsigned long ver = static_cast<unsigned long>(MAJOR_VERSION) << 24 |
+                        static_cast<unsigned long>(MINOR_VERSION) << 16 |
+                        static_cast<unsigned long>(RELEASE_VERSION) << 8 |
+                        static_cast<unsigned long>(BUILD_VERSION);
     return ver;
 }
 

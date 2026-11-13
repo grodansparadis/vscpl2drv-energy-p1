@@ -33,6 +33,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   raspberry-pi:
@@ -44,8 +45,25 @@ jobs:
       - name: Install checkout dependencies
         run: apt-get update && apt-get install --yes ca-certificates git
 
+      - name: Download versioned commit
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: versioned-commit
+          path: ${{ runner.temp }}/version
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read versioned commit
+        if: github.event_name == 'workflow_run'
+        id: version
+        shell: bash
+        run: echo "commit=$(cat "$RUNNER_TEMP/version/commit")" >> "$GITHUB_OUTPUT"
+
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.version.outputs.commit || github.sha }}
 
       - name: Install cross-build dependencies
         run: |

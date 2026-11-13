@@ -1,0 +1,57 @@
+name: Update version
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Test version updates
+        run: bash test/test-version.sh
+
+      - name: Update version and push
+        env:
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            git fetch origin main
+            git checkout -B version-update origin/main
+            version_commit=$(git log --format=%H --fixed-strings --grep="Version update for $PUSH_SHA" -1)
+            if [ -n "$version_commit" ]; then
+              break
+            fi
+            version=$(bash scripts/update-version.sh src/version.h)
+            git add src/version.h
+            git commit -m "Update version to $version" -m "Version update for $PUSH_SHA"
+            if git push origin HEAD:main; then
+              version_commit=$(git rev-parse HEAD)
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              echo "Failed to push version update after $attempt attempts" >&2
+              exit 1
+            fi
+          done
+          mkdir -p "$RUNNER_TEMP/version"
+          printf '%s\n' "$version_commit" > "$RUNNER_TEMP/version/commit"
+
+      - name: Save versioned commit for builds
+        uses: actions/upload-artifact@v4
+        with:
+          name: versioned-commit
+          path: ${{ runner.temp }}/version/commit
+          if-no-files-found: error

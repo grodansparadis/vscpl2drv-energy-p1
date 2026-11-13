@@ -2,14 +2,22 @@ name: Windows
 
 on:
   push:
+    branches-ignore: [main]
+    tags: ['**']
   pull_request:
   workflow_dispatch:
+  workflow_run:
+    workflows: [Update version]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     uses: ./.github/workflows/reusable-build-native.yml
     with:
       name: Windows

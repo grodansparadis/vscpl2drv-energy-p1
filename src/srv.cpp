@@ -2034,7 +2034,7 @@ tcpipClientObj::handleClientGetVersion(void)
 
   snprintf(outbuf,
            sizeof(outbuf),
-           "%d,%d,%d,%d\r\n%s",
+           "%02d,%d,%d,%d\r\n%s",
            MAJOR_VERSION,
            MINOR_VERSION,
            RELEASE_VERSION,

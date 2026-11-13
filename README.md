@@ -18,6 +18,20 @@ A driver that read data from a [DSMR V5.0.2 P1](https://www.netbeheernederland.n
 
 [Live data from this driver](https://grodansparadis.com/wordpress/wp-admin/post.php?post=5276&action=edit) using an Ellevio electric meter.
 
+## Versioning
+
+Versions use `YY.month.patch` in UTC, with a two-digit year. Each push to `main` increments the
+patch, or resets it to zero on the first push in a new month. GitHub Actions
+commits the updated `src/version.h` and builds that versioned commit. The
+workflow needs permission to push to `main`; branch protection must allow the
+GitHub Actions bot to do so. Pushes to other branches and pull requests do not
+change the version.
+
+The packed `VSCPGetVersion` API retains four 8-bit fields: the two-digit year,
+the month, the patch and a reserved build field. The patch is limited to 255;
+the version update fails explicitly if it would overflow. The calendar scheme
+supports years 2000 through 2099.
+
 ## Install the driver on Linux
 You can install the driver using the debian package with
 
