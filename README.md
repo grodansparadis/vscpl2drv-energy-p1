@@ -200,6 +200,16 @@ built). Each run uploads the platform's install package as a workflow
 artifact. The build badges at the top of this file show the status on `main`
 and link to the successful runs, where the packages can be downloaded.
 
+Each artifact also contains a `SHA256SUMS` file with the SHA-256 checksum of
+every package in it. After downloading and unpacking an artifact, check the
+packages with:
+
+```bash
+sha256sum -c SHA256SUMS
+```
+
+On macOS use `shasum -a 256 -c SHA256SUMS`.
+
 The workflows share their build steps through
 `.github/workflows/reusable-build-native.yml` and
 `.github/workflows/reusable-build-raspberry-pi.yml`.

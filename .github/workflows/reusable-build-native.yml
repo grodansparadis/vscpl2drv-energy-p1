@@ -67,6 +67,20 @@ jobs:
         if: runner.os != 'Windows'
         run: cpack --config build/CPackConfig.cmake -C Release -B build/packages
 
+      - name: Create checksums
+        shell: bash
+        working-directory: build/packages
+        run: |
+          shopt -s nullglob
+          files=(*.deb *.rpm *.tar.gz *.zip *.dmg *.exe)
+          if [ ${#files[@]} -eq 0 ]; then echo "No packages to checksum" >&2; exit 1; fi
+          if command -v sha256sum >/dev/null; then
+            sha256sum -b "${files[@]}" > SHA256SUMS
+          else
+            shasum -a 256 -b "${files[@]}" > SHA256SUMS
+          fi
+          cat SHA256SUMS
+
       - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
@@ -78,4 +92,5 @@ jobs:
             build/packages/*.zip
             build/packages/*.dmg
             build/packages/*.exe
+            build/packages/SHA256SUMS
           if-no-files-found: error
