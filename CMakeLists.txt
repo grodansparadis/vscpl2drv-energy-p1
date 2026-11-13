@@ -22,8 +22,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
-# VSCP_PATH - set to path to local vscp repository. Default is "../vscp". Set with
-# -DVSCP_PATH="path"
+# The VSCP sources and the header-only dependencies are downloaded with
+# FetchContent (see cmake/vscp-sources.cmake). To build against a local vscp
+# checkout, set -DFETCHCONTENT_SOURCE_DIR_VSCP_SOURCES="path".
 #
 
 cmake_minimum_required(VERSION 3.16)
@@ -31,9 +32,11 @@ project(vscpl2drv-energy-p1 LANGUAGES CXX C)
 set(PACKAGE_AUTHOR "Ake Hedman, the VSCP Project")
 
 
-# Only spdlog::spdlog_header_only (an INTERFACE target) is used, so exclude
-# the compiled spdlog library from the default build to save build time.
-add_subdirectory(./third_party/spdlog/ EXCLUDE_FROM_ALL)
+# VSCP sources, nlohmann/json, spdlog and mustache
+include(${CMAKE_SOURCE_DIR}/cmake/vscp-sources.cmake)
+
+# The driver doesn't link vscp_util, so leave out vscphelper call tracing
+add_definitions(-DVSCP_DISABLE_HELPER_LOGGING)
 
 # Read version from version.h
 file(READ "${CMAKE_SOURCE_DIR}/src/version.h" VERSION_FILE_CONTENT)
@@ -118,11 +121,6 @@ include(GNUInstallDirs)
 # Disable ABI warnings emitted by GCC when compiling nlohmann.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     add_compile_options(-Wno-psabi)
-endif()
-
-# --- Path to vscp --- 
-if (NOT DEFINED VSCP_PATH)
-set (VSCP_PATH "${PROJECT_SOURCE_DIR}/../vscp")
 endif()
 
 if(WIN32)
@@ -210,9 +208,6 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set (THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# spdlog
-#find_package(spdlog REQUIRED PATHS ./third_party/spdlog)
-
 #openssl
 find_package(OpenSSL REQUIRED)
 
@@ -243,41 +238,21 @@ add_library(vscpl2drv-energy-p1
     ${CMAKE_SOURCE_DIR}/src/alarm.h 
     ${CMAKE_SOURCE_DIR}/src/alarm.cpp
     ${CMAKE_SOURCE_DIR}/src/serialport.h
-    #./third_party/mustache/mustache.hpp
-    #./third_party/spdlog/include    
-    third_party/vscp/src/vscp/common/vscp.h
-    #third_party/vscp/src/vscp/common/vscpremotetcpif.h
-    #third_party/vscp/src/vscp/common/vscpremotetcpif.cpp
-    #$third_party/vscp/src/vscp/common/vscpdatetime.h
-    #third_party/vscp/src/vscp/common/vscpdatetime.cpp
-    third_party/vscp/src/vscp/common/guid.h
-    third_party/vscp/src/vscp/common/guid.cpp
-    #third_party/vscp/src/vscp/common/mdf.h
-    #third_party/vscp/src/vscp/common/mdf.cpp
-    third_party/vscp/src/vscp/common/vscphelper.h
-    third_party/vscp/src/vscp/common/vscphelper.cpp
-    third_party/vscp/src/common/crc.c
-    third_party/vscp/src/common/crc8.c
-    third_party/vscp/src/common/vscp-aes.c
-    third_party/vscp/src/common/vscpbase64.c
-    third_party/vscp/src/common/vscpmd5.c
-    #third_party/vscp/src/vscp/common/canal.h
-    #third_party/vscp/src/common/sockettcp.h
-    #third_party/vscp/src/common/sockettcp.c
-    #third_party/vscp/src/common/vscpbase64.h
-    #third_party/vscp/src/common/vscpbase64.c
-    #third_party/vscp/src/common/vscp_aes.h
-    #third_party/vscp/src/common/vscp_aes.c
-    #third_party/vscp/src/common/crc.h
-    #third_party/vscp/src/common/crc.c
-    #third_party/vscp/src/common/crc8.h
-    #third_party/vscp/src/common/crc8.c
-    #third_party/vscp/src/common/vscpmd5.h
-    #third_party/vscp/src/common/vscpmd5.c
-    $<$<BOOL:${WIN32}>:third_party/vscp/src/common/com-win32.h>
-    $<$<BOOL:${WIN32}>:third_party/vscp/src/common/com-win32.cpp>
-    $<$<NOT:$<BOOL:${WIN32}>>:third_party/vscp/src/common/com-linux.h>
-    $<$<NOT:$<BOOL:${WIN32}>>:third_party/vscp/src/common/com-linux.cpp>
+    ${VSCP_ROOT}/src/vscp/common/vscp.h
+    ${VSCP_ROOT}/src/vscp/common/guid.h
+    ${VSCP_ROOT}/src/vscp/common/guid.cpp
+    ${VSCP_ROOT}/src/vscp/common/vscphelper.h
+    ${VSCP_ROOT}/src/vscp/common/vscphelper.cpp
+    ${VSCP_ROOT}/src/common/vscphelper-common.cpp
+    ${VSCP_ROOT}/src/common/crc.c
+    ${VSCP_ROOT}/src/common/crc8.c
+    ${VSCP_ROOT}/src/common/vscp-aes.c
+    ${VSCP_ROOT}/src/common/vscpbase64.c
+    ${VSCP_ROOT}/src/common/vscpmd5.c
+    $<$<BOOL:${WIN32}>:${VSCP_ROOT}/src/common/com-win32.h>
+    $<$<BOOL:${WIN32}>:${VSCP_ROOT}/src/common/com-win32.cpp>
+    $<$<NOT:$<BOOL:${WIN32}>>:${VSCP_ROOT}/src/common/com-linux.h>
+    $<$<NOT:$<BOOL:${WIN32}>>:${VSCP_ROOT}/src/common/com-linux.cpp>
   ) 
 
 if (WIN32)    
@@ -285,30 +260,25 @@ if (WIN32)
     find_path(PTHREAD_INCLUDE_DIR pthread.h)
 
     include_directories( PUBLIC src/
-        ./third_party/vscp//src/vscp/common/  
-        ./third_party/vscp//src/common
-        ./third_party/vscp//src/common/third_party/
-        ./third_party/nlohmann/include/
-        ./third_party/spdlog/include/
-        ./third_party/fastpbkdf2/
-        ./third_party/mustache/
-        ./third_party/maddy/include/
+        ${VSCP_ROOT}/src/vscp/common/
+        ${VSCP_ROOT}/src/common
+        ${VSCP_NLOHMANN_INCLUDE_DIR}
+        ${VSCP_SPDLOG_INCLUDE_DIR}
+        ${VSCP_MUSTACHE_INCLUDE_DIR}
+        ${VSCP_ROOT}/src/common/windows
+        ${VSCP_ROOT}/src/vscp/common/win32helpers
         ${PThreads4W_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${OPENSSL_INCLUDE_DIR}
-        ./third_party/vscp/src/vscp/daemon/
         ${LOCAL_WIN_INCLUDE}
         ${LOCAL_SYSLOG_INCLUDE} )
 else()
     include_directories( PUBLIC src/
-        ./third_party/vscp//src/vscp/common/
-        ./third_party/vscp//src/common
-        ./third_party/vscp//src/common/third_party/
-        ./third_party/nlohmann/include/
-        ./third_party/spdlog/include/
-        ./third_party/fastpbkdf2/
-        ./third_party/mustache/
-        ./third_party/maddy/include/
+        ${VSCP_ROOT}/src/vscp/common/
+        ${VSCP_ROOT}/src/common
+        ${VSCP_NLOHMANN_INCLUDE_DIR}
+        ${VSCP_SPDLOG_INCLUDE_DIR}
+        ${VSCP_MUSTACHE_INCLUDE_DIR}
         ${CMAKE_BINARY_DIR}
         ${OPENSSL_INCLUDE_DIR}
         ${LOCAL_SYSLOG_INCLUDE} )
@@ -318,8 +288,6 @@ if(WIN32)
     target_link_libraries(vscpl2drv-energy-p1 PRIVATE     
         ${LIBS_SYSTEM}
         PThreads4W::PThreads4W_CXXEXC
-        #spdlog::spdlog
-        spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
         EXPAT::EXPAT
@@ -328,7 +296,6 @@ if(WIN32)
 elseif(APPLE)
     target_link_libraries(vscpl2drv-energy-p1 PRIVATE
         Threads::Threads
-        spdlog::spdlog_header_only
         OpenSSL::SSL
         OpenSSL::Crypto
         EXPAT::EXPAT
@@ -338,8 +305,6 @@ else()
         m
         dl
         Threads::Threads
-        #spdlog::spdlog
-        spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
         EXPAT::EXPAT

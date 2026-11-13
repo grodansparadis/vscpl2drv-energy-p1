@@ -31,8 +31,7 @@ tbd
 
 ## How to build the driver on Linux
 
-- sudo git clone https://github.com/grodansparadis/vscp.git
-- sudo https://github.com/grodansparadis/vscpl2drv-energy-p1.git development
+- git clone https://github.com/grodansparadis/vscpl2drv-energy-p1.git
 - sudo apt install pandoc           (comment: optional)
 - sudo apt install build-essential
 - sudo apt install cmake
@@ -52,14 +51,27 @@ tbd
 Install of pandoc is only needed if man pages needs to be rebuilt. This is normally already done and available in the repository.
 
 ```
-git clone --recurse-submodules -j8 https://github.com/grodansparadis/vscpl2drv-energy-p1.git
+git clone https://github.com/grodansparadis/vscpl2drv-energy-p1.git
 cd vscpl2drv-energy-p1
-./configure
-make
-make install
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+sudo cmake --install build
 ```
 
-Default install folder when you build from source is */usr/local/lib*. You can change this with the --prefix option in the configure step. For example *--prefix /usr* to install to */usr/lib* as the debian install
+Default install folder when you build from source is */usr/local/lib*. You can change this with *-DCMAKE_INSTALL_PREFIX* in the configure step. For example *-DCMAKE_INSTALL_PREFIX=/usr* to install to */usr/lib* as the debian install
+
+### Dependencies fetched at configure time
+
+The first CMake configure downloads the VSCP sources and the header-only
+libraries the driver needs (nlohmann/json, spdlog, mustache) with
+FetchContent, so network access is required. The VSCP commit is pinned in
+[cmake/vscp-sources.cmake](cmake/vscp-sources.cmake); the other libraries use
+the versions that VSCP pins.
+
+To build against a local vscp checkout instead, add
+*-DFETCHCONTENT_SOURCE_DIR_VSCP_SOURCES=/path/to/vscp* to the configure
+command. To reconfigure without network access after a first successful
+download, add *-DFETCHCONTENT_FULLY_DISCONNECTED=ON*.
 
 You need build-essentials and git installed on your system
 
@@ -111,7 +123,7 @@ Full usage is describe [here](https://docs.microsoft.com/en-us/cpp/build/manage-
 You need to checkout the main repository code 
 
 ```bash
-git clone --recursive https://github.com/grodansparadis/vscpl2drv-energy-p1.git
+git clone https://github.com/grodansparadis/vscpl2drv-energy-p1.git
 ```
 
 ### Build the driver
@@ -122,7 +134,7 @@ Build as usual but use
 cd vscpl2drv-energy-p1
 mkdir build
 cd build
-cmake .. -CMAKE_BUILD_TYPE=Release|Debug -DCMAKE_TOOLCHAIN_FILE=E:\src\vcpkg\scripts\buildsystems\vcpkg.cmake -DVSCP_PATH=path-vscp-repository
+cmake .. -CMAKE_BUILD_TYPE=Release|Debug -DCMAKE_TOOLCHAIN_FILE=E:\src\vcpkg\scripts\buildsystems\vcpkg.cmake
 ```
 
 The **CMAKE_TOOLCHAIN_FILE** path may be different in your case
@@ -167,7 +179,7 @@ Install the build dependencies with Homebrew and build with CMake:
 
 ```bash
 brew install cmake expat openssl@3
-git clone --recurse-submodules https://github.com/grodansparadis/vscpl2drv-energy-p1.git
+git clone https://github.com/grodansparadis/vscpl2drv-energy-p1.git
 cd vscpl2drv-energy-p1
 cmake --preset macos-release
 cmake --build --preset macos-release

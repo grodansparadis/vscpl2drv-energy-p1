@@ -23,11 +23,15 @@
 # SOFTWARE.
 #
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 project(test LANGUAGES CXX C)
 set(PACKAGE_AUTHOR "Ake Hedman, the VSCP Project")
 
-#add_subdirectory(../third_party/spdlog/)
+# VSCP sources, nlohmann/json, spdlog and mustache (shared with the driver)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vscp-sources.cmake)
+
+# The test doesn't link vscp_util, so leave out vscphelper call tracing
+add_definitions(-DVSCP_DISABLE_HELPER_LOGGING)
 
 ## --- C++14 build flags ---
 set(CMAKE_CXX_STANDARD 14)
@@ -70,8 +74,6 @@ endif()
 #    COMMAND ${CMAKE_COMMAND} -E environment
 #)
 
-# spdlog
-#find_package(spdlog REQUIRED PATHS ../third_party/spdlog)
 
 # pthreads
 set (THREADS_PREFER_PTHREAD_FLAG ON)
@@ -135,31 +137,29 @@ if (MSVC)
         ../src/energy-p1-obj.h
         ../src/energy-p1-obj.cpp
         
-        $ENV{VSCP_ROOT}/src/vscp/common/vscp.h
-        $ENV{VSCP_COMMON}/vscpdatetime.h
-        $ENV{VSCP_COMMON}/vscpdatetime.cpp
-        $ENV{VSCP_COMMON}/guid.h
-        $ENV{VSCP_COMMON}/guid.cpp
-        $ENV{VSCP_ROOT}/src/vscp/common/vscphelper.h
-        $ENV{VSCP_ROOT}/src/vscp/common/vscphelper.cpp       
-        $ENV{VSCP_ROOT}/src/common/windows/getopt.c
-        $ENV{VSCP_ROOT}/src/common/configfile.h
-        $ENV{VSCP_ROOT}/src/common/configfile.cpp
-        $ENV{VSCP_ROOT}/src/common/vscpbase64.h
-        $ENV{VSCP_ROOT}/src/common/vscpbase64.c
-        $ENV{VSCP_ROOT}/src/common/vscp-aes.h
-        $ENV{VSCP_ROOT}/src/common/vscp-aes.c
-        $ENV{VSCP_ROOT}/src/common/crc.h
-        $ENV{VSCP_ROOT}/src/common/crc.c
-        $ENV{VSCP_ROOT}/src/common/crc8.h
-        $ENV{VSCP_ROOT}/src/common/crc8.c
-        $ENV{VSCP_ROOT}/src/common/vscpmd5.h
-        $ENV{VSCP_ROOT}/src/common/vscpmd5.c
-        $ENV{VSCP_ROOT}/src/common/com_win32.h
-        $ENV{VSCP_ROOT}/src/common/com_win32.cpp
-        ../third_party/fastpbkdf2/fastpbkdf2.h
-        ../third_party/fastpbkdf2/fastpbkdf2.c
-        ../third_party/mustache/mustache.hpp
+        ${VSCP_ROOT}/src/vscp/common/vscp.h
+        ${VSCP_ROOT}/src/vscp/common/vscpdatetime.h
+        ${VSCP_ROOT}/src/vscp/common/vscpdatetime.cpp
+        ${VSCP_ROOT}/src/vscp/common/guid.h
+        ${VSCP_ROOT}/src/vscp/common/guid.cpp
+        ${VSCP_ROOT}/src/vscp/common/vscphelper.h
+        ${VSCP_ROOT}/src/vscp/common/vscphelper.cpp
+        ${VSCP_ROOT}/src/common/vscphelper-common.cpp
+        ${VSCP_ROOT}/src/common/windows/getopt.c
+        ${VSCP_ROOT}/src/common/configfile.h
+        ${VSCP_ROOT}/src/common/configfile.cpp
+        ${VSCP_ROOT}/src/common/vscpbase64.h
+        ${VSCP_ROOT}/src/common/vscpbase64.c
+        ${VSCP_ROOT}/src/common/vscp-aes.h
+        ${VSCP_ROOT}/src/common/vscp-aes.c
+        ${VSCP_ROOT}/src/common/crc.h
+        ${VSCP_ROOT}/src/common/crc.c
+        ${VSCP_ROOT}/src/common/crc8.h
+        ${VSCP_ROOT}/src/common/crc8.c
+        ${VSCP_ROOT}/src/common/vscpmd5.h
+        ${VSCP_ROOT}/src/common/vscpmd5.c
+        ${VSCP_ROOT}/src/common/com-win32.h
+        ${VSCP_ROOT}/src/common/com-win32.cpp
     )
 else()
     add_executable(test 
@@ -172,29 +172,27 @@ else()
         ../src/alarm.cpp        
         ../src/energy-p1-obj.h
         ../src/energy-p1-obj.cpp
-        $ENV{VSCP_ROOT}/src/vscp/common/vscp.h
-        $ENV{VSCP_COMMON}/vscpdatetime.h
-        $ENV{VSCP_COMMON}/vscpdatetime.cpp
-        $ENV{VSCP_COMMON}/guid.h
-        $ENV{VSCP_COMMON}/guid.cpp
-        $ENV{VSCP_ROOT}/src/vscp/common/vscphelper.h
-        $ENV{VSCP_ROOT}/src/vscp/common/vscphelper.cpp
-        $ENV{VSCP_ROOT}/src/vscp/common/canal.h        
-        $ENV{VSCP_ROOT}/src/common/configfile.h
-        $ENV{VSCP_ROOT}/src/common/configfile.cpp
-        $ENV{VSCP_ROOT}/src/common/vscpbase64.h
-        $ENV{VSCP_ROOT}/src/common/vscpbase64.c
-        $ENV{VSCP_ROOT}/src/common/vscp-aes.h
-        $ENV{VSCP_ROOT}/src/common/vscp-aes.c
-        $ENV{VSCP_ROOT}/src/common/crc.h
-        $ENV{VSCP_ROOT}/src/common/crc.c
-        $ENV{VSCP_ROOT}/src/common/crc8.h
-        $ENV{VSCP_ROOT}/src/common/crc8.c
-        $ENV{VSCP_ROOT}/src/common/vscpmd5.h
-        $ENV{VSCP_ROOT}/src/common/vscpmd5.c        
-        ../third_party/fastpbkdf2/fastpbkdf2.h
-        ../third_party/fastpbkdf2/fastpbkdf2.c
-        ../third_party/mustache/mustache.hpp
+        ${VSCP_ROOT}/src/vscp/common/vscp.h
+        ${VSCP_ROOT}/src/vscp/common/vscpdatetime.h
+        ${VSCP_ROOT}/src/vscp/common/vscpdatetime.cpp
+        ${VSCP_ROOT}/src/vscp/common/guid.h
+        ${VSCP_ROOT}/src/vscp/common/guid.cpp
+        ${VSCP_ROOT}/src/vscp/common/vscphelper.h
+        ${VSCP_ROOT}/src/vscp/common/vscphelper.cpp
+        ${VSCP_ROOT}/src/common/vscphelper-common.cpp
+        ${VSCP_ROOT}/src/vscp/common/canal.h        
+        ${VSCP_ROOT}/src/common/configfile.h
+        ${VSCP_ROOT}/src/common/configfile.cpp
+        ${VSCP_ROOT}/src/common/vscpbase64.h
+        ${VSCP_ROOT}/src/common/vscpbase64.c
+        ${VSCP_ROOT}/src/common/vscp-aes.h
+        ${VSCP_ROOT}/src/common/vscp-aes.c
+        ${VSCP_ROOT}/src/common/crc.h
+        ${VSCP_ROOT}/src/common/crc.c
+        ${VSCP_ROOT}/src/common/crc8.h
+        ${VSCP_ROOT}/src/common/crc8.c
+        ${VSCP_ROOT}/src/common/vscpmd5.h
+        ${VSCP_ROOT}/src/common/vscpmd5.c        
     )
  endif() 
 
@@ -202,27 +200,22 @@ else()
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if (MSVC)
-    include_directories( PUBLIC $ENV{VSCP_ROOT}/src/common 
-                            $ENV{VSCP_ROOT}/src/vscp/common/  
-                            $ENV{VSCP_ROOT}/src/common/third_party
-                            ../third_party/spdlog/include/  
-                            ../third_party/nlohmann/include/
-                            ../third_party/spdlog/include/
-                            ../third_party/mustache/
-                            ../third_party/fastpbkdf2/
-                            $ENV{VSCP_ROOT}/src/common/windows                            
+    include_directories( PUBLIC ${VSCP_ROOT}/src/common 
+                            ${VSCP_ROOT}/src/vscp/common/  
+                            ${VSCP_NLOHMANN_INCLUDE_DIR}
+                            ${VSCP_SPDLOG_INCLUDE_DIR}
+                            ${VSCP_MUSTACHE_INCLUDE_DIR}
+                            ${VSCP_ROOT}/src/common/windows                            
                             ${PThreads4W_INCLUDE_DIR}
                             ${CMAKE_BINARY_DIR}
                             ${DLFCN_INCLUDES}
                             ${LOCAL_WIN_INCLUDE} )
 else()
-    include_directories( PUBLIC $ENV{VSCP_ROOT}/src/common 
-                            $ENV{VSCP_ROOT}/src/vscp/common/  
-                            $ENV{VSCP_ROOT}/src/common/third_party
-                            ../third_party/nlohmann/include
-                            ../third_party/spdlog/include/
-                            ../third_party/mustache/
-                            ../third_party/fastpbkdf2/
+    include_directories( PUBLIC ${VSCP_ROOT}/src/common 
+                            ${VSCP_ROOT}/src/vscp/common/  
+                            ${VSCP_NLOHMANN_INCLUDE_DIR}
+                            ${VSCP_SPDLOG_INCLUDE_DIR}
+                            ${VSCP_MUSTACHE_INCLUDE_DIR}
                             ${PThreads4W_INCLUDE_DIR}
                             ${CMAKE_BINARY_DIR}
                             ${DLFCN_INCLUDES}
@@ -234,8 +227,6 @@ if(MSVC)
         netapi32.lib                   
         PThreads4W::PThreads4W_CXXEXC
         dlfcn-win32::dl
-        #spdlog::spdlog
-        spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
         expat::expat
@@ -246,8 +237,6 @@ else()
         dl
         systemd
         Threads::Threads
-        #spdlog::spdlog
-        #spdlog::spdlog_header_only
         OpenSSL::SSL 
         OpenSSL::Crypto
         expat::expat

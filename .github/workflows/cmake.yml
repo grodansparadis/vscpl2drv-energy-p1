@@ -26,8 +26,6 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -40,10 +38,6 @@ jobs:
       - name: Install Windows dependencies
         if: runner.os == 'Windows'
         run: vcpkg install expat:x64-windows openssl:x64-windows pthreads:x64-windows
-
-      - name: Apply macOS serial compatibility patch
-        if: runner.os == 'macOS'
-        run: git -C third_party/vscp apply ../../.github/patches/vscp-macos-serial.patch
 
       - name: Configure Linux build
         if: runner.os == 'Linux'
@@ -113,8 +107,6 @@ jobs:
 
       - name: Check out source
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       - name: Install cross-build dependencies
         run: |
