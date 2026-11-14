@@ -1,34 +1,28 @@
-set(PANDOCCOMMAND_FOUND 0)
-find_program(PANDOCCOMMAND_PATH
-  NAMES pandoc
-  DOC "Path to Pandoc processor. Used to generate man pages from Markdown."
-)
+# Man pages: <page>.md (pandoc's man format) is converted with
+#   pandoc -s -t man <page>.md -o <page>
+# when the driver is built and installed in share/man/man<section>.
 
-if(NOT EXISTS ${PANDOCCOMMAND_PATH})
-  message(WARNING "Pandoc processor not found, man pages will not be generated. Install pandoc or use the CMAKE_PROGRAM_PATH variable.")
-else()
-  set(PANDOCCOMMAND_FOUND 1)
+include(GNUInstallDirs)
+
+set(MAN_PAGES vscpl2drv-energy-p1.1)
+
+find_program(PANDOC_EXECUTABLE pandoc DOC "pandoc, converts the Markdown man pages")
+if(NOT PANDOC_EXECUTABLE)
+  message(WARNING "pandoc was not found, the man pages are not built. Install pandoc (e.g. apt install pandoc).")
+  return()
 endif()
 
-# if (NOT ${PANDOCCOMMAND_FOUND})
-#     message("* * * PanDoc was not found * * *")
-# endif()
+set(_man_outputs "")
+foreach(_page IN LISTS MAN_PAGES)
+  string(REGEX MATCH "[1-8]$" _section "${_page}")
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${_page}
+    COMMAND ${PANDOC_EXECUTABLE} -s -t man ${CMAKE_CURRENT_SOURCE_DIR}/${_page}.md -o ${CMAKE_CURRENT_BINARY_DIR}/${_page}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${_page}.md
+    COMMENT "Man page ${_page}"
+    VERBATIM)
+  list(APPEND _man_outputs ${CMAKE_CURRENT_BINARY_DIR}/${_page})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${_page} DESTINATION ${CMAKE_INSTALL_MANDIR}/man${_section})
+endforeach()
 
-# man pages
-if (${PANDOCCOMMAND_FOUND})
-    ADD_CUSTOM_COMMAND(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/vscpl2drv-energy-p1.1.md
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMAND pandoc -s -t man vscpl2drv-energy-p1.1.md -o ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
-    )
-
-    ADD_CUSTOM_TARGET(man ALL
-      DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
-    )
-
-    install(
-      FILES ${CMAKE_CURRENT_BINARY_DIR}/vscpl2drv-energy-p1.1
-      DESTINATION share/man/man1
-    )
-endif()
+add_custom_target(man ALL DEPENDS ${_man_outputs})

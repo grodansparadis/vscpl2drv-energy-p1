@@ -69,7 +69,7 @@ jobs:
         run: |
           dpkg --add-architecture ${{ inputs.arch }}
           apt-get update
-          apt-get install --yes cmake make ${{ inputs.compiler_package }} libexpat1-dev:${{ inputs.arch }} libssl-dev:${{ inputs.arch }}
+          apt-get install --yes cmake make pandoc ${{ inputs.compiler_package }} libexpat1-dev:${{ inputs.arch }} libssl-dev:${{ inputs.arch }}
 
       - name: Configure
         run: >-
