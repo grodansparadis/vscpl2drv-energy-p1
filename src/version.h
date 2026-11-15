@@ -25,5 +25,5 @@
 
 #define MAJOR_VERSION 26
 #define MINOR_VERSION 11
-#define RELEASE_VERSION 2
+#define RELEASE_VERSION 3
 #define BUILD_VERSION       0
