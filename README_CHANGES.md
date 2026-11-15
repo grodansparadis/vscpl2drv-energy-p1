@@ -7,6 +7,7 @@ tagged, rename **Unreleased** to the version and date, and start a new
 
 ## Unreleased
 
+- Build against the latest vscp master (d75d4f5c6)
 - Man page vscpl2drv-energy-p1(1) describes the driver and its configuration file. It is converted from man/vscpl2drv-energy-p1.1.md with pandoc when the driver is built and installed in share/man/man1; old man page scripts and generated files are removed
 - Make scripts/download-artifacts.sh generic: every workflow, artifact name filters, and checksum files that cover other artifacts
 - Add scripts/download-artifacts.sh to download and verify the latest CI packages

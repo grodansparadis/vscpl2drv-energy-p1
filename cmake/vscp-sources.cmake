@@ -22,8 +22,8 @@ include(FetchContent)
 
 # vscp commit to build against. Update both lines together; the hash is the
 # SHA256 of the downloaded tarball.
-set(VSCP_SOURCES_COMMIT afb70e10fd15c1f5a743d237e196633811c39b01)
-set(VSCP_SOURCES_SHA256 84ffc67f9f0df894d0f27fdc0952f9396651ff73fe9e629f46ae69035b453df7)
+set(VSCP_SOURCES_COMMIT d75d4f5c6c097a1dca841b63727c79c522b701ce)
+set(VSCP_SOURCES_SHA256 709763c16c995b65787e72947f9c3f45a03a404c708286c7cad00b53dcaedbb5)
 
 set(_vscp_sources_options)
 if(NOT CMAKE_VERSION VERSION_LESS "3.18")
