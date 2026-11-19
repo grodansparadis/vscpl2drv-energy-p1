@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -50,7 +50,7 @@ jobs:
           printf '%s\n' "$version_commit" > "$RUNNER_TEMP/version/commit"
 
       - name: Save versioned commit for builds
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: versioned-commit
           path: ${{ runner.temp }}/version/commit

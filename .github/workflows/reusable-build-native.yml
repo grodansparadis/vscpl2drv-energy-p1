@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Download versioned commit
         if: github.event_name == 'workflow_run'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: versioned-commit
           path: ${{ runner.temp }}/version
@@ -41,7 +41,7 @@ jobs:
         run: echo "commit=$(cat "$RUNNER_TEMP/version/commit")" >> "$GITHUB_OUTPUT"
 
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ steps.version.outputs.commit || github.sha }}
 
@@ -100,7 +100,7 @@ jobs:
           cat SHA256SUMS
 
       - name: Upload packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vscpl2drv-energy-p1-${{ runner.os }}
           path: |
